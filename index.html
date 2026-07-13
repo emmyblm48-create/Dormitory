@@ -608,6 +608,214 @@
             gap: 6px;
             white-space: nowrap;
         }
+
+        /* Container ครอบการ์ดทั้งหมดเพื่อจัดระยะห่าง */
+        .repair-history-container {
+        display: flex;
+        flex-direction: column;
+        gap: 24px; /* เว้นระยะห่างระหว่างการ์ด */
+        width: 100%;
+        max-width: 800px; /* ปรับขนาดความกว้างตามความเหมาะสมของหน้า Dashboard */
+        margin: 0 auto;
+        }
+
+        /* ปรับปรุงโครงสร้าง Ticket Card จากเดิม */
+        .ticket-card {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 10px 30px -15px rgba(6,17,45,0.1);
+        position: relative;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .ticket-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 16px 36px -18px rgba(6,17,45,0.15);
+        }
+
+        /* ลบ Effect เอียงซ้อนหลังออกเพื่อให้เหมาะกับการทำเป็นรายการประวัติย้อนหลัง */
+        .ticket-card::before {
+        display: none; 
+        }
+
+        .ticket-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 16px;
+        }
+
+        .ticket-id {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--slate);
+        letter-spacing: .03em;
+        }
+
+        .ticket-title {
+        font-family: var(--font-display);
+        color: var(--navy-deep);
+        font-size: 18px;
+        font-weight: 700;
+        margin-top: 4px;
+        }
+
+        /* การจัดการสี Badge ตามสถานะต่างๆ */
+        .ticket-badge {
+        font-family: var(--font-body);
+        font-size: 13px;
+        font-weight: 600;
+        padding: 6px 14px;
+        border-radius: 999px;
+        white-space: nowrap;
+        }
+        .ticket-badge.status-warning {
+        background: #fdf0e2;
+        color: var(--amber-deep);
+        }
+        .ticket-badge.status-success {
+        background: rgba(31,157,99,0.12);
+        color: var(--green);
+        }
+        .ticket-badge.status-info {
+        background: var(--mist);
+        color: var(--navy);
+        }
+
+        .ticket-body {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+        }
+
+        .ticket-thumb {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        background: var(--mist);
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        }
+
+        .ticket-info h4 {
+        font-family: var(--font-display);
+        color: var(--navy-deep);
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 2px;
+        }
+
+        .ticket-info p {
+        font-size: 13.5px;
+        color: var(--slate);
+        }
+
+        /* Pipeline Status Track */
+        .pipeline { 
+        margin-bottom: 12px; 
+        }
+        .pipeline-track {
+        position: relative;
+        height: 4px;
+        background: var(--line);
+        border-radius: 4px;
+        margin: 18px 4px 14px;
+        }
+        .pipeline-fill {
+        position: absolute; 
+        left: 0; 
+        top: 0; 
+        height: 100%;
+        background: linear-gradient(90deg, var(--navy), var(--amber));
+        border-radius: 4px;
+        transition: width 0.5s ease;
+        }
+        .pipeline-steps {
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+        margin-top: -24px;
+        }
+        .pstep {
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        gap: 8px;
+        width: 25%;
+        }
+        .pstep .node {
+        width: 14px; 
+        height: 14px;
+        border-radius: 50%;
+        background: var(--white);
+        border: 2.5px solid var(--line);
+        z-index: 1;
+        }
+        .pstep.done .node { 
+        background: var(--navy); 
+        border-color: var(--navy); 
+        }
+        .pstep.active .node {
+        background: var(--amber); 
+        border-color: var(--amber);
+        box-shadow: 0 0 0 5px rgba(243,166,33,.22);
+        }
+        .pstep span {
+        font-size: 12px;
+        color: var(--slate);
+        text-align: center;
+        font-weight: 500;
+        }
+        .pstep.done span, .pstep.active span { 
+        color: var(--navy-deep); 
+        font-weight: 600; 
+        }
+
+        /* Footer บันทึกการอัปเดต */
+        .ticket-updated {
+        display: flex; 
+        align-items: center; 
+        gap: 8px;
+        font-size: 13px; 
+        color: var(--slate);
+        margin-top: 20px; 
+        padding-top: 14px; 
+        border-top: 1px dashed var(--line);
+        }
+        .ticket-updated .pulse {
+        width: 8px; 
+        height: 8px; 
+        border-radius: 50%; 
+        background: var(--green);
+        box-shadow: 0 0 0 0 rgba(31,157,99,.5);
+        animation: pulse 1.8s infinite;
+        }
+
+        @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(31,157,99,0.45); }
+        70% { box-shadow: 0 0 0 8px rgba(31,157,99,0); }
+        100% { box-shadow: 0 0 0 0 rgba(31,157,99,0); }
+        }
+
+        /* Responsive สำหรับหน้าจอมือถือ */
+        @media (max-width: 560px) {
+        .ticket-top {
+            flex-direction: column;
+            gap: 10px;
+        }
+        .pstep span {
+            font-size: 10px;
+        }
+        .ticket-body {
+            flex-direction: row;
+            align-items: flex-start;
+        }
+        }
     </style>
 </head>
 <body>
@@ -724,23 +932,13 @@
                         <div class="card-header-action">
                             <h3>ประวัติการแจ้งซ่อมของห้องพัก</h3>
                         </div>
-                        <div class="data-table-container">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 70px; text-align: center;">รูปภาพ</th>
-                                        <th>หัวข้อ/อุปกรณ์</th>
-                                        <th>รายละเอียด</th>
-                                        <th>วันที่แจ้ง</th>
-                                        <th>สถานะ</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="repair-table-body">
-                                    <tr>
-                                        <td colspan="5" style="text-align:center; color:var(--text-muted);">ไม่มีข้อมูลรายการแจ้งซ่อม</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        
+                        <!-- เปลี่ยนจากตารางเดิม เป็น Container สำหรับใส่การ์ดที่สร้างจาก JS -->
+                        <div id="repair-cards-container" class="repair-history-container">
+                            <!-- ข้อความเริ่มต้นระหว่างรอโหลดข้อมูล หรือกรณีไม่มีข้อมูล -->
+                            <div class="no-data" style="text-align:center; color:var(--slate); padding: 40px 0;">
+                                กำลังโหลดข้อมูลรายการแจ้งซ่อม...
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1050,8 +1248,11 @@
         }
 
         async function renderRepairsData() {
-            const tableBody = document.getElementById('repair-table-body');
-            tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">กำลังดึงข้อมูลเรียลไทม์...</td></tr>';
+            // เปลี่ยนมาดึงข้อมูลจาก Container การ์ด แทนตารางเดิม
+            const container = document.getElementById('repair-cards-container');
+            if (!container) return;
+            
+            container.innerHTML = '<div style="text-align:center; color:var(--slate); padding: 40px 0;">กำลังดึงข้อมูลเรียลไทม์...</div>';
 
             let items = [];
 
@@ -1064,7 +1265,7 @@
                 if (error) {
                     console.error("Error fetching data:", error);
                     showToast("ไม่สามารถดึงข้อมูลตารางแจ้งซ่อมได้: " + error.message, "danger");
-                    tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--danger);">เกิดข้อผิดพลาด: ${error.message} (เช็คชื่อตารางในระบบของคุณ)</td></tr>`;
+                    container.innerHTML = `<div style="text-align:center; color:red; padding: 40px 0;">เกิดข้อผิดพลาด: ${error.message}</div>`;
                     return;
                 }
 
@@ -1072,20 +1273,18 @@
             }
 
             if (items.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">ไม่มีข้อมูลรายการแจ้งซ่อม</td></tr>';
+                container.innerHTML = '<div style="text-align:center; color:var(--slate); padding: 40px 0;">ไม่มีข้อมูลรายการแจ้งซ่อม</div>';
                 return;
             }
 
-            tableBody.innerHTML = items.map(item => {
-                const isSuccess = item.status === 'Defect Resolved' || item.status === 'สถานะเสร็จสมบูรณ์';
-                const badgeClass = isSuccess ? 'badge-success' : 'badge-pending';
-                const displayStatus = item.status || 'สถานะแจ้งซ่อม';
-
+            // วนลูปสร้างการ์ดดีไซน์ใหม่จากข้อมูล Supabase
+            container.innerHTML = items.map(item => {
+                // 1. ดึงข้อมูลครุภัณฑ์และชื่อข้อความแจ้งซ่อม
                 const product = item.products || {};
                 const productName = item.title || product.product_name || product.name || `ไม่ระบุชื่อครุภัณฑ์ (ID: ${item.product_id || '-'})`;
                 
+                // 2. จัดการรูปภาพคุรุภัณฑ์ / รูปส่งซ่อม
                 let imageUrl = item.image_url || item.image || product.image_url || product.image || '';
-
                 if (imageUrl && !imageUrl.startsWith('http')) {
                     const cleanPath = imageUrl.startsWith('/') ? imageUrl.slice(1) : imageUrl;
                     imageUrl = `https://aktyghpazejsihdbvrle.supabase.co/storage/v1/object/public/productImage//${cleanPath}`;
@@ -1093,26 +1292,89 @@
 
                 let imageHtml = '';
                 if (imageUrl) {
-                    imageHtml = `<img src="${escapeHtml(imageUrl)}" alt="ครุภัณฑ์" style="width: 45px; height: 45px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border); display: block; margin: 0 auto;" onerror="this.onerror=null; this.parentNode.innerHTML='<div style=&quot;width: 45px; height: 45px; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); margin: 0 auto;&quot;><i class=&quot;fa-solid fa-box&quot;></i></div>';">`;
+                    imageHtml = `<img src="${escapeHtml(imageUrl)}" alt="ครุภัณฑ์" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;" onerror="this.onerror=null; this.parentNode.innerHTML='<i class=&quot;fa-solid fa-box&quot; style=&quot;color: var(--navy); font-size: 20px;&quot;></i>';">`;
                 } else {
-                    imageHtml = `<div style="width: 45px; height: 45px; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); margin: 0 auto;"><i class="fa-solid fa-box"></i></div>`;
+                    imageHtml = `<i class="fa-solid fa-box" style="color: var(--navy); font-size: 20px;"></i>`;
                 }
 
+                // 3. วิเคราะห์สถานะ (Status) เพื่อแมปเข้าสู่ระบบ Timeline (Pipeline) ของการ์ด
+                let progressWidth = '12%';
+                let badgeClass = 'status-info';
+                let displayStatus = 'แจ้งปัญหา';
+                let stepsState = { step1: 'active', step2: '', step3: '', step4: '' };
+
+                // แปลงตัวพิมพ์เล็กตัดช่องว่างเพื่อความแม่นยำในการเช็คเงื่อนไขสถานะจากฐานข้อมูลของคุณ
+                const currentStatus = (item.status || '').trim().toLowerCase();
+
+                if (currentStatus === 'defect resolved' || currentStatus === 'สถานะเสร็จสมบูรณ์' || currentStatus === 'เสร็จสิ้น') {
+                    progressWidth = '100%';
+                    badgeClass = 'status-success';
+                    displayStatus = 'เสร็จสิ้น';
+                    stepsState = { step1: 'done', step2: 'done', step3: 'done', step4: 'done' };
+                } else if (currentStatus === 'กำลังซ่อม' || currentStatus === 'in progress' || currentStatus === 'กำลังดำเนินการ') {
+                    progressWidth = '68%';
+                    badgeClass = 'status-warning';
+                    displayStatus = 'กำลังดำเนินการ';
+                    stepsState = { step1: 'done', step2: 'done', step3: 'active', step4: '' };
+                } else if (currentStatus === 'รับเรื่อง' || currentStatus === 'acknowledged' || currentStatus === 'รับเรื่องแล้ว') {
+                    progressWidth = '38%';
+                    badgeClass = 'status-warning';
+                    displayStatus = 'กำลังดำเนินการ';
+                    stepsState = { step1: 'done', step2: 'active', step3: '', step4: '' };
+                } else {
+                    // ค่าตั้งต้นเริ่มต้น: แจ้งปัญหาเข้ามาใหม่
+                    progressWidth = '12%';
+                    badgeClass = 'status-info';
+                    displayStatus = item.status || 'แจ้งปัญหา';
+                    stepsState = { step1: 'active', step2: '', step3: '', step4: '' };
+                }
+
+                // 4. ฟอร์แมตวันที่แจ้งเรื่อง
+                const rawDate = item.reported_date || item.created_at;
+                const formattedDate = rawDate ? new Date(rawDate).toLocaleDateString('th-TH', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                }) : '-';
+
+                // 5. ส่งออกโครงสร้าง Template ของการ์ดดีไซน์ใหม่
                 return `
-                    <tr>
-                        <td style="text-align: center;">${imageHtml}</td>
-                        <td style="font-weight:500; color:var(--primary);">
-                            ${escapeHtml(productName)}
-                            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 400; margin-top: 2px;">รหัสแจ้งซ่อม #${item.maintenance_request_id || item.id}</div>
-                        </td>
-                        <td style="color:var(--text-muted); font-size:0.85rem;">${escapeHtml(item.description || 'ไม่มีรายละเอียด')}</td>
-                        <td>${item.reported_date || item.created_at ? new Date(item.reported_date || item.created_at).toLocaleDateString('th-TH') : '-'}</td>
-                        <td>
-                            <span class="badge ${badgeClass}">
-                                ${escapeHtml(displayStatus)}
-                            </span>
-                        </td>
-                    </tr>
+                    <div class="ticket-card">
+                        <div class="ticket-top">
+                            <div>
+                                <div class="ticket-id">TICKET #${item.maintenance_request_id || item.id}</div>
+                                <h4 class="ticket-title">${escapeHtml(productName)}</h4>
+                            </div>
+                            <span class="ticket-badge ${badgeClass}">${escapeHtml(displayStatus)}</span>
+                        </div>
+                        
+                        <div class="ticket-body">
+                            <div class="ticket-thumb">
+                                ${imageHtml}
+                            </div>
+                            <div class="ticket-info">
+                                <h4>รายละเอียดการชำรุด</h4>
+                                <p>${escapeHtml(item.description || 'ไม่มีรายละเอียดเพิ่มเติม')}</p>
+                            </div>
+                        </div>
+
+                        <div class="pipeline">
+                            <div class="pipeline-track">
+                                <div class="pipeline-fill" style="width: ${progressWidth}; ${displayStatus === 'เสร็จสิ้น' ? 'background: var(--green);' : ''}"></div>
+                            </div>
+                            <div class="pipeline-steps">
+                                <div class="pstep ${stepsState.step1}"><div class="node"></div><span>แจ้งปัญหา</span></div>
+                                <div class="pstep ${stepsState.step2}"><div class="node"></div><span>รับเรื่อง</span></div>
+                                <div class="pstep ${stepsState.step3}"><div class="node"></div><span>กำลังซ่อม</span></div>
+                                <div class="pstep ${stepsState.step4}"><div class="node"></div><span>เสร็จสิ้น</span></div>
+                            </div>
+                        </div>
+
+                        <div class="ticket-updated">
+                            <span class="pulse" style="${displayStatus === 'เสร็จสิ้น' ? 'background: var(--slate); animation: none;' : ''}"></span> 
+                            วันที่แจ้งเรื่อง: ${formattedDate}
+                        </div>
+                    </div>
                 `;
             }).join('');
         }
