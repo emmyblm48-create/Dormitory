@@ -2,7 +2,8 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 🌟 บล็อกการซูมหน้าจอเมื่อกดพิมพ์ หรือเบิ้ลหน้าจอ (maximum-scale=1.0, user-scalable=no) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dormitory</title>
     <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1qT0iZnhKDIFMYZjklMUUCl80kjavydu6=s32">
     <meta name="theme-color" content="#ffc0cb">
@@ -10,9 +11,7 @@
     <link rel="apple-touch-icon" href="https://lh3.googleusercontent.com/d/1qT0iZnhKDIFMYZjklMUUCl80kjavydu6=s180">
     <!-- สำหรับ Android และ Chrome -->
     <link rel="icon" sizes="192x192" href="https://lh3.googleusercontent.com/d/1qT0iZnhKDIFMYZjklMUUCl80kjavydu6=s192">
-    <!-- กำหนดชื่อแอปที่จะขึ้นใต้ไอคอนบนหน้าจอ Home Screen -->
     <meta name="apple-mobile-web-app-title" content="Dormitory">   
-    <!-- ทำให้แถบด้านบน (Status Bar) ดูเป็นแอปมากขึ้น -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <!-- Font Awesome for sleek modern icons -->
@@ -51,21 +50,50 @@
             padding: 0;
             font-family: 'Prompt', sans-serif;
             -webkit-tap-highlight-color: transparent;
+            /* 🌟 ป้องกันพฤติกรรมดับเบิ้ลแท็บแล้วซูมของเบราว์เซอร์มือถือ */
+            touch-action: manipulation; 
         }
 
+        html, body {
+            max-width: 100vw;
+            overflow-x: hidden;
+        }
+
+        /* 🌟 คุมการแสดงผลให้อยู่ตรงกลางหน้าจอแบบ Mockup มือถือ เหมือน member.html */
         body {
-            background-color: var(--background);
+            background-color: #f4f6f8;
             color: var(--text-main);
             min-height: 100vh;
             display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 🌟 โครงสร้างหน้าจอมือถือหลัก ครอบคลุมทั้งระบบบ */
+        .app-layout {
+            width: 100%;
+            max-width: 480px;
+            height: 100vh;
+            background: var(--surface);
+            display: flex;
             flex-direction: column;
-            overflow-x: hidden;
+            position: relative;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        @media (min-width: 768px) {
+            .app-layout {
+                height: 850px;
+                max-height: 95vh;
+                border-radius: 30px;
+                border: 1px solid var(--border);
+            }
         }
 
         /* Smooth scrollbar styling */
         ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+            width: 4px;
         }
         ::-webkit-scrollbar-track {
             background: transparent;
@@ -74,18 +102,16 @@
             background: var(--border);
             border-radius: 10px;
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--text-muted);
-        }
 
-        /* Toast Notification */
+        /* Toast Notification - ปรับมาอิงพิกัดในแอปสไตล์มือถือ */
         .toast {
-            position: fixed;
-            top: 24px;
-            right: 24px;
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            right: 16px;
             background: var(--surface);
             border-left: 4px solid var(--primary);
-            padding: 16px 24px;
+            padding: 12px 20px;
             border-radius: var(--radius-md);
             box-shadow: var(--shadow-lg);
             display: flex;
@@ -105,7 +131,7 @@
 
         /* Dynamic Loading Overlay */
         .loading-screen {
-            position: fixed;
+            position: absolute;
             inset: 0;
             background: var(--surface);
             display: flex;
@@ -116,8 +142,8 @@
             transition: var(--transition);
         }
         .spinner {
-            width: 40px;
-            height: 40px;
+            width: 35px;
+            height: 35px;
             border: 3px solid var(--primary-light);
             border-top: 3px solid var(--primary);
             border-radius: 50%;
@@ -134,21 +160,22 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 24px;
+            padding: 20px;
             background: radial-gradient(circle at top right, var(--primary-light) 0%, transparent 40%),
                         radial-gradient(circle at bottom left, rgba(6, 59, 130, 0.03) 0%, transparent 50%);
+            overflow-y: auto;
+            width: 100%;
         }
 
         .auth-card {
             background: var(--surface);
             width: 100%;
-            max-width: 420px;
-            padding: 40px;
+            max-width: 380px;
+            padding: 32px 24px;
             border-radius: var(--radius-lg);
             border: 1px solid var(--border);
-            box-shadow: var(--shadow-lg);
+            box-shadow: var(--shadow-sm);
             text-align: center;
-            transition: var(--transition);
         }
 
         .auth-logo {
@@ -161,32 +188,32 @@
             justify-content: center;
             align-items: center;
             font-size: 1.5rem;
-            margin-bottom: 24px;
-            box-shadow: 0 8px 16px rgba(6, 59, 130, 0.2);
+            margin-bottom: 20px;
+            box-shadow: 0 8px 16px rgba(6, 59, 130, 0.15);
         }
 
         .auth-card h1 {
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: 700;
             color: var(--primary);
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .auth-card p {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: var(--text-muted);
-            margin-bottom: 32px;
+            margin-bottom: 24px;
         }
 
         .form-group {
             text-align: left;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             position: relative;
         }
 
         .form-group label {
             display: block;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 500;
             margin-bottom: 6px;
             color: var(--text-main);
@@ -202,15 +229,15 @@
             top: 50%;
             transform: translateY(-50%);
             color: var(--text-muted);
-            font-size: 1rem;
+            font-size: 0.95rem;
         }
 
         .form-control {
             width: 100%;
-            padding: 12px 14px 12px 40px;
+            padding: 12px 14px 12px 38px;
             border: 1px solid var(--border);
             border-radius: var(--radius-sm);
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             background: var(--background);
             color: var(--text-main);
             transition: var(--transition);
@@ -220,7 +247,6 @@
             outline: none;
             border-color: var(--primary);
             background: var(--surface);
-            box-shadow: 0 0 0 4px var(--primary-light);
         }
 
         .btn {
@@ -230,7 +256,7 @@
             color: var(--surface);
             border: none;
             border-radius: var(--radius-sm);
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 500;
             cursor: pointer;
             transition: var(--transition);
@@ -242,155 +268,178 @@
 
         .btn:hover {
             opacity: 0.95;
-            transform: translateY(-1px);
         }
 
         .btn:disabled {
             background: var(--text-muted);
             cursor: not-allowed;
-            transform: none;
         }
 
         /* --- APPLICATION DASHBOARD INTERFACE (SPA) --- */
         #app-container {
             display: none; 
-            flex: 1;
-            grid-template-columns: 260px 1fr;
-            min-height: 100vh;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
         }
 
-        /* Sidebar Navigation */
-        aside {
+        /* 🌟 ส่วนหัวแอปพลิเคชันด้านบนสุด (Top App Bar) สำหรับหน้าจอมือถือ */
+        .app-header {
             background: var(--surface);
-            border-right: 1px solid var(--border);
-            padding: 32px 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            height: 100vh;
-        }
-
-        .app-brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-weight: 700;
-            font-size: 1.2rem;
-            color: var(--primary);
-            margin-bottom: 40px;
-            padding-left: 8px;
-        }
-
-        .nav-menu {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            flex: 1;
-        }
-
-        .nav-item a {
-            display: flex;
-            align-items: center;
-            gap: 12px;
+            border-bottom: 1px solid var(--border);
             padding: 12px 16px;
-            color: var(--text-muted);
-            text-decoration: none;
-            border-radius: var(--radius-sm);
-            font-weight: 400;
-            font-size: 0.95rem;
-            transition: var(--transition);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
         }
 
-        .nav-item.active a, .nav-item a:hover {
-            background: var(--primary-light);
-            color: var(--primary);
-            font-weight: 500;
-        }
-
-        .user-block {
-            border-top: 1px solid var(--border);
-            padding-top: 20px;
+        .app-header-brand {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            gap: 8px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--primary);
         }
 
-        .user-info {
+        .app-header-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-info-mini {
             display: flex;
             flex-direction: column;
-            max-width: 140px;
+            text-align: right;
         }
 
-        .user-name {
-            font-size: 0.9rem;
+        #display-user-email {
+            font-size: 0.8rem;
             font-weight: 600;
             color: var(--text-main);
+            max-width: 120px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        .user-role {
-            font-size: 0.75rem;
+        #display-user-role {
+            font-size: 0.7rem;
             color: var(--text-muted);
         }
 
-        .btn-logout {
+        .btn-logout-mini {
             background: transparent;
             border: none;
             color: var(--danger);
             cursor: pointer;
-            padding: 8px;
+            padding: 6px;
             border-radius: var(--radius-sm);
+            font-size: 1rem;
             transition: var(--transition);
         }
 
-        .btn-logout:hover {
+        .btn-logout-mini:hover {
             background: rgba(239, 68, 68, 0.08);
         }
 
-        /* Main Content Viewport */
-        main {
-            padding: 40px;
-            max-width: 1200px;
+        /* 🌟 เปลี่ยนโครงสร้างเมนูด้านข้างมาเป็น แถบเมนูด้านล่างสุด (Bottom Navbar) */
+        aside {
+            position: absolute;
+            bottom: 0;
+            left: 0;
             width: 100%;
-            margin: 0 auto;
+            height: 68px;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 0 8px;
+            z-index: 4000;
+        }
+
+        .nav-menu {
+            list-style: none;
+            display: flex;
+            width: 100%;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+        }
+
+        .nav-item a {
             display: flex;
             flex-direction: column;
-            gap: 32px;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 8px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 400;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), color 0.2s ease;
+            width: 100%;
+        }
+
+        /* 🌟 ถ้ากดปุ่มไหนให้ขยายปุ่มนั้น ไม่ต้องทำเงา */
+        .nav-item.active a {
+            color: var(--primary);
+            font-weight: 600;
+            transform: scale(1.15); /* ขยายขนาดปุ่มที่เลือกให้เด่นชัด */
+            background: transparent !important;
+            box-shadow: none !important;
+            text-shadow: none !important;
+        }
+
+        /* Main Content Viewport - ปรับปรุงการสกรอลล์ในพอร์ตมือถือ */
+        main {
+            padding: 20px 16px 88px 16px; /* เผื่อช่องว่างด้านล่างไม่ให้เมนูบังคอนเทนต์ */
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+            flex: 1;
         }
 
         .view-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 12px;
         }
 
         .view-title h2 {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 700;
             color: var(--primary);
         }
 
         .view-title p {
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             color: var(--text-muted);
         }
 
         /* Cards and Grid structures */
         .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
         .stat-card {
             background: var(--surface);
             border: 1px solid var(--border);
-            padding: 24px;
+            padding: 16px;
             border-radius: var(--radius-md);
             box-shadow: var(--shadow-sm);
             display: flex;
@@ -399,28 +448,28 @@
         }
 
         .stat-details h4 {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--text-muted);
             font-weight: 400;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         .stat-details p {
-            font-size: 1.75rem;
+            font-size: 1.35rem;
             font-weight: 700;
             color: var(--text-main);
         }
 
         .stat-icon {
-            width: 48px;
-            height: 48px;
+            width: 42px;
+            height: 42px;
             border-radius: var(--radius-sm);
             background: var(--primary-light);
             color: var(--primary);
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 1.25rem;
+            font-size: 1.1rem;
         }
 
         /* Content Views Table & Lists */
@@ -429,7 +478,7 @@
             border: 1px solid var(--border);
             border-radius: var(--radius-md);
             box-shadow: var(--shadow-sm);
-            padding: 24px;
+            padding: 16px;
             overflow: hidden;
         }
 
@@ -437,11 +486,11 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 14px;
         }
 
         .card-header-action h3 {
-            font-size: 1.1rem;
+            font-size: 1rem;
             color: var(--primary);
             font-weight: 600;
         }
@@ -454,30 +503,32 @@
             width: 100%;
             border-collapse: collapse;
             text-align: left;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
         .data-table th {
-            padding: 12px 16px;
+            padding: 10px 12px;
             background: var(--background);
             color: var(--text-muted);
             font-weight: 500;
             border-bottom: 1px solid var(--border);
+            white-space: nowrap;
         }
 
         .data-table td {
-            padding: 16px;
+            padding: 12px;
             border-bottom: 1px solid var(--border);
             color: var(--text-main);
             vertical-align: middle;
         }
 
         .badge {
-            padding: 4px 10px;
+            padding: 4px 8px;
             border-radius: 50px;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 500;
             display: inline-block;
+            white-space: nowrap;
         }
 
         .badge-pending { background: #fef3c7; color: #d97706; }
@@ -486,7 +537,7 @@
 
         /* Floating Action/Modal Panels */
         .modal {
-            position: fixed;
+            position: absolute;
             inset: 0;
             background: rgba(15, 23, 42, 0.4);
             backdrop-filter: blur(4px);
@@ -494,7 +545,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 24px;
+            padding: 16px;
             opacity: 0;
             visibility: hidden;
             transition: var(--transition);
@@ -508,13 +559,15 @@
         .modal-content {
             background: var(--surface);
             width: 100%;
-            max-width: 500px;
+            max-width: 400px;
             border-radius: var(--radius-lg);
-            padding: 32px;
+            padding: 24px;
             box-shadow: var(--shadow-lg);
             position: relative;
             transform: scale(0.95);
             transition: var(--transition);
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         .modal.show .modal-content {
@@ -523,25 +576,27 @@
 
         .modal-close {
             position: absolute;
-            top: 20px;
-            right: 20px;
+            top: 16px;
+            right: 16px;
             background: transparent;
             border: none;
-            font-size: 1.25rem;
+            font-size: 1.5rem;
             color: var(--text-muted);
             cursor: pointer;
+            line-height: 1;
         }
 
         .modal-title {
-            font-size: 1.25rem;
+            font-size: 1.1rem;
             font-weight: 600;
             color: var(--primary);
-            margin-bottom: 24px;
+            margin-bottom: 20px;
+            padding-right: 24px;
         }
 
         .btn-action-sm {
-            padding: 8px 16px;
-            font-size: 0.85rem;
+            padding: 8px 12px;
+            font-size: 0.8rem;
             border-radius: var(--radius-sm);
             background: var(--primary);
             color: var(--surface);
@@ -551,272 +606,244 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-        }
-
-        /* Mobile View Configurations */
-        @media (max-width: 768px) {
-            #app-container {
-                grid-template-columns: 1fr;
-            }
-            aside {
-                position: fixed;
-                bottom: 0;
-                top: auto;
-                left: 0;
-                width: 100%;
-                height: 64px;
-                flex-direction: row;
-                padding: 0 16px;
-                z-index: 4000;
-                box-shadow: 0 -4px 16px rgba(0,0,0,0.04);
-                border-right: none;
-                border-top: 1px solid var(--border);
-            }
-            .app-brand, .user-block { display: none; }
-            .nav-menu {
-                flex-direction: row;
-                justify-content: space-around;
-                width: 100%;
-                gap: 0;
-            }
-            .nav-item a {
-                flex-direction: column;
-                font-size: 0.7rem;
-                padding: 8px;
-                gap: 4px;
-                align-items: center;
-            }
-            main {
-                padding: 24px 16px 100px 16px;
-            }
-            .view-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 12px;
-            }
+            white-space: nowrap;
         }
     </style>
 </head>
 <body>
 
-    <!-- Dynamic Alert System -->
-    <div id="toast" class="toast">
-        <i class="fa-solid fa-circle-info" id="toast-icon"></i>
-        <span id="toast-text">ข้อความแจ้งเตือน</span>
-    </div>
+    <!-- 🌟 โครงสร้างหน้าจอมือถือหลักครอบระบบตามสไตล์ member.html -->
+    <div class="app-layout">
 
-    <!-- App Initialization Spinner -->
-    <div id="loading-screen" class="loading-screen">
-        <div class="spinner"></div>
-        <p style="color: var(--text-muted); font-size: 0.9rem;">กำลังเตรียมระบบฐานข้อมูล...</p>
-    </div>
-
-    <!-- 1. AUTHENTICATION COMPONENT -->
-    <div id="auth-container">
-        <div class="auth-card">
-            <div class="auth-logo">
-                <i class="fa-solid fa-building-user"></i>
-            </div>
-            <h1>Dormitory</h1>
-            <p>ลงชื่อเข้าใช้งานแพลตฟอร์มจัดการหอพักดิจิทัล</p>
-            
-            <form id="login-form">
-                <div class="form-group">
-                    <label for="login-email">อีเมลบัญชีผู้ใช้ (Email)</label>
-                    <div class="input-wrapper">
-                        <i class="fa-regular fa-envelope"></i>
-                        <input type="email" id="login-email" class="form-control" placeholder="yourname@domain.com" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="login-password">รหัสผ่าน (Password)</label>
-                    <div class="input-wrapper">
-                        <i class="fa-solid fa-lock"></i>
-                        <input type="password" id="login-password" class="form-control" placeholder="••••••••" required>
-                    </div>
-                </div>
-                <button type="submit" class="btn" id="btn-login-submit">
-                    <span>เข้าสู่ระบบ</span>
-                    <i class="fa-solid fa-arrow-right-to-bracket"></i>
-                </button>
-            </form>
+        <!-- Dynamic Alert System -->
+        <div id="toast" class="toast">
+            <i class="fa-solid fa-circle-info" id="toast-icon"></i>
+            <span id="toast-text">ข้อความแจ้งเตือน</span>
         </div>
-    </div>
 
-    <!-- 2. MAIN APPLICATION COMPONENT (SPA ENGINE) -->
-    <div id="app-container">
-        <!-- Sidebar Navigation -->
-        <aside>
-            <div>
-                <div class="app-brand">
+        <!-- App Initialization Spinner -->
+        <div id="loading-screen" class="loading-screen">
+            <div class="spinner"></div>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">กำลังเตรียมระบบฐานข้อมูล...</p>
+        </div>
+
+        <!-- 1. AUTHENTICATION COMPONENT -->
+        <div id="auth-container">
+            <div class="auth-card">
+                <div class="auth-logo">
+                    <i class="fa-solid fa-building-user"></i>
+                </div>
+                <h1>Dormitory</h1>
+                <p>ลงชื่อเข้าใช้งานแพลตฟอร์มจัดการหอพักดิจิทัล</p>
+                
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-email">อีเมลบัญชีผู้ใช้ (Email)</label>
+                        <div class="input-wrapper">
+                            <i class="fa-regular fa-envelope"></i>
+                            <input type="email" id="login-email" class="form-control" placeholder="yourname@domain.com" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">รหัสผ่าน (Password)</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" id="login-password" class="form-control" placeholder="••••••••" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn" id="btn-login-submit">
+                        <span>เข้าสู่ระบบ</span>
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 2. MAIN APPLICATION COMPONENT (SPA ENGINE) -->
+        <div id="app-container">
+            
+            <!-- ส่วนแถบหัวเรื่องแอปด้านบนสุดประจำโมเดลมือถือ -->
+            <div class="app-header">
+                <div class="app-header-brand">
                     <i class="fa-solid fa-building-user"></i>
                     <span>Dormitory</span>
                 </div>
-                <ul class="nav-menu">
-                    <li class="nav-item active" data-view="dashboard">
-                        <a href="javascript:void(0)"><i class="fa-solid fa-chart-pie"></i><span>ภาพรวม</span></a>
-                    </li>
-                    <li class="nav-item" data-view="repairs">
-                        <a href="javascript:void(0)"><i class="fa-solid fa-screwdriver-wrench"></i><span>การแจ้งซ่อม</span></a>
-                    </li>
-                    <li class="nav-item" data-view="billing">
-                        <a href="javascript:void(0)"><i class="fa-solid fa-money-check-dollar"></i><span>บิลค่าเช่า</span></a>
-                    </li>
-                </ul>
-            </div>
-            
-            <div class="user-block">
-                <div class="user-info">
-                    <span class="user-name" id="display-user-email">loading...</span>
-                    <span class="user-role" id="display-user-role">ผู้พักอาศัย</span>
-                </div>
-                <button class="btn-logout" id="btn-logout" title="ออกจากระบบ">
-                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                </button>
-            </div>
-        </aside>
-
-        <!-- Main Viewport Context Router -->
-        <main>
-            <!-- VIEW: DASHBOARD -->
-            <div id="view-dashboard" class="spa-view">
-                <div class="view-header">
-                    <div class="view-title">
-                        <h2>แผงควบคุมหลัก</h2>
-                        <p>ยินดีต้อนรับสู่ระบบรายงานข้อมูลเรียลไทม์ประจำห้องพักของคุณ</p>
+                <div class="app-header-user">
+                    <div class="user-info-mini">
+                        <span id="display-user-email">loading...</span>
+                        <span id="display-user-role">ผู้พักอาศัย</span>
                     </div>
-                </div>
-                
-                <div class="dashboard-grid">
-                    <div class="stat-card">
-                        <div class="stat-details">
-                            <h4>สถานะบิลล่าสุด</h4>
-                            <p style="font-size: 1.3rem; margin-top: 6px;" id="stat-bill-status">กำลังโหลด...</p>
-                        </div>
-                        <div class="stat-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-details">
-                            <h4>งานแจ้งซ่อมของฉัน</h4>
-                            <p id="stat-repair-count">0 รายการ</p>
-                        </div>
-                        <div class="stat-icon"><i class="fa-solid fa-wrench"></i></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- VIEW: REPAIRS -->
-            <div id="view-repairs" class="spa-view" style="display:none;">
-                <div class="view-header">
-                    <div class="view-title">
-                        <h2>รายการแจ้งซ่อมบำรุง</h2>
-                        <p>จัดการ ตรวจสอบ และติดตามสถานะคุรุภัณฑ์ที่ชำรุดแบบเรียลไทม์</p>
-                    </div>
-                    <button class="btn-action-sm" onclick="openModal('repair-modal')">
-                        <i class="fa-solid fa-plus"></i> แจ้งซ่อมใหม่
+                    <button class="btn-logout-mini" id="btn-logout" title="ออกจากระบบ">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
                     </button>
                 </div>
-
-                <div class="content-card">
-                    <div class="card-header-action">
-                        <h3>ประวัติการแจ้งซ่อมของห้องพัก</h3>
-                    </div>
-                    <div class="data-table-container">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 80px; text-align: center;">รูปภาพ</th>
-                                    <th>หัวข้อ/อุปกรณ์</th>
-                                    <th>รายละเอียด</th>
-                                    <th>วันที่แจ้ง</th>
-                                    <th>สถานะ</th>
-                                </tr>
-                            </thead>
-                            <tbody id="repair-table-body">
-                                <tr>
-                                    <td colspan="5" style="text-align:center; color:var(--text-muted);">ไม่มีข้อมูลรายการแจ้งซ่อม</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
             </div>
 
-            <!-- VIEW: BILLING -->
-            <div id="view-billing" class="spa-view" style="display:none;">
-                <div class="view-header">
-                    <div class="view-title">
-                        <h2>ระบบใบแจ้งหนี้และการเงิน</h2>
-                        <p>ตรวจสอบประวัติใบแจ้งหนี้ค่าเช่าประจำเดือนและค่าสาธารณูปโภคได้อย่างโปร่งใส</p>
+            <!-- Main Viewport Context Router -->
+            <main>
+                <!-- VIEW: DASHBOARD -->
+                <div id="view-dashboard" class="spa-view">
+                    <div class="view-header">
+                        <div class="view-title">
+                            <h2>แผงควบคุมหลัก</h2>
+                            <p>ยินดีต้อนรับสู่ระบบรายงานข้อมูลเรียลไทม์ประจำห้องพักของคุณ</p>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-grid">
+                        <div class="stat-card">
+                            <div class="stat-details">
+                                <h4>สถานะบิลล่าสุด</h4>
+                                <p style="font-size: 1.15rem; margin-top: 4px;" id="stat-bill-status">กำลังโหลด...</p>
+                            </div>
+                            <div class="stat-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-details">
+                                <h4>งานแจ้งซ่อมของฉัน</h4>
+                                <p id="stat-repair-count">0 รายการ</p>
+                            </div>
+                            <div class="stat-icon"><i class="fa-solid fa-wrench"></i></div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="content-card">
-                    <div class="card-header-action">
-                        <h3>บิลค่าใช้จ่ายทั้งหมด</h3>
-                    </div>
-                    <div class="data-table-container">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>รอบบิลประจำเดือน</th>
-                                    <th>ยอดรวมสุทธิ</th>
-                                    <th>กำหนดชำระ</th>
-                                    <th>สถานะ</th>
-                                </tr>
-                            </thead>
-                            <tbody id="billing-table-body">
-                                <tr>
-                                    <td colspan="4" style="text-align:center; color:var(--text-muted);">ไม่มีข้อมูลใบแจ้งหนี้ค้างชำระ</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- MODAL: ADD REPAIR REQUEST -->
-    <div class="modal" id="repair-modal">
-        <div class="modal-content">
-            <button class="modal-close" onclick="closeModal('repair-modal')">&times;</button>
-            <h3 class="modal-title">กรอกข้อมูลแจ้งซ่อมแซมคุรุภัณฑ์</h3>
-            <form id="repair-form">
-                <div class="form-group" style="margin-bottom: 16px;">
-                    <label for="repair-title">อุปกรณ์ / หัวข้อปัญหา</label>
-                    <input type="text" id="repair-title" class="form-control" style="padding-left: 14px;" placeholder="เช่น แอร์ไม่เย็น, ท่อน้ำซึมในห้องน้ำ" required>
-                </div>
-                <div class="form-group" style="margin-bottom: 16px;">
-                    <label for="repair-desc">รายละเอียดเชิงลึกของความเสียหาย</label>
-                    <textarea id="repair-desc" class="form-control" style="padding-left: 14px; height: 100px; resize: none;" placeholder="ระบุอาการ หรือตำแหน่งคุรุภัณฑ์เพิ่มเติม..." required></textarea>
-                </div>
-                
-                <!-- 📸 ส่วนรับรองการถ่ายภาพและบันทึกรูปภาพหลักฐาน -->
-                <div class="form-group" style="margin-bottom: 24px;">
-                    <label for="repair-image">ถ่ายรูปภาพ หรือ แนบไฟล์รูปหลักฐานความเสียหาย</label>
-                    <div class="input-wrapper">
-                        <!-- accept="image/*" จะสั่งให้เปิดกล้องอัตโนมัติเมื่อกดผ่านโทรศัพท์มือถือ -->
-                        <input type="file" id="repair-image" class="form-control" accept="image/*" style="padding-left: 14px; padding-top: 9px;">
-                    </div>
-                    <!-- ส่วนแสดงตัวอย่างรูปภาพ Live Preview ก่อนกดบันทึก -->
-                    <div id="image-preview-container" style="margin-top: 12px; display: none; position: relative; text-align: center;">
-                        <img id="image-preview" src="" alt="Preview" style="max-width: 100%; max-height: 180px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border);">
-                        <button type="button" id="btn-remove-image" style="position: absolute; top: 6px; right: 6px; background: rgba(239, 68, 68, 0.85); color: white; border: none; border-radius: 50%; width: 26px; height: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="ลบรูปภาพ">
-                            <i class="fa-solid fa-xmark" style="font-size: 0.85rem;"></i>
+                <!-- VIEW: REPAIRS -->
+                <div id="view-repairs" class="spa-view" style="display:none;">
+                    <div class="view-header">
+                        <div class="view-title">
+                            <h2>รายการแจ้งซ่อมบำรุง</h2>
+                            <p>จัดการ ตรวจสอบ และติดตามสถานะคุรุภัณฑ์ที่ชำรุดแบบเรียลไทม์</p>
+                        </div>
+                        <button class="btn-action-sm" onclick="openModal('repair-modal')">
+                            <i class="fa-solid fa-plus"></i> แจ้งซ่อมใหม่
                         </button>
                     </div>
+
+                    <div class="content-card">
+                        <div class="card-header-action">
+                            <h3>ประวัติการแจ้งซ่อมของห้องพัก</h3>
+                        </div>
+                        <div class="data-table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 70px; text-align: center;">รูปภาพ</th>
+                                        <th>หัวข้อ/อุปกรณ์</th>
+                                        <th>รายละเอียด</th>
+                                        <th>วันที่แจ้ง</th>
+                                        <th>สถานะ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="repair-table-body">
+                                    <tr>
+                                        <td colspan="5" style="text-align:center; color:var(--text-muted);">ไม่มีข้อมูลรายการแจ้งซ่อม</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
-                <button type="submit" class="btn" id="btn-repair-submit">ส่งข้อมูลแจ้งซ่อมแซม</button>
-            </form>
+                <!-- VIEW: BILLING -->
+                <div id="view-billing" class="spa-view" style="display:none;">
+                    <div class="view-header">
+                        <div class="view-title">
+                            <h2>ระบบใบแจ้งหนี้และการเงิน</h2>
+                            <p>ตรวจสอบประวัติใบแจ้งหนี้ค่าเช่าประจำเดือนและค่าสาธารณูปโภคได้อย่างโปร่งใส</p>
+                        </div>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header-action">
+                            <h3>บิลค่าใช้จ่ายทั้งหมด</h3>
+                        </div>
+                        <div class="data-table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>รอบบิลประจำเดือน</th>
+                                        <th>ยอดรวมสุทธิ</th>
+                                        <th>กำหนดชำระ</th>
+                                        <th>สถานะ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="billing-table-body">
+                                    <tr>
+                                        <td colspan="4" style="text-align:center; color:var(--text-muted);">ไม่มีข้อมูลใบแจ้งหนี้ค้างชำระ</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- 🌟 แถบเมนูด้านล่างสุด (Bottom Navbar Layout) ปรับเปลี่ยนมาจากรูปเล่มเมนูด้านข้าง -->
+            <aside>
+                <ul class="nav-menu">
+                    <li class="nav-item active" data-view="dashboard">
+                        <a href="javascript:void(0)">
+                            <i class="fa-solid fa-chart-pie"></i>
+                            <span>ภาพรวม</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" data-view="repairs">
+                        <a href="javascript:void(0)">
+                            <i class="fa-solid fa-screwdriver-wrench"></i>
+                            <span>การแจ้งซ่อม</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" data-view="billing">
+                        <a href="javascript:void(0)">
+                            <i class="fa-solid fa-money-check-dollar"></i>
+                            <span>บิลค่าเช่า</span>
+                        </a>
+                    </li>
+                </ul>
+            </aside>
         </div>
+
+        <!-- MODAL: ADD REPAIR REQUEST -->
+        <div class="modal" id="repair-modal">
+            <div class="modal-content">
+                <button class="modal-close" onclick="closeModal('repair-modal')">&times;</button>
+                <h3 class="modal-title">กรอกข้อมูลแจ้งซ่อมแซมคุรุภัณฑ์</h3>
+                <form id="repair-form">
+                    <div class="form-group" style="margin-bottom: 14px;">
+                        <label for="repair-title">อุปกรณ์ / หัวข้อปัญหา</label>
+                        <input type="text" id="repair-title" class="form-control" style="padding-left: 14px;" placeholder="เช่น แอร์ไม่เย็น, ท่อน้ำซึมในห้องน้ำ" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 14px;">
+                        <label for="repair-desc">รายละเอียดเชิงลึกของความเสียหาย</label>
+                        <textarea id="repair-desc" class="form-control" style="padding-left: 14px; height: 90px; resize: none;" placeholder="ระบุอาการ หรือตำแหน่งคุรุภัณฑ์เพิ่มเติม..." required></textarea>
+                    </div>
+                    
+                    <!-- ส่วนรับรองการถ่ายภาพและบันทึกรูปภาพหลักฐาน - ใช้ไอคอนอย่างเคลียร์ใสไม่มีอีโมจิ -->
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label for="repair-image"><i class="fa-solid fa-camera" style="margin-right: 4px;"></i> ถ่ายรูปภาพ หรือ แนบไฟล์รูปหลักฐานความเสียหาย</label>
+                        <div class="input-wrapper">
+                            <input type="file" id="repair-image" class="form-control" accept="image/*" style="padding-left: 14px; padding-top: 9px;">
+                        </div>
+                        <!-- ส่วนแสดงตัวอย่างรูปภาพ Live Preview -->
+                        <div id="image-preview-container" style="margin-top: 12px; display: none; position: relative; text-align: center;">
+                            <img id="image-preview" src="" alt="Preview" style="max-width: 100%; max-height: 160px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+                            <button type="button" id="btn-remove-image" style="position: absolute; top: 6px; right: 6px; background: rgba(239, 68, 68, 0.85); color: white; border: none; border-radius: 50%; width: 26px; height: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="ลบรูปภาพ">
+                                <i class="fa-solid fa-xmark" style="font-size: 0.85rem;"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn" id="btn-repair-submit">ส่งข้อมูลแจ้งซ่อมแซม</button>
+                </form>
+            </div>
+        </div>
+
     </div>
 
     <!-- JAVASCRIPT SYSTEM ENGINE (FULL SUPABASE CLIENT INTEGRATION) -->
     <script>
         // --- 1. CONFIGURATION & STATE MANAGEMENT ---
-        // ⚠️ แนะนำเปลี่ยนเส้นทางตารางซ่อมแซมด้านล่างเป็น 'repair_requests' หากระบบของคุณไม่มีตาราง 'maintenance_request'
         const TARGET_TABLE = "maintenance_request"; 
         
         const SUPABASE_URL = "https://aktyghpazejsihdbvrle.supabase.co";
@@ -826,7 +853,6 @@
         let currentUser = null;
 
         window.addEventListener('DOMContentLoaded', async () => {
-            // จับตัวแปร Element ของฟังก์ชันแนบรูปภาพ/ Live Preview
             setupImagePreviewEngine();
 
             if (SUPABASE_KEY !== "YOUR_SUPABASE_ANON_KEY" && SUPABASE_KEY !== "") {
@@ -862,7 +888,6 @@
             }
         });
 
-        // --- ฟังก์ชันควบคุมระบบ Live Preview รูปภาพบนหน้าจอ ---
         function setupImagePreviewEngine() {
             const repairImageInput = document.getElementById('repair-image');
             const imagePreviewContainer = document.getElementById('image-preview-container');
@@ -978,7 +1003,7 @@
             document.getElementById('display-user-role').textContent = roleText;
 
             document.getElementById('auth-container').style.display = 'none';
-            document.getElementById('app-container').style.display = 'grid';
+            document.getElementById('app-container').style.display = 'flex';
             hideLoading();
             fetchViewData('dashboard');
         }
@@ -1057,13 +1082,10 @@
                 const displayStatus = item.status || 'สถานะแจ้งซ่อม';
 
                 const product = item.products || {};
-                // ตรวจหาหัวข้อปัญหาจากรายการแจ้งโดยตรงก่อน ถ้าไม่มีค่อยใช้ชื่อครุภัณฑ์ผูกมัดแทน
                 const productName = item.title || product.product_name || product.name || `ไม่ระบุชื่อครุภัณฑ์ (ID: ${item.product_id || '-'})`;
                 
-                // ดึงรูปภาพโดยเรียงลำดับความสำคัญ: รูปที่แนบมาใหม่ตอนแจ้งซ่อม -> รูปเดิมของครุภัณฑ์
                 let imageUrl = item.image_url || item.image || product.image_url || product.image || '';
 
-                // รองรับการแปลงรูปแบบ URL ของ Supabase Storage ให้แสดงผลได้อย่างถูกต้อง
                 if (imageUrl && !imageUrl.startsWith('http')) {
                     const cleanPath = imageUrl.startsWith('/') ? imageUrl.slice(1) : imageUrl;
                     imageUrl = `https://aktyghpazejsihdbvrle.supabase.co/storage/v1/object/public/productImage//${cleanPath}`;
@@ -1071,9 +1093,9 @@
 
                 let imageHtml = '';
                 if (imageUrl) {
-                    imageHtml = `<img src="${escapeHtml(imageUrl)}" alt="ครุภัณฑ์" style="width: 50px; height: 50px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border); display: block; margin: 0 auto;" onerror="this.onerror=null; this.parentNode.innerHTML='<div style=&quot;width: 50px; height: 50px; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); margin: 0 auto;&quot;><i class=&quot;fa-solid fa-box&quot;></i></div>';">`;
+                    imageHtml = `<img src="${escapeHtml(imageUrl)}" alt="ครุภัณฑ์" style="width: 45px; height: 45px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border); display: block; margin: 0 auto;" onerror="this.onerror=null; this.parentNode.innerHTML='<div style=&quot;width: 45px; height: 45px; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); margin: 0 auto;&quot;><i class=&quot;fa-solid fa-box&quot;></i></div>';">`;
                 } else {
-                    imageHtml = `<div style="width: 50px; height: 50px; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); margin: 0 auto;"><i class="fa-solid fa-box"></i></div>`;
+                    imageHtml = `<div style="width: 45px; height: 45px; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); margin: 0 auto;"><i class="fa-solid fa-box"></i></div>`;
                 }
 
                 return `
@@ -1123,7 +1145,6 @@
             `).join('');
         }
 
-        // --- ⚡ ฟังก์ชันจัดการตอนส่งฟอร์มแจ้งซ่อม (ถ่ายรูปภาพ + บันทึกข้อมูลลง Database) ---
         document.getElementById('repair-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const title = document.getElementById('repair-title').value;
@@ -1132,7 +1153,6 @@
             const imageFile = imageInput.files[0];
             const submitBtn = document.getElementById('btn-repair-submit');
 
-            // เปลี่ยนสถานะปุ่มเป็นกำลังโหลด ป้องกันการกดย้ำๆ
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<div class="spinner" style="width:18px; height:18px; margin:0; border-width:2px; border-top-color:var(--surface);"></div> กำลังอัปโหลดข้อมูล...';
 
@@ -1140,10 +1160,8 @@
 
             if (supabaseClient) {
                 try {
-                    // ขั้นตอนที่ 1: ตรวจสอบและอัปโหลดรูปภาพเข้าสู่คลาวด์ Storage
                     if (imageFile) {
                         const fileExt = imageFile.name.split('.').pop();
-                        // สร้างชื่อไฟล์แบบสุ่มด้วย Timestamp เพื่อหลีกเลี่ยงชื่อไฟล์ซ้ำในโฟลเดอร์
                         uploadedFileName = `${Date.now()}.${fileExt}`;
 
                         const { data: uploadData, error: uploadError } = await supabaseClient
@@ -1156,8 +1174,6 @@
                         }
                     }
 
-                    // ขั้นตอนที่ 2: บันทึกข้อมูลลงตาราง Database
-                    // 💡 หมายเหตุ: หากชื่อคอลัมน์เก็บภาพในฐานข้อมูลของคุณชื่ออื่น (เช่น image) ให้เปลี่ยนจาก 'image_url' เป็นชื่อนั้นได้เลยครับ
                     const payload = { 
                         title: title, 
                         description: description, 
@@ -1180,7 +1196,6 @@
                     showToast("บันทึกส่งเรื่องแจ้งซ่อมพร้อมหลักฐานรูปภาพสำเร็จ!", "success");
                     closeModal('repair-modal');
                     
-                    // ทำความสะอาดฟอร์มหลังส่งเสร็จสิ้น
                     document.getElementById('repair-form').reset();
                     document.getElementById('image-preview-container').style.display = 'none';
                     renderRepairsData(); 
@@ -1190,7 +1205,6 @@
                     showToast(err.message, "danger");
                 }
             } else {
-                // สำหรับรันบนเซิร์ฟเวอร์โหมดทดสอบ Mockup
                 setTimeout(() => {
                     showToast("[ระบบจำลอง] บันทึกรายงานและอัปโหลดรูปภาพเสร็จสิ้น", "success");
                     closeModal('repair-modal');
