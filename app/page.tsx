@@ -3,20 +3,18 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { 
-  Eye, EyeOff, PlusSquare, AlertCircle, Phone, LogOut 
+  Eye, EyeOff, PlusSquare, AlertCircle, Phone, LogOut, Package 
 } from 'lucide-react';
 
-// --- โลโก้ Dormitory (ไอคอนบ้านและเตียงสองชั้น) ---
+// --- โลโก้ Dormitory ---
 const DormitoryLogo = ({ className = "w-28 h-28" }: { className?: string }) => (
   <svg viewBox="0 0 200 200" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M100 20 L25 75 V170 H175 V75 Z" stroke="#0B3C7B" strokeWidth="12" strokeLinejoin="round" fill="none"/>
     <path d="M15 80 L100 15 L185 80" stroke="#0B3C7B" strokeWidth="14" strokeLinecap="round" strokeLinejoin="round"/>
     <rect x="52" y="80" width="96" height="75" stroke="#0B3C7B" strokeWidth="8" rx="4"/>
-    {/* เตียงบน */}
     <circle cx="72" cy="100" r="7" fill="#0B3C7B"/>
     <rect x="85" y="94" width="50" height="14" rx="3" fill="#0B3C7B"/>
     <line x1="60" y1="112" x2="140" y2="112" stroke="#0B3C7B" strokeWidth="6" strokeLinecap="round"/>
-    {/* เตียงล่าง */}
     <circle cx="72" cy="132" r="7" fill="#0B3C7B"/>
     <rect x="85" y="126" width="50" height="14" rx="3" fill="#0B3C7B"/>
     <line x1="60" y1="144" x2="140" y2="144" stroke="#0B3C7B" strokeWidth="6" strokeLinecap="round"/>
@@ -56,38 +54,94 @@ const SinkIcon = () => (
   </svg>
 );
 
+const DefaultItemIcon = () => (
+  <Package className="w-9 h-9 text-white" />
+);
+
+// ฟังก์ชันเลือกไอคอนตามชื่อครุภัณฑ์อัตโนมัติ
+const getAssetIcon = (name: string = '') => {
+  if (name.includes('น้ำอุ่น')) return WaterHeaterIcon;
+  if (name.includes('คัดเอาท์') || name.includes('ไฟ')) return CutoutIcon;
+  if (name.includes('อ่าง') || name.includes('ซิงค์')) return SinkIcon;
+  return DefaultItemIcon;
+};
+
+// ฟังก์ชันแปลงวันที่ให้อยู่ในรูปแบบ YYYY-MM-DD HH:mm:ss.000
+const formatFullDate = (dateStr?: string) => {
+  if (!dateStr) return '2026-02-24 00:00:00.000';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const year = d.getFullYear();
+  const month = pad(d.getMonth() + 1);
+  const day = pad(d.getDate());
+  const hours = pad(d.getHours());
+  const minutes = pad(d.getMinutes());
+  const seconds = pad(d.getSeconds());
+  
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.000`;
+};
+
 export default function App() {
   const [session, setSession] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDataLoading, setIsDataLoading] = useState(false);
   
   // Login Form States
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  // Mock หรือ ข้อมูลครุภัณฑ์จริง
-  const normalItems = [
-    { id: 1, name: 'คัดเอาท์', status: 'สถานะปกติ', date: '2026-02-19 00:00:00.000', icon: CutoutIcon },
-    { id: 2, name: 'เครื่องทำน้ำอุ่น', status: 'สถานะปกติ', date: '2026-02-22 00:00:00.000', icon: WaterHeaterIcon },
-  ];
-
-  const repairItems = [
-    { id: 3, name: 'อ่างล้างหน้า', status: 'สถานะแจ้งซ่อม', date: '2026-02-24 00:00:00.000', icon: SinkIcon },
-    { id: 4, name: 'เครื่องทำน้ำอุ่น', status: 'สถานะแจ้งซ่อม', date: '2026-02-24 00:00:00.000', icon: WaterHeaterIcon },
-  ];
+  // States สำหรับข้อมูลจริงจาก DB
+  const [normalItems, setNormalItems] = useState<any[]>([]);
+  const [repairItems, setRepairItems] = useState<any[]>([]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setIsLoading(false);
+      if (session) fetchDashboardData(session.user.id);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (session) fetchDashboardData(session.user.id);
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // --- ฟังก์ชันดึงข้อมูลจาก Supabase Database ---
+  const fetchDashboardData = async (userId: string) => {
+    setIsDataLoading(true);
+    try {
+      // 1. ดึงรายการครุภัณฑ์ในห้องพัก (สถานะปกติ)
+      const { data: productsData, error: prodErr } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!prodErr && productsData) {
+        setNormalItems(productsData);
+      }
+
+      // 2. ดึงรายการแจ้งซ่อม (ติดตามสถานะครุภัณฑ์) ของผู้ใช้งานนี้
+      const { data: repairsData, error: repairErr } = await supabase
+        .from('maintenance_request')
+        .select('*')
+        .eq('resident_id', userId)
+        .order('reported_date', { ascending: false });
+
+      if (!repairErr && repairsData) {
+        setRepairItems(repairsData);
+      }
+    } catch (err) {
+      console.error("Error fetching data:", err);
+    } finally {
+      setIsDataLoading(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,22 +165,19 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-200 flex justify-center items-center p-0 md:p-4">
-      {/* Container จำลองจอมือถือสัดส่วน 393 x 852 */}
+      {/* Container มือถือสัดส่วน 393 x 852 */}
       <div className="w-full max-w-[393px] h-screen md:h-[852px] bg-[#EEF2F6] md:rounded-[36px] shadow-2xl relative flex flex-col overflow-hidden border border-slate-300">
         
         {/* ==================== 1. หน้า LOGIN ==================== */}
         {!session ? (
           <div className="flex-1 flex flex-col justify-between p-6 pt-12">
             <div className="flex flex-col items-center text-center">
-              {/* โลโก้ และ ชื่อแบรนด์ */}
               <DormitoryLogo className="w-36 h-36 mb-1" />
               <h1 className="text-3xl font-extrabold text-[#0B3C7B] tracking-wider mb-8">DORMITORY</h1>
 
-              {/* ข้อความต้อนรับ */}
               <h2 className="text-2xl font-bold text-slate-900 mb-1">WELCOME</h2>
               <p className="text-slate-600 text-sm mb-8 font-medium">กรุณาเข้าสู่ระบบด้วยบัญชีห้องของท่าน</p>
 
-              {/* ฟอร์มเข้าสู่ระบบ */}
               <form onSubmit={handleLogin} className="w-full space-y-4">
                 <div>
                   <input
@@ -173,7 +224,7 @@ export default function App() {
           </div>
         ) : (
 
-        /* ==================== 2. หน้า HOME ==================== */
+        /* ==================== 2. หน้า HOME (ดึงข้อมูลจริง) ==================== */
           <div className="flex-1 flex flex-col bg-[#EEF2F6] overflow-y-auto">
             {/* Header แถบสีน้ำเงิน */}
             <header className="bg-[#0B57D0] text-white px-5 py-3.5 flex justify-between items-center shadow-md sticky top-0 z-10">
@@ -214,50 +265,78 @@ export default function App() {
 
               <hr className="border-slate-300 my-2" />
 
-              {/* ส่วนที่ 1: ครุภัณฑ์ในห้องพัก */}
+              {/* ส่วนที่ 1: ครุภัณฑ์ในห้องพัก (ดึงจากตาราง products) */}
               <div>
                 <h3 className="text-base font-bold text-slate-900 mb-3">ครุภัณฑ์ในห้องพัก</h3>
-                <div className="space-y-3">
-                  {normalItems.map((item) => {
-                    const IconComponent = item.icon;
-                    return (
-                      <div key={item.id} className="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 flex items-center gap-3.5">
-                        <div className="w-16 h-16 rounded-2xl bg-[#0B3C7B] flex items-center justify-center shrink-0">
-                          <IconComponent />
+                {isDataLoading ? (
+                  <div className="text-center py-6 text-slate-400 text-xs">กำลังโหลดข้อมูล...</div>
+                ) : normalItems.length === 0 ? (
+                  <div className="text-center py-6 text-slate-400 text-xs bg-white rounded-2xl border border-slate-100">
+                    ไม่มีรายการครุภัณฑ์ในห้องพัก
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {normalItems.map((item) => {
+                      const IconComponent = getAssetIcon(item.name || item.title);
+                      return (
+                        <div key={item.id} className="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 flex items-center gap-3.5">
+                          <div className="w-16 h-16 rounded-2xl bg-[#0B3C7B] flex items-center justify-center shrink-0">
+                            <IconComponent />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-slate-900 text-lg leading-tight truncate">
+                              {item.name || item.title || 'ครุภัณฑ์'}
+                            </h4>
+                            <p className="text-[#0B57D0] font-medium text-xs my-0.5">
+                              {item.status || 'สถานะปกติ'}
+                            </p>
+                            <p className="text-slate-400 text-[10px] font-mono">
+                              {formatFullDate(item.created_at || item.reported_date)}
+                            </p>
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-bold text-slate-900 text-lg leading-tight">{item.name}</h4>
-                          <p className="text-[#0B57D0] font-medium text-xs my-0.5">{item.status}</p>
-                          <p className="text-slate-400 text-[10px] font-mono">{item.date}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               <hr className="border-slate-300 my-2" />
 
-              {/* ส่วนที่ 2: ติดตามสถานะครุภัณฑ์ */}
+              {/* ส่วนที่ 2: ติดตามสถานะครุภัณฑ์ (ดึงจากตาราง maintenance_request) */}
               <div>
                 <h3 className="text-base font-bold text-slate-900 mb-3">ติดตามสถานะครุภัณฑ์</h3>
-                <div className="space-y-3">
-                  {repairItems.map((item) => {
-                    const IconComponent = item.icon;
-                    return (
-                      <div key={item.id} className="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 flex items-center gap-3.5">
-                        <div className="w-16 h-16 rounded-2xl bg-[#0B3C7B] flex items-center justify-center shrink-0">
-                          <IconComponent />
+                {isDataLoading ? (
+                  <div className="text-center py-6 text-slate-400 text-xs">กำลังโหลดข้อมูล...</div>
+                ) : repairItems.length === 0 ? (
+                  <div className="text-center py-6 text-slate-400 text-xs bg-white rounded-2xl border border-slate-100">
+                    ไม่มีรายการแจ้งซ่อม
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {repairItems.map((item) => {
+                      const IconComponent = getAssetIcon(item.title || item.name);
+                      return (
+                        <div key={item.id} className="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 flex items-center gap-3.5">
+                          <div className="w-16 h-16 rounded-2xl bg-[#0B3C7B] flex items-center justify-center shrink-0">
+                            <IconComponent />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-slate-900 text-lg leading-tight truncate">
+                              {item.title || item.name || 'รายการแจ้งซ่อม'}
+                            </h4>
+                            <p className="text-red-500 font-medium text-xs my-0.5">
+                              {item.status === 'pending' || item.status === 'แจ้งปัญหา' ? 'สถานะแจ้งซ่อม' : item.status}
+                            </p>
+                            <p className="text-slate-400 text-[10px] font-mono">
+                              {formatFullDate(item.reported_date || item.created_at)}
+                            </p>
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-bold text-slate-900 text-lg leading-tight">{item.name}</h4>
-                          <p className="text-red-500 font-medium text-xs my-0.5">{item.status}</p>
-                          <p className="text-slate-400 text-[10px] font-mono">{item.date}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               <hr className="border-slate-300 my-2" />
