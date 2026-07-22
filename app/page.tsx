@@ -239,7 +239,8 @@ export default function App() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="User"
                     required
-                    className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm text-sm"
+                    /* ใช้ text-base บนมือถือ (16px) เพื่อกัน iOS Auto-Zoom */
+                    className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm text-base md:text-sm"
                   />
                 </div>
 
@@ -250,7 +251,8 @@ export default function App() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Password"
                     required
-                    className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm text-sm"
+                    /* ใช้ text-base บนมือถือ (16px) เพื่อกัน iOS Auto-Zoom */
+                    className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm text-base md:text-sm"
                   />
                   <button
                     type="button"
