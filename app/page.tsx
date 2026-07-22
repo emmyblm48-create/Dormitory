@@ -8,7 +8,7 @@ import {
   Camera, X, Box, FileText, CheckCircle 
 } from 'lucide-react';
 
-export default function DormCareApp() {
+export default function DormitoryApp() {
   const [session, setSession] = useState<any>(null);
   const [activeView, setActiveView] = useState('dashboard');
   const [isLoading, setIsLoading] = useState(true);
@@ -139,7 +139,7 @@ export default function DormCareApp() {
           <div className="w-16 h-16 bg-blue-900 text-white rounded-xl flex items-center justify-center mx-auto mb-6 shadow-md">
             <Building2 size={32} />
           </div>
-          <h1 className="text-2xl font-bold text-blue-900 mb-2">DormCare</h1>
+          <h1 className="text-2xl font-bold text-blue-900 mb-2">Dormitory</h1>
           <p className="text-slate-500 text-sm mb-8">ลงชื่อเข้าใช้งานแพลตฟอร์มจัดการหอพักดิจิทัล</p>
           
           <form onSubmit={handleLogin} className="space-y-4 text-left">
@@ -174,7 +174,7 @@ export default function DormCareApp() {
         <header className="bg-white border-b border-slate-100 px-5 py-4 flex justify-between items-center z-10 shrink-0">
           <div className="flex items-center gap-2 text-blue-900 font-bold text-lg">
             <Building2 size={24} />
-            <span>DormCare</span>
+            <span>Dormitory</span>
           </div>
           <div className="flex items-center gap-3">
             <div className="text-right">
