@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { 
-  Eye, EyeOff, PlusSquare, AlertCircle, Phone, LogOut, Package 
+  Eye, EyeOff, PlusSquare, AlertCircle, Phone, LogOut, Package, RefreshCw
 } from 'lucide-react';
 
 // --- โลโก้ Dormitory ---
@@ -23,7 +23,7 @@ const DormitoryLogo = ({ className = "w-28 h-28" }: { className?: string }) => (
 
 // --- ไอคอนครุภัณฑ์ประเภทต่างๆ ---
 const CutoutIcon = () => (
-  <svg className="w-10 h-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+  <svg className="w-8 h-8 md:w-10 md:h-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <rect x="4" y="3" width="16" height="13" rx="2" />
     <path d="M8 7h8" />
     <path d="M10 10l2 3l2-3" />
@@ -34,7 +34,7 @@ const CutoutIcon = () => (
 );
 
 const WaterHeaterIcon = () => (
-  <svg className="w-10 h-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+  <svg className="w-8 h-8 md:w-10 md:h-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <rect x="8" y="3" width="10" height="15" rx="2" />
     <circle cx="13" cy="7" r="1.5" fill="currentColor" />
     <circle cx="13" cy="12" r="2" />
@@ -45,7 +45,7 @@ const WaterHeaterIcon = () => (
 );
 
 const SinkIcon = () => (
-  <svg className="w-10 h-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+  <svg className="w-8 h-8 md:w-10 md:h-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M4 9h16v4a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6V9z" />
     <path d="M12 3v6" />
     <path d="M10 3h4" />
@@ -54,11 +54,9 @@ const SinkIcon = () => (
   </svg>
 );
 
-const DefaultItemIcon = () => (
-  <Package className="w-9 h-9 text-white" />
-);
+const DefaultItemIcon = () => <Package className="w-8 h-8 md:w-9 md:h-9 text-white" />;
 
-// ฟังก์ชันเลือกไอคอนตามชื่อครุภัณฑ์อัตโนมัติ
+// เลือกไอคอนตามชื่อครุภัณฑ์
 const getAssetIcon = (name: string = '') => {
   if (name.includes('น้ำอุ่น')) return WaterHeaterIcon;
   if (name.includes('คัดเอาท์') || name.includes('ไฟ')) return CutoutIcon;
@@ -66,7 +64,7 @@ const getAssetIcon = (name: string = '') => {
   return DefaultItemIcon;
 };
 
-// ฟังก์ชันแปลงวันที่ให้อยู่ในรูปแบบ YYYY-MM-DD HH:mm:ss.000
+// แปลงวันที่ให้อยู่ในฟอร์แมต YYYY-MM-DD HH:mm:ss.000
 const formatFullDate = (dateStr?: string) => {
   if (!dateStr) return '2026-02-24 00:00:00.000';
   const d = new Date(dateStr);
@@ -93,48 +91,62 @@ export default function App() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  // States สำหรับข้อมูลจริงจาก DB
-  const [normalItems, setNormalItems] = useState<any[]>([]);
-  const [repairItems, setRepairItems] = useState<any[]>([]);
+  // Database States
+  const [productsList, setProductsList] = useState<any[]>([]);
+  const [maintenanceList, setMaintenanceList] = useState<any[]>([]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setIsLoading(false);
-      if (session) fetchDashboardData(session.user.id);
+      if (session) fetchDashboardData();
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (session) fetchDashboardData(session.user.id);
+      if (session) fetchDashboardData();
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  // --- ฟังก์ชันดึงข้อมูลจาก Supabase Database ---
-  const fetchDashboardData = async (userId: string) => {
+  // --- ดึงข้อมูลจาก Supabase ตาม ER Diagram ---
+  const fetchDashboardData = async () => {
     setIsDataLoading(true);
     try {
-      // 1. ดึงรายการครุภัณฑ์ในห้องพัก (สถานะปกติ)
-      const { data: productsData, error: prodErr } = await supabase
+      // 1. ดึงตาราง products + JOIN status
+      const { data: prodData, error: prodErr } = await supabase
         .from('products')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select(`
+          product_id,
+          product_name,
+          date_recieved,
+          status:status_id (
+            status_name
+          )
+        `)
+        .order('product_id', { ascending: false });
 
-      if (!prodErr && productsData) {
-        setNormalItems(productsData);
+      if (!prodErr && prodData) {
+        setProductsList(prodData);
       }
 
-      // 2. ดึงรายการแจ้งซ่อม (ติดตามสถานะครุภัณฑ์) ของผู้ใช้งานนี้
-      const { data: repairsData, error: repairErr } = await supabase
-        .from('maintenance_request')
-        .select('*')
-        .eq('resident_id', userId)
+      // 2. ดึงตาราง maintenance_requests + JOIN products
+      const { data: repairData, error: repairErr } = await supabase
+        .from('maintenance_requests')
+        .select(`
+          maintenance_request_id,
+          description,
+          status,
+          reported_date,
+          products:product_id (
+            product_name
+          )
+        `)
         .order('reported_date', { ascending: false });
 
-      if (!repairErr && repairsData) {
-        setRepairItems(repairsData);
+      if (!repairErr && repairData) {
+        setMaintenanceList(repairData);
       }
     } catch (err) {
       console.error("Error fetching data:", err);
@@ -164,19 +176,20 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-200 flex justify-center items-center p-0 md:p-4">
-      {/* Container มือถือสัดส่วน 393 x 852 */}
-      <div className="w-full max-w-[393px] h-screen md:h-[852px] bg-[#EEF2F6] md:rounded-[36px] shadow-2xl relative flex flex-col overflow-hidden border border-slate-300">
+    <div className="min-h-screen bg-slate-200/80 flex justify-center items-center p-0 md:p-6">
+      
+      {/* Container ตอบสนองตามขนาดหน้าจอ (มือถือ = App / คอมพิวเตอร์ = Web App) */}
+      <div className="w-full max-w-5xl min-h-screen md:min-h-[850px] bg-[#EEF2F6] md:rounded-[28px] shadow-2xl relative flex flex-col overflow-hidden border border-slate-300">
         
-        {/* ==================== 1. หน้า LOGIN ==================== */}
+        {/* ==================== 1. LOGIN PAGE ==================== */}
         {!session ? (
-          <div className="flex-1 flex flex-col justify-between p-6 pt-12">
-            <div className="flex flex-col items-center text-center">
-              <DormitoryLogo className="w-36 h-36 mb-1" />
-              <h1 className="text-3xl font-extrabold text-[#0B3C7B] tracking-wider mb-8">DORMITORY</h1>
+          <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12">
+            <div className="w-full max-w-sm flex flex-col items-center text-center">
+              <DormitoryLogo className="w-32 h-32 md:w-40 md:h-40 mb-2" />
+              <h1 className="text-3xl font-extrabold text-[#0B3C7B] tracking-wider mb-6">DORMITORY</h1>
 
               <h2 className="text-2xl font-bold text-slate-900 mb-1">WELCOME</h2>
-              <p className="text-slate-600 text-sm mb-8 font-medium">กรุณาเข้าสู่ระบบด้วยบัญชีห้องของท่าน</p>
+              <p className="text-slate-600 text-sm mb-6 font-medium">กรุณาเข้าสู่ระบบด้วยบัญชีห้องของท่าน</p>
 
               <form onSubmit={handleLogin} className="w-full space-y-4">
                 <div>
@@ -211,146 +224,178 @@ export default function App() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-[#1877F2] hover:bg-blue-600 text-white font-semibold py-3.5 rounded-xl shadow-md transition-colors text-base mt-4"
+                  className="w-full bg-[#1877F2] hover:bg-blue-600 text-white font-semibold py-3.5 rounded-xl shadow-md transition-colors text-base mt-2"
                 >
                   {isLoading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
                 </button>
               </form>
-            </div>
 
-            <div className="text-center text-xs text-slate-400 pb-2">
-              Dormitory Management System
+              <div className="text-center text-xs text-slate-400 mt-8">
+                Dormitory Management System
+              </div>
             </div>
           </div>
         ) : (
 
-        /* ==================== 2. หน้า HOME (ดึงข้อมูลจริง) ==================== */
+        /* ==================== 2. HOME PAGE (HYBRID WEB/APP) ==================== */
           <div className="flex-1 flex flex-col bg-[#EEF2F6] overflow-y-auto">
-            {/* Header แถบสีน้ำเงิน */}
-            <header className="bg-[#0B57D0] text-white px-5 py-3.5 flex justify-between items-center shadow-md sticky top-0 z-10">
-              <h1 className="text-xl font-bold">Home</h1>
-              <button 
-                onClick={handleLogout} 
-                className="text-white hover:text-red-200 transition-colors p-1"
-                title="ออกจากระบบ"
-              >
-                <LogOut size={20} />
-              </button>
+            
+            {/* Header Navbar */}
+            <header className="bg-[#0B57D0] text-white px-6 py-4 flex justify-between items-center shadow-md sticky top-0 z-20">
+              <div className="flex items-center gap-3">
+                <h1 className="text-xl md:text-2xl font-bold">Home</h1>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={fetchDashboardData} 
+                  className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                  title="รีเฟรชข้อมูล"
+                >
+                  <RefreshCw size={18} className={isDataLoading ? "animate-spin" : ""} />
+                </button>
+                <button 
+                  onClick={handleLogout} 
+                  className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg text-white text-sm font-medium transition-colors"
+                  title="ออกจากระบบ"
+                >
+                  <LogOut size={18} />
+                  <span className="hidden md:inline">ออกจากระบบ</span>
+                </button>
+              </div>
             </header>
 
-            <div className="p-4 space-y-5 flex-1">
-              {/* การ์ดโปรไฟล์ผู้ใช้ */}
-              <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-[#0B3C7B] flex items-center justify-center overflow-hidden shrink-0">
-                  <DormitoryLogo className="w-12 h-12 text-white" />
+            <div className="p-4 md:p-8 space-y-6 max-w-5xl mx-auto w-full flex-1">
+              
+              {/* แถบโปรไฟล์ผู้ใช้ + เมนูทางลัด (บนจอคอมจะเรียงเป็นแนวนอน) */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* การ์ดโปรไฟล์ */}
+                <div className="md:col-span-2 bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center gap-4">
+                  <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-[#0B3C7B] flex items-center justify-center overflow-hidden shrink-0">
+                    <DormitoryLogo className="w-10 h-10 md:w-12 md:h-12 text-white" />
+                  </div>
+                  <div className="overflow-hidden">
+                    <p className="text-slate-400 text-xs font-medium">บัญชีผู้ใช้</p>
+                    <p className="text-slate-800 font-bold text-base md:text-lg truncate">
+                      {session.user.email}
+                    </p>
+                  </div>
                 </div>
-                <div className="overflow-hidden">
-                  <p className="text-slate-800 font-semibold text-base truncate">
-                    {session.user.email}
-                  </p>
+
+                {/* ปุ่มทางลัด */}
+                <div className="grid grid-cols-2 gap-3">
+                  <button className="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 flex flex-col md:flex-row items-center justify-center gap-2 hover:bg-slate-50 transition-colors">
+                    <PlusSquare className="text-emerald-500" size={24} />
+                    <span className="text-emerald-600 font-semibold text-xs md:text-sm">เพิ่มครุภัณฑ์</span>
+                  </button>
+                  <button className="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 flex flex-col md:flex-row items-center justify-center gap-2 hover:bg-slate-50 transition-colors">
+                    <AlertCircle className="text-red-500" size={24} />
+                    <span className="text-red-500 font-semibold text-xs md:text-sm">รายงานครุภัณฑ์</span>
+                  </button>
                 </div>
               </div>
 
-              {/* ปุ่มทางลัด เมนูดำเนินการ */}
-              <div className="grid grid-cols-2 gap-4 text-center">
-                <button className="bg-white rounded-xl p-3 shadow-sm border border-slate-100 flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors">
-                  <PlusSquare className="text-emerald-500" size={22} />
-                  <span className="text-emerald-600 font-semibold text-sm">เพิ่มครุภัณฑ์</span>
-                </button>
-                <button className="bg-white rounded-xl p-3 shadow-sm border border-slate-100 flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors">
-                  <AlertCircle className="text-red-500" size={22} />
-                  <span className="text-red-500 font-semibold text-sm">รายงานครุภัณฑ์</span>
-                </button>
+              {/* GRID หลักสำหรับหน้าจอคอม (2 คอลัมน์) / มือถือ (1 คอลัมน์) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                
+                {/* คอลัมน์ซ้าย: ครุภัณฑ์ในห้องพัก (ตาราง products) */}
+                <div className="bg-white/60 md:bg-transparent rounded-2xl p-4 md:p-0 border md:border-none border-slate-200/60">
+                  <h3 className="text-base md:text-lg font-bold text-slate-900 mb-3 flex items-center justify-between">
+                    <span>ครุภัณฑ์ในห้องพัก</span>
+                    <span className="text-xs bg-blue-100 text-[#0B57D0] px-2.5 py-1 rounded-full font-semibold">
+                      {productsList.length} รายการ
+                    </span>
+                  </h3>
+
+                  {isDataLoading ? (
+                    <div className="text-center py-8 text-slate-400 text-xs">กำลังโหลดข้อมูล...</div>
+                  ) : productsList.length === 0 ? (
+                    <div className="text-center py-8 text-slate-400 text-xs bg-white rounded-2xl border border-slate-100">
+                      ไม่มีรายการครุภัณฑ์ในห้องพัก
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {productsList.map((item) => {
+                        const IconComponent = getAssetIcon(item.product_name);
+                        const statusName = item.status?.status_name || 'สถานะปกติ';
+                        return (
+                          <div key={item.product_id} className="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 flex items-center gap-3.5 hover:shadow-md transition-shadow">
+                            <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-[#0B3C7B] flex items-center justify-center shrink-0">
+                              <IconComponent />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-bold text-slate-900 text-base md:text-lg leading-tight truncate">
+                                {item.product_name}
+                              </h4>
+                              <p className="text-[#0B57D0] font-medium text-xs my-0.5">
+                                {statusName}
+                              </p>
+                              <p className="text-slate-400 text-[10px] md:text-xs font-mono">
+                                {formatFullDate(item.date_recieved)}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* คอลัมน์ขวา: ติดตามสถานะครุภัณฑ์ (ตาราง maintenance_requests) */}
+                <div className="bg-white/60 md:bg-transparent rounded-2xl p-4 md:p-0 border md:border-none border-slate-200/60">
+                  <h3 className="text-base md:text-lg font-bold text-slate-900 mb-3 flex items-center justify-between">
+                    <span>ติดตามสถานะครุภัณฑ์</span>
+                    <span className="text-xs bg-red-100 text-red-600 px-2.5 py-1 rounded-full font-semibold">
+                      {maintenanceList.length} รายการ
+                    </span>
+                  </h3>
+
+                  {isDataLoading ? (
+                    <div className="text-center py-8 text-slate-400 text-xs">กำลังโหลดข้อมูล...</div>
+                  ) : maintenanceList.length === 0 ? (
+                    <div className="text-center py-8 text-slate-400 text-xs bg-white rounded-2xl border border-slate-100">
+                      ไม่มีรายการแจ้งซ่อม
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {maintenanceList.map((item) => {
+                        const productName = item.products?.product_name || item.description || 'รายการแจ้งซ่อม';
+                        const IconComponent = getAssetIcon(productName);
+                        return (
+                          <div key={item.maintenance_request_id} className="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 flex items-center gap-3.5 hover:shadow-md transition-shadow">
+                            <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-[#0B3C7B] flex items-center justify-center shrink-0">
+                              <IconComponent />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-bold text-slate-900 text-base md:text-lg leading-tight truncate">
+                                {productName}
+                              </h4>
+                              <p className="text-red-500 font-medium text-xs my-0.5">
+                                {item.status || 'สถานะแจ้งซ่อม'}
+                              </p>
+                              <p className="text-slate-400 text-[10px] md:text-xs font-mono">
+                                {formatFullDate(item.reported_date)}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
               </div>
 
-              <hr className="border-slate-300 my-2" />
-
-              {/* ส่วนที่ 1: ครุภัณฑ์ในห้องพัก (ดึงจากตาราง products) */}
-              <div>
-                <h3 className="text-base font-bold text-slate-900 mb-3">ครุภัณฑ์ในห้องพัก</h3>
-                {isDataLoading ? (
-                  <div className="text-center py-6 text-slate-400 text-xs">กำลังโหลดข้อมูล...</div>
-                ) : normalItems.length === 0 ? (
-                  <div className="text-center py-6 text-slate-400 text-xs bg-white rounded-2xl border border-slate-100">
-                    ไม่มีรายการครุภัณฑ์ในห้องพัก
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {normalItems.map((item) => {
-                      const IconComponent = getAssetIcon(item.name || item.title);
-                      return (
-                        <div key={item.id} className="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 flex items-center gap-3.5">
-                          <div className="w-16 h-16 rounded-2xl bg-[#0B3C7B] flex items-center justify-center shrink-0">
-                            <IconComponent />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-slate-900 text-lg leading-tight truncate">
-                              {item.name || item.title || 'ครุภัณฑ์'}
-                            </h4>
-                            <p className="text-[#0B57D0] font-medium text-xs my-0.5">
-                              {item.status || 'สถานะปกติ'}
-                            </p>
-                            <p className="text-slate-400 text-[10px] font-mono">
-                              {formatFullDate(item.created_at || item.reported_date)}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              <hr className="border-slate-300 my-2" />
-
-              {/* ส่วนที่ 2: ติดตามสถานะครุภัณฑ์ (ดึงจากตาราง maintenance_request) */}
-              <div>
-                <h3 className="text-base font-bold text-slate-900 mb-3">ติดตามสถานะครุภัณฑ์</h3>
-                {isDataLoading ? (
-                  <div className="text-center py-6 text-slate-400 text-xs">กำลังโหลดข้อมูล...</div>
-                ) : repairItems.length === 0 ? (
-                  <div className="text-center py-6 text-slate-400 text-xs bg-white rounded-2xl border border-slate-100">
-                    ไม่มีรายการแจ้งซ่อม
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {repairItems.map((item) => {
-                      const IconComponent = getAssetIcon(item.title || item.name);
-                      return (
-                        <div key={item.id} className="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 flex items-center gap-3.5">
-                          <div className="w-16 h-16 rounded-2xl bg-[#0B3C7B] flex items-center justify-center shrink-0">
-                            <IconComponent />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-slate-900 text-lg leading-tight truncate">
-                              {item.title || item.name || 'รายการแจ้งซ่อม'}
-                            </h4>
-                            <p className="text-red-500 font-medium text-xs my-0.5">
-                              {item.status === 'pending' || item.status === 'แจ้งปัญหา' ? 'สถานะแจ้งซ่อม' : item.status}
-                            </p>
-                            <p className="text-slate-400 text-[10px] font-mono">
-                              {formatFullDate(item.reported_date || item.created_at)}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              <hr className="border-slate-300 my-2" />
-
-              {/* ส่วนที่ 3: เบอร์โทรติดต่อหอพัก */}
-              <div className="pt-1 pb-4">
+              {/* ส่วนท้าย: เบอร์โทรติดต่อหอพัก */}
+              <div className="pt-2 pb-4">
                 <h3 className="text-base font-bold text-slate-900 mb-2">เบอร์โทรติดต่อหอพัก</h3>
-                <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-100 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-50 text-[#0B57D0] flex items-center justify-center">
-                    <Phone size={20} />
+                <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center gap-4">
+                  <div className="w-11 h-11 rounded-full bg-blue-50 text-[#0B57D0] flex items-center justify-center shrink-0">
+                    <Phone size={22} />
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500">สำนักงานหอพัก</p>
-                    <p className="text-sm font-bold text-slate-800">02-xxx-xxxx / 08x-xxx-xxxx</p>
+                    <p className="text-xs text-slate-500 font-medium">สำนักงานหอพัก</p>
+                    <p className="text-sm md:text-base font-bold text-slate-800">02-xxx-xxxx / 08x-xxx-xxxx</p>
                   </div>
                 </div>
               </div>
