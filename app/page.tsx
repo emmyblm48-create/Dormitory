@@ -8,7 +8,6 @@ import {
 
 // --- 1. ตั้งค่า Supabase Project ID และ Bucket Name ---
 const SUPABASE_PROJECT_ID = "aktyghpazejsihdbvrle";
-// หมายเหตุ: ตรวจสอบใน Supabase Dashboard ด้วยว่า Bucket ชื่อ productImage หรือ productimage (เคสตัวพิมพ์เล็ก/ใหญ่มีผล)
 const BUCKET_NAME = "productImage"; 
 
 // --- 2. โลโก้ Dormitory ---
@@ -85,26 +84,37 @@ const formatFullDate = (dateStr?: string) => {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.000`;
 };
 
-// ฟังก์ชันแปลง URL ปรับปรุงใหม่
+// ฟังก์ชันแปลง URL ปรับปรุงใหม่ รองรับทั้ง Supabase และ External URL
 const formatImageUrl = (url?: string) => {
   if (!url || url.trim() === "") return null;
 
   let cleanUrl = url.trim();
 
-  // 1. เปลี่ยน Project ID เก่าเป็น ID ใหม่
-  if (cleanUrl.includes("sdltpjvwovgjsldrixxi")) {
-    cleanUrl = cleanUrl.replace("sdltpjvwovgjsldrixxi", SUPABASE_PROJECT_ID);
+  // 1. ตรวจสอบหากเป็น Full URL (เช่น https://lh3.googleusercontent.com/...)
+  if (cleanUrl.startsWith("http://") || cleanUrl.startsWith("https://")) {
+    if (cleanUrl.includes("drive.google.com/file/d/")) {
+      const fileId = cleanUrl.split("/d/")[1]?.split("/")[0];
+      if (fileId) {
+        return `https://lh3.googleusercontent.com/d/${fileId}=s1000`;
+      }
+    }
+
+    if (cleanUrl.includes("sdltpjvwovgjsldrixxi")) {
+      cleanUrl = cleanUrl.replace("sdltpjvwovgjsldrixxi", SUPABASE_PROJECT_ID);
+    }
+
+    if (!cleanUrl.includes("supabase.co") || cleanUrl.includes("/storage/v1/object/public/")) {
+      return cleanUrl;
+    }
   }
 
-  // 2. ถ้าเป็น Full URL ให้สกัดเอาเฉพาะชื่อไฟล์/พาธย่อยหลัง /public/ ออกมา
+  // 2. ถ้าเป็น Relative Path / ชื่อไฟล์ใน Supabase Storage
   if (cleanUrl.includes("/public/")) {
     cleanUrl = cleanUrl.split("/public/")[1];
   }
 
-  // 3. ยุบเครื่องหมาย / ที่ซ้ำซ้อน (เช่น //) ให้เหลือ / เดียว
   cleanUrl = cleanUrl.replace(/\/+/g, "/");
 
-  // 4. ตัด Prefix เก่าที่อาจติดมาใน Database ออก
   const prefixesToRemove = ["public/", "products/", "productimage/", "productImage/"];
   prefixesToRemove.forEach((prefix) => {
     if (cleanUrl.toLowerCase().startsWith(prefix.toLowerCase())) {
@@ -112,10 +122,8 @@ const formatImageUrl = (url?: string) => {
     }
   });
 
-  // 5. ตัด / ที่อยู่หน้าสุดออก
   cleanUrl = cleanUrl.replace(/^\/+/, "");
 
-  // 6. ส่งกลับ Full URL ที่ถูกต้องสมบูรณ์
   return `https://${SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/${BUCKET_NAME}/${cleanUrl}`;
 };
 
