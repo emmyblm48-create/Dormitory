@@ -21,7 +21,7 @@ const DormitoryLogo = ({ className = "w-28 h-28" }: { className?: string }) => (
   </svg>
 );
 
-// --- ไอคอนครุภัณฑ์ประเภทต่างๆ ---
+// --- ไอคอน Fallback สำรอง (กรณีรูปโหลดไม่ได้หรือไม่มีรูป) ---
 const CutoutIcon = () => (
   <svg className="w-8 h-8 md:w-10 md:h-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <rect x="4" y="3" width="16" height="13" rx="2" />
@@ -56,7 +56,6 @@ const SinkIcon = () => (
 
 const DefaultItemIcon = () => <Package className="w-8 h-8 md:w-9 md:h-9 text-white" />;
 
-// เลือกไอคอนตามชื่อครุภัณฑ์
 const getAssetIcon = (name: string = '') => {
   if (name.includes('น้ำอุ่น')) return WaterHeaterIcon;
   if (name.includes('คัดเอาท์') || name.includes('ไฟ')) return CutoutIcon;
@@ -81,6 +80,31 @@ const formatFullDate = (dateStr?: string) => {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.000`;
 };
 
+// Component แสดงรูปภาพพร้อม Fallback
+const AssetAvatar = ({ imageUrl, name }: { imageUrl?: string; name?: string }) => {
+  const [imgError, setImgError] = useState(false);
+  const IconComponent = getAssetIcon(name);
+
+  if (imageUrl && !imgError) {
+    return (
+      <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
+        <img 
+          src={imageUrl} 
+          alt={name || 'ครุภัณฑ์'} 
+          className="w-full h-full object-cover"
+          onError={() => setImgError(true)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-[#0B3C7B] flex items-center justify-center shrink-0">
+      <IconComponent />
+    </div>
+  );
+};
+
 export default function App() {
   const [session, setSession] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -91,9 +115,9 @@ export default function App() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  // Database States
-  const [productsList, setProductsList] = useState<any[]>([]);
-  const [maintenanceList, setMaintenanceList] = useState<any[]>([]);
+  // States สำหรับเก็บข้อมูลจาก View
+  const [roomAssets, setRoomAssets] = useState<any[]>([]);
+  const [homeUserRequests, setHomeUserRequests] = useState<any[]>([]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -110,46 +134,31 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // --- ดึงข้อมูลจาก Supabase ตาม ER Diagram ---
+  // --- ดึงข้อมูลจาก View ตรงๆ ---
   const fetchDashboardData = async () => {
     setIsDataLoading(true);
     try {
-      // 1. ดึงตาราง products + JOIN status
-      const { data: prodData, error: prodErr } = await supabase
-        .from('products')
-        .select(`
-          product_id,
-          product_name,
-          date_recieved,
-          status:status_id (
-            status_name
-          )
-        `)
-        .order('product_id', { ascending: false });
+      // 1. ดึงครุภัณฑ์ในห้องพักจาก view_room_asset
+      const { data: assetsData, error: assetsErr } = await supabase
+        .from('view_room_asset')
+        .select('*')
+        .order('asset_id', { ascending: false });
 
-      if (!prodErr && prodData) {
-        setProductsList(prodData);
+      if (!assetsErr && assetsData) {
+        setRoomAssets(assetsData);
       }
 
-      // 2. ดึงตาราง maintenance_requests + JOIN products
-      const { data: repairData, error: repairErr } = await supabase
-        .from('maintenance_requests')
-        .select(`
-          maintenance_request_id,
-          description,
-          status,
-          reported_date,
-          products:product_id (
-            product_name
-          )
-        `)
+      // 2. ดึงติดตามสถานะแจ้งซ่อมจาก view_home_user
+      const { data: homeData, error: homeErr } = await supabase
+        .from('view_home_user')
+        .select('*')
         .order('reported_date', { ascending: false });
 
-      if (!repairErr && repairData) {
-        setMaintenanceList(repairData);
+      if (!homeErr && homeData) {
+        setHomeUserRequests(homeData);
       }
     } catch (err) {
-      console.error("Error fetching data:", err);
+      console.error("Error fetching data from views:", err);
     } finally {
       setIsDataLoading(false);
     }
@@ -178,7 +187,6 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-200/80 flex justify-center items-center p-0 md:p-6">
       
-      {/* Container ตอบสนองตามขนาดหน้าจอ (มือถือ = App / คอมพิวเตอร์ = Web App) */}
       <div className="w-full max-w-5xl min-h-screen md:min-h-[850px] bg-[#EEF2F6] md:rounded-[28px] shadow-2xl relative flex flex-col overflow-hidden border border-slate-300">
         
         {/* ==================== 1. LOGIN PAGE ==================== */}
@@ -237,14 +245,12 @@ export default function App() {
           </div>
         ) : (
 
-        /* ==================== 2. HOME PAGE (HYBRID WEB/APP) ==================== */
+        /* ==================== 2. HOME PAGE ==================== */
           <div className="flex-1 flex flex-col bg-[#EEF2F6] overflow-y-auto">
             
             {/* Header Navbar */}
             <header className="bg-[#0B57D0] text-white px-6 py-4 flex justify-between items-center shadow-md sticky top-0 z-20">
-              <div className="flex items-center gap-3">
-                <h1 className="text-xl md:text-2xl font-bold">Home</h1>
-              </div>
+              <h1 className="text-xl md:text-2xl font-bold">Home</h1>
               
               <div className="flex items-center gap-2">
                 <button 
@@ -267,9 +273,8 @@ export default function App() {
 
             <div className="p-4 md:p-8 space-y-6 max-w-5xl mx-auto w-full flex-1">
               
-              {/* แถบโปรไฟล์ผู้ใช้ + เมนูทางลัด (บนจอคอมจะเรียงเป็นแนวนอน) */}
+              {/* แถบโปรไฟล์ผู้ใช้ + เมนูทางลัด */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* การ์ดโปรไฟล์ */}
                 <div className="md:col-span-2 bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center gap-4">
                   <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-[#0B3C7B] flex items-center justify-center overflow-hidden shrink-0">
                     <DormitoryLogo className="w-10 h-10 md:w-12 md:h-12 text-white" />
@@ -282,7 +287,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* ปุ่มทางลัด */}
                 <div className="grid grid-cols-2 gap-3">
                   <button className="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 flex flex-col md:flex-row items-center justify-center gap-2 hover:bg-slate-50 transition-colors">
                     <PlusSquare className="text-emerald-500" size={24} />
@@ -295,91 +299,83 @@ export default function App() {
                 </div>
               </div>
 
-              {/* GRID หลักสำหรับหน้าจอคอม (2 คอลัมน์) / มือถือ (1 คอลัมน์) */}
+              {/* GRID แสดงรายการจาก view_room_asset และ view_home_user */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                 
-                {/* คอลัมน์ซ้าย: ครุภัณฑ์ในห้องพัก (ตาราง products) */}
+                {/* คอลัมน์ซ้าย: ครุภัณฑ์ในห้องพัก (จาก view_room_asset) */}
                 <div className="bg-white/60 md:bg-transparent rounded-2xl p-4 md:p-0 border md:border-none border-slate-200/60">
                   <h3 className="text-base md:text-lg font-bold text-slate-900 mb-3 flex items-center justify-between">
                     <span>ครุภัณฑ์ในห้องพัก</span>
                     <span className="text-xs bg-blue-100 text-[#0B57D0] px-2.5 py-1 rounded-full font-semibold">
-                      {productsList.length} รายการ
+                      {roomAssets.length} รายการ
                     </span>
                   </h3>
 
                   {isDataLoading ? (
                     <div className="text-center py-8 text-slate-400 text-xs">กำลังโหลดข้อมูล...</div>
-                  ) : productsList.length === 0 ? (
+                  ) : roomAssets.length === 0 ? (
                     <div className="text-center py-8 text-slate-400 text-xs bg-white rounded-2xl border border-slate-100">
                       ไม่มีรายการครุภัณฑ์ในห้องพัก
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {productsList.map((item) => {
-                        const IconComponent = getAssetIcon(item.product_name);
-                        const statusName = item.status?.status_name || 'สถานะปกติ';
-                        return (
-                          <div key={item.product_id} className="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 flex items-center gap-3.5 hover:shadow-md transition-shadow">
-                            <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-[#0B3C7B] flex items-center justify-center shrink-0">
-                              <IconComponent />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-bold text-slate-900 text-base md:text-lg leading-tight truncate">
-                                {item.product_name}
-                              </h4>
-                              <p className="text-[#0B57D0] font-medium text-xs my-0.5">
-                                {statusName}
-                              </p>
-                              <p className="text-slate-400 text-[10px] md:text-xs font-mono">
-                                {formatFullDate(item.date_recieved)}
-                              </p>
-                            </div>
+                      {roomAssets.map((item) => (
+                        <div key={item.asset_id} className="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 flex items-center gap-3.5 hover:shadow-md transition-shadow">
+                          {/* แสดงรูปภาพจาก product_image ในฐานข้อมูล */}
+                          <AssetAvatar imageUrl={item.product_image} name={item.product_name} />
+                          
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-slate-900 text-base md:text-lg leading-tight truncate">
+                              {item.product_name}
+                            </h4>
+                            <p className="text-[#0B57D0] font-medium text-xs my-0.5">
+                              {item.status_name || 'สถานะปกติ'}
+                            </p>
+                            <p className="text-slate-400 text-[10px] md:text-xs font-mono">
+                              {formatFullDate(item.date_add)}
+                            </p>
                           </div>
-                        );
-                      })}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
 
-                {/* คอลัมน์ขวา: ติดตามสถานะครุภัณฑ์ (ตาราง maintenance_requests) */}
+                {/* คอลัมน์ขวา: ติดตามสถานะครุภัณฑ์ (จาก view_home_user) */}
                 <div className="bg-white/60 md:bg-transparent rounded-2xl p-4 md:p-0 border md:border-none border-slate-200/60">
                   <h3 className="text-base md:text-lg font-bold text-slate-900 mb-3 flex items-center justify-between">
                     <span>ติดตามสถานะครุภัณฑ์</span>
                     <span className="text-xs bg-red-100 text-red-600 px-2.5 py-1 rounded-full font-semibold">
-                      {maintenanceList.length} รายการ
+                      {homeUserRequests.length} รายการ
                     </span>
                   </h3>
 
                   {isDataLoading ? (
                     <div className="text-center py-8 text-slate-400 text-xs">กำลังโหลดข้อมูล...</div>
-                  ) : maintenanceList.length === 0 ? (
+                  ) : homeUserRequests.length === 0 ? (
                     <div className="text-center py-8 text-slate-400 text-xs bg-white rounded-2xl border border-slate-100">
                       ไม่มีรายการแจ้งซ่อม
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {maintenanceList.map((item) => {
-                        const productName = item.products?.product_name || item.description || 'รายการแจ้งซ่อม';
-                        const IconComponent = getAssetIcon(productName);
-                        return (
-                          <div key={item.maintenance_request_id} className="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 flex items-center gap-3.5 hover:shadow-md transition-shadow">
-                            <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-[#0B3C7B] flex items-center justify-center shrink-0">
-                              <IconComponent />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-bold text-slate-900 text-base md:text-lg leading-tight truncate">
-                                {productName}
-                              </h4>
-                              <p className="text-red-500 font-medium text-xs my-0.5">
-                                {item.status || 'สถานะแจ้งซ่อม'}
-                              </p>
-                              <p className="text-slate-400 text-[10px] md:text-xs font-mono">
-                                {formatFullDate(item.reported_date)}
-                              </p>
-                            </div>
+                      {homeUserRequests.map((item) => (
+                        <div key={item.maintenance_request_id} className="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 flex items-center gap-3.5 hover:shadow-md transition-shadow">
+                          {/* สามารถเลือกใช้ product_image หรือ image_path (รูปที่ถ่ายตอนแจ้งซ่อม) ได้ */}
+                          <AssetAvatar imageUrl={item.image_path || item.product_image} name={item.product_name} />
+                          
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-slate-900 text-base md:text-lg leading-tight truncate">
+                              {item.product_name}
+                            </h4>
+                            <p className="text-red-500 font-medium text-xs my-0.5">
+                              {item.status || 'สถานะแจ้งซ่อม'}
+                            </p>
+                            <p className="text-slate-400 text-[10px] md:text-xs font-mono">
+                              {formatFullDate(item.reported_date)}
+                            </p>
                           </div>
-                        );
-                      })}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
