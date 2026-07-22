@@ -8,6 +8,7 @@ import {
 
 // --- 1. ตั้งค่า Supabase Project ID และ Bucket Name ---
 const SUPABASE_PROJECT_ID = "aktyghpazejsihdbvrle";
+// หมายเหตุ: ตรวจสอบใน Supabase Dashboard ด้วยว่า Bucket ชื่อ productImage หรือ productimage (เคสตัวพิมพ์เล็ก/ใหญ่มีผล)
 const BUCKET_NAME = "productImage"; 
 
 // --- 2. โลโก้ Dormitory ---
@@ -25,7 +26,7 @@ const DormitoryLogo = ({ className = "w-28 h-28" }: { className?: string }) => (
   </svg>
 );
 
-// --- 3. ไอคอน Fallback สำรอง (กรณีรูปโหลดไม่ได้หรือไม่มีรูป) ---
+// --- 3. ไอคอน Fallback สำรอง ---
 const CutoutIcon = () => (
   <svg className="w-8 h-8 md:w-10 md:h-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <rect x="4" y="3" width="16" height="13" rx="2" />
@@ -84,37 +85,37 @@ const formatFullDate = (dateStr?: string) => {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.000`;
 };
 
-// ฟังก์ชันแปลง URL ให้ถูกต้อง
+// ฟังก์ชันแปลง URL ปรับปรุงใหม่
 const formatImageUrl = (url?: string) => {
   if (!url || url.trim() === "") return null;
 
   let cleanUrl = url.trim();
 
-  // Auto-Fix: เปลี่ยน Project ID เก่าเป็น ID ใหม่
+  // 1. เปลี่ยน Project ID เก่าเป็น ID ใหม่
   if (cleanUrl.includes("sdltpjvwovgjsldrixxi")) {
     cleanUrl = cleanUrl.replace("sdltpjvwovgjsldrixxi", SUPABASE_PROJECT_ID);
   }
 
-  // Auto-Fix: เปลี่ยนชื่อ Bucket เก่า (/products/) เป็นชื่อใหม่
-  if (cleanUrl.includes("/public/products/")) {
-    cleanUrl = cleanUrl.replace("/public/products/", `/public/${BUCKET_NAME}/`);
+  // 2. ถ้าเป็น Full URL ให้สกัดเอาเฉพาะชื่อไฟล์/พาธย่อยหลัง /public/ ออกมา
+  if (cleanUrl.includes("/public/")) {
+    cleanUrl = cleanUrl.split("/public/")[1];
   }
 
-  // ถ้าเป็น Full URL สมบูรณ์แล้ว
-  if (cleanUrl.startsWith("http://") || cleanUrl.startsWith("https://")) {
-    return cleanUrl;
-  }
+  // 3. ยุบเครื่องหมาย / ที่ซ้ำซ้อน (เช่น //) ให้เหลือ / เดียว
+  cleanUrl = cleanUrl.replace(/\/+/g, "/");
 
-  // ถ้าขาด https://
-  if (cleanUrl.includes("supabase.co")) {
-    return `https://${cleanUrl.replace(/^\/+/, "")}`;
-  }
+  // 4. ตัด Prefix เก่าที่อาจติดมาใน Database ออก
+  const prefixesToRemove = ["public/", "products/", "productimage/", "productImage/"];
+  prefixesToRemove.forEach((prefix) => {
+    if (cleanUrl.toLowerCase().startsWith(prefix.toLowerCase())) {
+      cleanUrl = cleanUrl.slice(prefix.length);
+    }
+  });
 
-  // ถ้ามีแค่ชื่อไฟล์ หรือพาธย่อย
+  // 5. ตัด / ที่อยู่หน้าสุดออก
   cleanUrl = cleanUrl.replace(/^\/+/, "");
-  if (cleanUrl.startsWith("public/")) cleanUrl = cleanUrl.replace("public/", "");
-  if (cleanUrl.startsWith(`${BUCKET_NAME}/`)) cleanUrl = cleanUrl.replace(`${BUCKET_NAME}/`, "");
 
+  // 6. ส่งกลับ Full URL ที่ถูกต้องสมบูรณ์
   return `https://${SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/${BUCKET_NAME}/${cleanUrl}`;
 };
 
@@ -178,11 +179,10 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // --- ดึงข้อมูลจาก View ตรงๆ ---
+  // ดึงข้อมูลจาก View
   const fetchDashboardData = async () => {
     setIsDataLoading(true);
     try {
-      // 1. ดึงครุภัณฑ์ในห้องพักจาก view_room_asset
       const { data: assetsData, error: assetsErr } = await supabase
         .from('view_room_asset')
         .select('*')
@@ -192,7 +192,6 @@ export default function App() {
         setRoomAssets(assetsData);
       }
 
-      // 2. ดึงติดตามสถานะแจ้งซ่อมจาก view_home_user
       const { data: homeData, error: homeErr } = await supabase
         .from('view_home_user')
         .select('*')
@@ -230,11 +229,10 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-200/80 flex justify-center items-center p-0 md:p-6">
-      
       <div className="w-full max-w-5xl min-h-screen md:min-h-[850px] bg-[#EEF2F6] md:rounded-[28px] shadow-2xl relative flex flex-col overflow-hidden border border-slate-300">
         
-        {/* ==================== 1. LOGIN PAGE ==================== */}
         {!session ? (
+          /* LOGIN PAGE */
           <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12">
             <div className="w-full max-w-sm flex flex-col items-center text-center">
               <DormitoryLogo className="w-32 h-32 md:w-40 md:h-40 mb-2" />
@@ -288,11 +286,8 @@ export default function App() {
             </div>
           </div>
         ) : (
-
-        /* ==================== 2. HOME PAGE ==================== */
+          /* HOME PAGE */
           <div className="flex-1 flex flex-col bg-[#EEF2F6] overflow-y-auto">
-            
-            {/* Header Navbar */}
             <header className="bg-[#0B57D0] text-white px-6 py-4 flex justify-between items-center shadow-md sticky top-0 z-20">
               <h1 className="text-xl md:text-2xl font-bold">Home</h1>
               
@@ -315,9 +310,9 @@ export default function App() {
               </div>
             </header>
 
-            <div className="p-4 md:p-8 space-y-[#EEF2F6] max-w-5xl mx-auto w-full flex-1 space-y-6">
+            <div className="p-4 md:p-8 space-y-6 max-w-5xl mx-auto w-full flex-1">
               
-              {/* แถบโปรไฟล์ผู้ใช้ + เมนูทางลัด */}
+              {/* Profile Bar */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="md:col-span-2 bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center gap-4">
                   <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-[#0B3C7B] flex items-center justify-center overflow-hidden shrink-0">
@@ -343,10 +338,10 @@ export default function App() {
                 </div>
               </div>
 
-              {/* GRID แสดงรายการจาก view_room_asset และ view_home_user */}
+              {/* Data Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                 
-                {/* คอลัมน์ซ้าย: ครุภัณฑ์ในห้องพัก (จาก view_room_asset) */}
+                {/* view_room_asset */}
                 <div className="bg-white/60 md:bg-transparent rounded-2xl p-4 md:p-0 border md:border-none border-slate-200/60">
                   <h3 className="text-base md:text-lg font-bold text-slate-900 mb-3 flex items-center justify-between">
                     <span>ครุภัณฑ์ในห้องพัก</span>
@@ -384,7 +379,7 @@ export default function App() {
                   )}
                 </div>
 
-                {/* คอลัมน์ขวา: ติดตามสถานะครุภัณฑ์ (จาก view_home_user) */}
+                {/* view_home_user */}
                 <div className="bg-white/60 md:bg-transparent rounded-2xl p-4 md:p-0 border md:border-none border-slate-200/60">
                   <h3 className="text-base md:text-lg font-bold text-slate-900 mb-3 flex items-center justify-between">
                     <span>ติดตามสถานะครุภัณฑ์</span>
@@ -424,7 +419,7 @@ export default function App() {
 
               </div>
 
-              {/* ส่วนท้าย: เบอร์โทรติดต่อหอพัก */}
+              {/* Phone Contacts */}
               <div className="pt-2 pb-4">
                 <h3 className="text-base font-bold text-slate-900 mb-2">เบอร์โทรติดต่อหอพัก</h3>
                 <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center gap-4">
