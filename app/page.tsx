@@ -8,7 +8,7 @@ import {
 
 // --- 1. ตั้งค่า Supabase Project ID และ Bucket Name ---
 const SUPABASE_PROJECT_ID = "aktyghpazejsihdbvrle";
-const BUCKET_NAME = "products"; // หรือชื่อ bucket ที่ใช้เก็บรูปภาพ
+const BUCKET_NAME = "productImage"; 
 
 // --- 2. โลโก้ Dormitory ---
 const DormitoryLogo = ({ className = "w-28 h-28" }: { className?: string }) => (
