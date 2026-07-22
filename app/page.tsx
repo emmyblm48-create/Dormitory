@@ -84,7 +84,7 @@ const formatFullDate = (dateStr?: string) => {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.000`;
 };
 
-// ฟังก์ชันแปลง URL ให้ถูกต้องและแก้ Project ID ให้อัตโนมัติ
+// ฟังก์ชันแปลง URL ให้ถูกต้อง
 const formatImageUrl = (url?: string) => {
   if (!url || url.trim() === "") return null;
 
@@ -95,7 +95,12 @@ const formatImageUrl = (url?: string) => {
     cleanUrl = cleanUrl.replace("sdltpjvwovgjsldrixxi", SUPABASE_PROJECT_ID);
   }
 
-  // ถ้าเป็น Full URL
+  // Auto-Fix: เปลี่ยนชื่อ Bucket เก่า (/products/) เป็นชื่อใหม่
+  if (cleanUrl.includes("/public/products/")) {
+    cleanUrl = cleanUrl.replace("/public/products/", `/public/${BUCKET_NAME}/`);
+  }
+
+  // ถ้าเป็น Full URL สมบูรณ์แล้ว
   if (cleanUrl.startsWith("http://") || cleanUrl.startsWith("https://")) {
     return cleanUrl;
   }
@@ -105,8 +110,12 @@ const formatImageUrl = (url?: string) => {
     return `https://${cleanUrl.replace(/^\/+/, "")}`;
   }
 
-  // ถ้ามีแค่ชื่อไฟล์
-  return `https://${SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/${BUCKET_NAME}/${cleanUrl.replace(/^\/+/, "")}`;
+  // ถ้ามีแค่ชื่อไฟล์ หรือพาธย่อย
+  cleanUrl = cleanUrl.replace(/^\/+/, "");
+  if (cleanUrl.startsWith("public/")) cleanUrl = cleanUrl.replace("public/", "");
+  if (cleanUrl.startsWith(`${BUCKET_NAME}/`)) cleanUrl = cleanUrl.replace(`${BUCKET_NAME}/`, "");
+
+  return `https://${SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/${BUCKET_NAME}/${cleanUrl}`;
 };
 
 // --- 5. Component แสดงรูปภาพพร้อม Fallback ---
@@ -123,7 +132,10 @@ const AssetAvatar = ({ imageUrl, name }: { imageUrl?: string; name?: string }) =
           src={validUrl} 
           alt={name || 'ครุภัณฑ์'} 
           className="w-full h-full object-cover"
-          onError={() => setImgError(true)}
+          onError={(e) => {
+            console.error(`[Image Load Failed] URL: ${validUrl}`, e);
+            setImgError(true);
+          }}
         />
       </div>
     );
@@ -239,7 +251,6 @@ export default function App() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="User"
                     required
-                    /* ใช้ text-base บนมือถือ (16px) เพื่อกัน iOS Auto-Zoom */
                     className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm text-base md:text-sm"
                   />
                 </div>
@@ -251,7 +262,6 @@ export default function App() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Password"
                     required
-                    /* ใช้ text-base บนมือถือ (16px) เพื่อกัน iOS Auto-Zoom */
                     className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm text-base md:text-sm"
                   />
                   <button
@@ -305,7 +315,7 @@ export default function App() {
               </div>
             </header>
 
-            <div className="p-4 md:p-8 space-y-6 max-w-5xl mx-auto w-full flex-1">
+            <div className="p-4 md:p-8 space-y-[#EEF2F6] max-w-5xl mx-auto w-full flex-1 space-y-6">
               
               {/* แถบโปรไฟล์ผู้ใช้ + เมนูทางลัด */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -355,7 +365,6 @@ export default function App() {
                     <div className="space-y-3">
                       {roomAssets.map((item) => (
                         <div key={item.asset_id} className="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 flex items-center gap-3.5 hover:shadow-md transition-shadow">
-                          {/* แสดงรูปภาพจาก product_image ในฐานข้อมูล */}
                           <AssetAvatar imageUrl={item.product_image} name={item.product_name} />
                           
                           <div className="flex-1 min-w-0">
@@ -394,7 +403,6 @@ export default function App() {
                     <div className="space-y-3">
                       {homeUserRequests.map((item) => (
                         <div key={item.maintenance_request_id} className="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 flex items-center gap-3.5 hover:shadow-md transition-shadow">
-                          {/* สามารถเลือกใช้ product_image หรือ image_path (รูปที่ถ่ายตอนแจ้งซ่อม) ได้ */}
                           <AssetAvatar imageUrl={item.image_path || item.product_image} name={item.product_name} />
                           
                           <div className="flex-1 min-w-0">
