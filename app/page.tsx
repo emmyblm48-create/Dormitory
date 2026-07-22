@@ -1,72 +1,97 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { 
-  Building2, Mail, Lock, LogIn, LogOut, 
-  PieChart, Wrench, CreditCard, Plus, 
-  Camera, X, Box, FileText, CheckCircle 
+  Eye, EyeOff, PlusSquare, AlertCircle, Phone, LogOut 
 } from 'lucide-react';
 
-export default function DormitoryApp() {
+// --- โลโก้ Dormitory (ไอคอนบ้านและเตียงสองชั้น) ---
+const DormitoryLogo = ({ className = "w-28 h-28" }: { className?: string }) => (
+  <svg viewBox="0 0 200 200" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M100 20 L25 75 V170 H175 V75 Z" stroke="#0B3C7B" strokeWidth="12" strokeLinejoin="round" fill="none"/>
+    <path d="M15 80 L100 15 L185 80" stroke="#0B3C7B" strokeWidth="14" strokeLinecap="round" strokeLinejoin="round"/>
+    <rect x="52" y="80" width="96" height="75" stroke="#0B3C7B" strokeWidth="8" rx="4"/>
+    {/* เตียงบน */}
+    <circle cx="72" cy="100" r="7" fill="#0B3C7B"/>
+    <rect x="85" y="94" width="50" height="14" rx="3" fill="#0B3C7B"/>
+    <line x1="60" y1="112" x2="140" y2="112" stroke="#0B3C7B" strokeWidth="6" strokeLinecap="round"/>
+    {/* เตียงล่าง */}
+    <circle cx="72" cy="132" r="7" fill="#0B3C7B"/>
+    <rect x="85" y="126" width="50" height="14" rx="3" fill="#0B3C7B"/>
+    <line x1="60" y1="144" x2="140" y2="144" stroke="#0B3C7B" strokeWidth="6" strokeLinecap="round"/>
+  </svg>
+);
+
+// --- ไอคอนครุภัณฑ์ประเภทต่างๆ ---
+const CutoutIcon = () => (
+  <svg className="w-10 h-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="4" y="3" width="16" height="13" rx="2" />
+    <path d="M8 7h8" />
+    <path d="M10 10l2 3l2-3" />
+    <path d="M6 16v3a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3" />
+    <path d="M8 21v1" />
+    <path d="M16 21v1" />
+  </svg>
+);
+
+const WaterHeaterIcon = () => (
+  <svg className="w-10 h-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="8" y="3" width="10" height="15" rx="2" />
+    <circle cx="13" cy="7" r="1.5" fill="currentColor" />
+    <circle cx="13" cy="12" r="2" />
+    <path d="M4 8a2 2 0 0 1 2-2h2" />
+    <path d="M4 8v7a3 3 0 0 0 3 3" />
+    <circle cx="4" cy="8" r="1" fill="currentColor" />
+  </svg>
+);
+
+const SinkIcon = () => (
+  <svg className="w-10 h-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 9h16v4a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6V9z" />
+    <path d="M12 3v6" />
+    <path d="M10 3h4" />
+    <path d="M12 19v3" />
+    <path d="M8 22h8" />
+  </svg>
+);
+
+export default function App() {
   const [session, setSession] = useState<any>(null);
-  const [activeView, setActiveView] = useState('dashboard');
   const [isLoading, setIsLoading] = useState(true);
   
-  // States สำหรับข้อมูล
-  const [repairs, setRepairs] = useState<any[]>([]);
-  const [bills, setBills] = useState<any[]>([]);
-  const [repairCount, setRepairCount] = useState(0);
+  // Login Form States
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
-  // States สำหรับฟอร์มแจ้งซ่อม
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [repairTitle, setRepairTitle] = useState('');
-  const [repairDesc, setRepairDesc] = useState('');
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // Mock หรือ ข้อมูลครุภัณฑ์จริง
+  const normalItems = [
+    { id: 1, name: 'คัดเอาท์', status: 'สถานะปกติ', date: '2026-02-19 00:00:00.000', icon: CutoutIcon },
+    { id: 2, name: 'เครื่องทำน้ำอุ่น', status: 'สถานะปกติ', date: '2026-02-22 00:00:00.000', icon: WaterHeaterIcon },
+  ];
+
+  const repairItems = [
+    { id: 3, name: 'อ่างล้างหน้า', status: 'สถานะแจ้งซ่อม', date: '2026-02-24 00:00:00.000', icon: SinkIcon },
+    { id: 4, name: 'เครื่องทำน้ำอุ่น', status: 'สถานะแจ้งซ่อม', date: '2026-02-24 00:00:00.000', icon: WaterHeaterIcon },
+  ];
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setIsLoading(false);
-      if (session) fetchAllData();
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (session) fetchAllData();
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchAllData = async () => {
-    // ดึงข้อมูลแจ้งซ่อม
-    const { data: repairData, count } = await supabase
-      .from('maintenance_request')
-      .select('*, products(*)', { count: 'exact' })
-      .order('reported_date', { ascending: false });
-    
-    if (repairData) {
-      setRepairs(repairData);
-      setRepairCount(count || 0);
-    }
-
-    // ดึงข้อมูลบิล
-    const { data: billData } = await supabase
-      .from('invoices')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    if (billData) setBills(billData);
-  };
-
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    const email = (e.currentTarget.elements.namedItem('email') as HTMLInputElement).value;
-    const password = (e.currentTarget.elements.namedItem('password') as HTMLInputElement).value;
-    
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) alert("เข้าสู่ระบบไม่สำเร็จ: " + error.message);
     setIsLoading(false);
@@ -76,314 +101,181 @@ export default function DormitoryApp() {
     await supabase.auth.signOut();
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setImagePreview(reader.result as string);
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const submitRepair = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    try {
-      let imageUrl = null;
-      const file = fileInputRef.current?.files?.[0];
-      
-      if (file) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage
-          .from('productImage')
-          .upload(fileName, file);
-          
-        if (uploadError) throw uploadError;
-        imageUrl = fileName;
-      }
-
-      const { error } = await supabase.from('maintenance_request').insert([{
-        title: repairTitle,
-        description: repairDesc,
-        status: 'pending',
-        image_url: imageUrl,
-        resident_id: session?.user?.id
-      }]);
-
-      if (error) throw error;
-      
-      setIsModalOpen(false);
-      setRepairTitle('');
-      setRepairDesc('');
-      setImagePreview(null);
-      fetchAllData();
-      alert("ส่งข้อมูลแจ้งซ่อมสำเร็จ");
-
-    } catch (err: any) {
-      alert("เกิดข้อผิดพลาด: " + err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   if (isLoading && !session) {
-    return <div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="w-8 h-8 border-4 border-blue-900 border-t-transparent rounded-full animate-spin"></div></div>;
-  }
-
-  if (!session) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <div className="bg-white w-full max-w-md p-8 rounded-2xl shadow-sm border border-slate-200 text-center">
-          <div className="w-16 h-16 bg-blue-900 text-white rounded-xl flex items-center justify-center mx-auto mb-6 shadow-md">
-            <Building2 size={32} />
-          </div>
-          <h1 className="text-2xl font-bold text-blue-900 mb-2">Dormitory</h1>
-          <p className="text-slate-500 text-sm mb-8">ลงชื่อเข้าใช้งานแพลตฟอร์มจัดการหอพักดิจิทัล</p>
-          
-          <form onSubmit={handleLogin} className="space-y-4 text-left">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">อีเมลบัญชีผู้ใช้</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 text-slate-400" size={18} />
-                <input name="email" type="email" required className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-blue-900 outline-none transition-all" placeholder="yourname@domain.com" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">รหัสผ่าน</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 text-slate-400" size={18} />
-                <input name="password" type="password" required className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-blue-900 outline-none transition-all" placeholder="••••••••" />
-              </div>
-            </div>
-            <button type="submit" className="w-full bg-blue-900 hover:bg-blue-800 text-white py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 mt-6">
-              เข้าสู่ระบบ <LogIn size={18} />
-            </button>
-          </form>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-slate-100">
+        <div className="w-8 h-8 border-4 border-[#0B3C7B] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex justify-center items-center">
-      <div className="w-full max-w-md h-screen md:h-[850px] md:max-h-[95vh] bg-white md:rounded-[30px] md:border border-slate-200 shadow-xl relative flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-slate-200 flex justify-center items-center p-0 md:p-4">
+      {/* Container จำลองจอมือถือสัดส่วน 393 x 852 */}
+      <div className="w-full max-w-[393px] h-screen md:h-[852px] bg-[#EEF2F6] md:rounded-[36px] shadow-2xl relative flex flex-col overflow-hidden border border-slate-300">
         
-        {/* Header */}
-        <header className="bg-white border-b border-slate-100 px-5 py-4 flex justify-between items-center z-10 shrink-0">
-          <div className="flex items-center gap-2 text-blue-900 font-bold text-lg">
-            <Building2 size={24} />
-            <span>Dormitory</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="text-right">
-              <div className="text-xs font-semibold text-slate-800 w-24 truncate">{session.user.email}</div>
-              <div className="text-[10px] text-slate-500">ผู้พักอาศัย</div>
-            </div>
-            <button onClick={handleLogout} className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors">
-              <LogOut size={18} />
-            </button>
-          </div>
-        </header>
+        {/* ==================== 1. หน้า LOGIN ==================== */}
+        {!session ? (
+          <div className="flex-1 flex flex-col justify-between p-6 pt-12">
+            <div className="flex flex-col items-center text-center">
+              {/* โลโก้ และ ชื่อแบรนด์ */}
+              <DormitoryLogo className="w-36 h-36 mb-1" />
+              <h1 className="text-3xl font-extrabold text-[#0B3C7B] tracking-wider mb-8">DORMITORY</h1>
 
-        {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto p-5 pb-24">
-          
-          {/* View: Dashboard */}
-          {activeView === 'dashboard' && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div>
-                <h2 className="text-xl font-bold text-blue-900">ภาพรวมหอพัก</h2>
-                <p className="text-sm text-slate-500">ยินดีต้อนรับสู่ระบบรายงานข้อมูลเรียลไทม์</p>
-              </div>
-              
-              <div className="grid grid-cols-1 gap-4">
-                <div className="bg-white border border-slate-200 p-5 rounded-xl shadow-sm flex justify-between items-center">
-                  <div>
-                    <h4 className="text-xs text-slate-500 font-medium mb-1">สถานะบิลล่าสุด</h4>
-                    <p className="text-lg font-bold text-slate-800">
-                      {bills.length > 0 && bills[0].status === 'paid' ? 'ชำระเงินเสร็จสิ้น' : 'มียอดค้างชำระ'}
-                    </p>
-                  </div>
-                  <div className="w-12 h-12 rounded-lg bg-blue-50 text-blue-900 flex items-center justify-center">
-                    <FileText size={24} />
-                  </div>
-                </div>
-                
-                <div className="bg-white border border-slate-200 p-5 rounded-xl shadow-sm flex justify-between items-center">
-                  <div>
-                    <h4 className="text-xs text-slate-500 font-medium mb-1">งานแจ้งซ่อมของฉัน</h4>
-                    <p className="text-lg font-bold text-slate-800">{repairCount} รายการ</p>
-                  </div>
-                  <div className="w-12 h-12 rounded-lg bg-blue-50 text-blue-900 flex items-center justify-center">
-                    <Wrench size={24} />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+              {/* ข้อความต้อนรับ */}
+              <h2 className="text-2xl font-bold text-slate-900 mb-1">WELCOME</h2>
+              <p className="text-slate-600 text-sm mb-8 font-medium">กรุณาเข้าสู่ระบบด้วยบัญชีห้องของท่าน</p>
 
-          {/* View: Repairs */}
-          {activeView === 'repairs' && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="flex justify-between items-end">
+              {/* ฟอร์มเข้าสู่ระบบ */}
+              <form onSubmit={handleLogin} className="w-full space-y-4">
                 <div>
-                  <h2 className="text-xl font-bold text-blue-900">การแจ้งซ่อม</h2>
-                  <p className="text-sm text-slate-500">จัดการและติดตามสถานะ</p>
+                  <input
+                    type="text"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="User"
+                    required
+                    className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm text-sm"
+                  />
                 </div>
-                <button onClick={() => setIsModalOpen(true)} className="bg-blue-900 text-white text-xs px-3 py-2 rounded-lg font-medium flex items-center gap-1 shadow-sm hover:bg-blue-800 transition-colors">
-                  <Plus size={14} /> แจ้งซ่อมใหม่
+
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Password"
+                    required
+                    className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600"
+                  >
+                    {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
+                  </button>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-[#1877F2] hover:bg-blue-600 text-white font-semibold py-3.5 rounded-xl shadow-md transition-colors text-base mt-4"
+                >
+                  {isLoading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
+                </button>
+              </form>
+            </div>
+
+            <div className="text-center text-xs text-slate-400 pb-2">
+              Dormitory Management System
+            </div>
+          </div>
+        ) : (
+
+        /* ==================== 2. หน้า HOME ==================== */
+          <div className="flex-1 flex flex-col bg-[#EEF2F6] overflow-y-auto">
+            {/* Header แถบสีน้ำเงิน */}
+            <header className="bg-[#0B57D0] text-white px-5 py-3.5 flex justify-between items-center shadow-md sticky top-0 z-10">
+              <h1 className="text-xl font-bold">Home</h1>
+              <button 
+                onClick={handleLogout} 
+                className="text-white hover:text-red-200 transition-colors p-1"
+                title="ออกจากระบบ"
+              >
+                <LogOut size={20} />
+              </button>
+            </header>
+
+            <div className="p-4 space-y-5 flex-1">
+              {/* การ์ดโปรไฟล์ผู้ใช้ */}
+              <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-[#0B3C7B] flex items-center justify-center overflow-hidden shrink-0">
+                  <DormitoryLogo className="w-12 h-12 text-white" />
+                </div>
+                <div className="overflow-hidden">
+                  <p className="text-slate-800 font-semibold text-base truncate">
+                    {session.user.email}
+                  </p>
+                </div>
+              </div>
+
+              {/* ปุ่มทางลัด เมนูดำเนินการ */}
+              <div className="grid grid-cols-2 gap-4 text-center">
+                <button className="bg-white rounded-xl p-3 shadow-sm border border-slate-100 flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors">
+                  <PlusSquare className="text-emerald-500" size={22} />
+                  <span className="text-emerald-600 font-semibold text-sm">เพิ่มครุภัณฑ์</span>
+                </button>
+                <button className="bg-white rounded-xl p-3 shadow-sm border border-slate-100 flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors">
+                  <AlertCircle className="text-red-500" size={22} />
+                  <span className="text-red-500 font-semibold text-sm">รายงานครุภัณฑ์</span>
                 </button>
               </div>
 
-              <div className="space-y-4">
-                {repairs.length === 0 ? (
-                  <div className="text-center text-slate-400 py-10 text-sm">ไม่มีข้อมูลรายการแจ้งซ่อม</div>
-                ) : (
-                  repairs.map((item) => {
-                    const statusText = item.status === 'defect resolved' || item.status === 'เสร็จสิ้น' ? 'เสร็จสิ้น' : 
-                                       item.status === 'in progress' || item.status === 'กำลังดำเนินการ' ? 'กำลังดำเนินการ' : 'แจ้งปัญหา';
-                    const isDone = statusText === 'เสร็จสิ้น';
-                    
+              <hr className="border-slate-300 my-2" />
+
+              {/* ส่วนที่ 1: ครุภัณฑ์ในห้องพัก */}
+              <div>
+                <h3 className="text-base font-bold text-slate-900 mb-3">ครุภัณฑ์ในห้องพัก</h3>
+                <div className="space-y-3">
+                  {normalItems.map((item) => {
+                    const IconComponent = item.icon;
                     return (
-                      <div key={item.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-                        <div className="flex justify-between items-start mb-3">
-                          <div>
-                            <div className="text-[10px] text-slate-400 font-mono tracking-wider">TICKET #{item.id}</div>
-                            <h4 className="font-semibold text-blue-900 text-sm">{item.title || 'ไม่ระบุชื่อ'}</h4>
-                          </div>
-                          <span className={`text-[10px] px-2 py-1 rounded-full font-medium ${isDone ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'}`}>
-                            {statusText}
-                          </span>
+                      <div key={item.id} className="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 flex items-center gap-3.5">
+                        <div className="w-16 h-16 rounded-2xl bg-[#0B3C7B] flex items-center justify-center shrink-0">
+                          <IconComponent />
                         </div>
-                        <div className="flex gap-3 mb-4">
-                          <div className="w-14 h-14 bg-slate-100 rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
-                            {item.image_url ? (
-                              <img src={`https://aktyghpazejsihdbvrle.supabase.co/storage/v1/object/public/productImage/${item.image_url}`} alt="หลักฐาน" className="w-full h-full object-cover" />
-                            ) : (
-                              <Box size={20} className="text-slate-400" />
-                            )}
-                          </div>
-                          <p className="text-xs text-slate-500 line-clamp-3 leading-relaxed">{item.description}</p>
-                        </div>
-                        <div className="border-t border-dashed border-slate-200 pt-3 flex items-center gap-2 text-[10px] text-slate-400">
-                           <div className={`w-2 h-2 rounded-full ${isDone ? 'bg-slate-300' : 'bg-green-500 animate-pulse'}`}></div>
-                           อัปเดตล่าสุด: {new Date(item.reported_date || item.created_at).toLocaleDateString('th-TH')}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-slate-900 text-lg leading-tight">{item.name}</h4>
+                          <p className="text-[#0B57D0] font-medium text-xs my-0.5">{item.status}</p>
+                          <p className="text-slate-400 text-[10px] font-mono">{item.date}</p>
                         </div>
                       </div>
                     );
-                  })
-                )}
+                  })}
+                </div>
               </div>
-            </div>
-          )}
 
-          {/* View: Billing */}
-          {activeView === 'billing' && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <hr className="border-slate-300 my-2" />
+
+              {/* ส่วนที่ 2: ติดตามสถานะครุภัณฑ์ */}
               <div>
-                <h2 className="text-xl font-bold text-blue-900">บิลค่าเช่า</h2>
-                <p className="text-sm text-slate-500">ตรวจสอบประวัติใบแจ้งหนี้</p>
-              </div>
-
-              <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm">
-                    <thead className="bg-slate-50 text-slate-500 text-xs uppercase">
-                      <tr>
-                        <th className="px-4 py-3 font-medium">รอบบิล</th>
-                        <th className="px-4 py-3 font-medium">ยอดสุทธิ</th>
-                        <th className="px-4 py-3 font-medium">สถานะ</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {bills.length === 0 ? (
-                        <tr>
-                          <td colSpan={3} className="px-4 py-8 text-center text-slate-400 text-sm">ไม่มีข้อมูลใบแจ้งหนี้</td>
-                        </tr>
-                      ) : (
-                        bills.map((bill) => (
-                          <tr key={bill.id}>
-                            <td className="px-4 py-4 font-medium text-slate-700">{bill.billing_month || '-'}</td>
-                            <td className="px-4 py-4 font-semibold text-blue-900">{(bill.amount || 0).toLocaleString()} ฿</td>
-                            <td className="px-4 py-4">
-                              <span className={`text-[10px] px-2 py-1 rounded-full font-medium ${bill.status === 'paid' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
-                                {bill.status === 'paid' ? 'ชำระแล้ว' : 'ค้างชำระ'}
-                              </span>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+                <h3 className="text-base font-bold text-slate-900 mb-3">ติดตามสถานะครุภัณฑ์</h3>
+                <div className="space-y-3">
+                  {repairItems.map((item) => {
+                    const IconComponent = item.icon;
+                    return (
+                      <div key={item.id} className="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 flex items-center gap-3.5">
+                        <div className="w-16 h-16 rounded-2xl bg-[#0B3C7B] flex items-center justify-center shrink-0">
+                          <IconComponent />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-slate-900 text-lg leading-tight">{item.name}</h4>
+                          <p className="text-red-500 font-medium text-xs my-0.5">{item.status}</p>
+                          <p className="text-slate-400 text-[10px] font-mono">{item.date}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-            </div>
-          )}
 
-        </main>
+              <hr className="border-slate-300 my-2" />
 
-        {/* Bottom Navigation */}
-        <nav className="absolute bottom-0 w-full bg-white border-t border-slate-100 pb-safe pt-2 px-4 z-20">
-          <ul className="flex justify-between items-center h-16">
-            {[
-              { id: 'dashboard', icon: PieChart, label: 'ภาพรวม' },
-              { id: 'repairs', icon: Wrench, label: 'แจ้งซ่อม' },
-              { id: 'billing', icon: CreditCard, label: 'บิลค่าเช่า' },
-            ].map((item) => {
-              const Icon = item.icon;
-              const isActive = activeView === item.id;
-              return (
-                <li key={item.id} className="flex-1">
-                  <button 
-                    onClick={() => setActiveView(item.id)}
-                    className={`w-full flex flex-col items-center justify-center gap-1 transition-all duration-200 ${isActive ? 'text-blue-900 scale-110' : 'text-slate-400 hover:text-slate-600'}`}
-                  >
-                    <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-                    <span className={`text-[10px] ${isActive ? 'font-semibold' : 'font-medium'}`}>{item.label}</span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
-
-        {/* Modal: แจ้งซ่อมใหม่ */}
-        {isModalOpen && (
-          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="bg-white w-full max-w-sm rounded-2xl shadow-xl overflow-hidden animate-in zoom-in-95 duration-200">
-              <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <h3 className="font-semibold text-blue-900">แจ้งซ่อมแซมคุรุภัณฑ์</h3>
-                <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
-                  <X size={20} />
-                </button>
+              {/* ส่วนที่ 3: เบอร์โทรติดต่อหอพัก */}
+              <div className="pt-1 pb-4">
+                <h3 className="text-base font-bold text-slate-900 mb-2">เบอร์โทรติดต่อหอพัก</h3>
+                <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-100 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-50 text-[#0B57D0] flex items-center justify-center">
+                    <Phone size={20} />
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500">สำนักงานหอพัก</p>
+                    <p className="text-sm font-bold text-slate-800">02-xxx-xxxx / 08x-xxx-xxxx</p>
+                  </div>
+                </div>
               </div>
-              <form onSubmit={submitRepair} className="p-5 space-y-4">
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">หัวข้อปัญหา</label>
-                  <input type="text" value={repairTitle} onChange={(e) => setRepairTitle(e.target.value)} required className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-900 outline-none" placeholder="เช่น แอร์ไม่เย็น" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">รายละเอียด</label>
-                  <textarea value={repairDesc} onChange={(e) => setRepairDesc(e.target.value)} required rows={3} className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-900 outline-none resize-none" placeholder="ระบุอาการเพิ่มเติม..." />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-2 flex items-center gap-1"><Camera size={14} /> แนบรูปภาพ</label>
-                  <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageChange} className="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-900 hover:file:bg-blue-100 transition-colors" />
-                  {imagePreview && (
-                    <div className="mt-3 relative rounded-lg overflow-hidden border border-slate-200">
-                      <img src={imagePreview} alt="Preview" className="w-full h-32 object-cover" />
-                      <button type="button" onClick={() => { setImagePreview(null); if (fileInputRef.current) fileInputRef.current.value = ''; }} className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center">
-                        <X size={12} />
-                      </button>
-                    </div>
-                  )}
-                </div>
-                <button type="submit" disabled={isLoading} className="w-full bg-blue-900 hover:bg-blue-800 text-white py-2.5 rounded-lg text-sm font-medium mt-2 transition-colors disabled:opacity-70">
-                  {isLoading ? 'กำลังประมวลผล...' : 'ส่งเรื่องแจ้งซ่อม'}
-                </button>
-              </form>
+
             </div>
           </div>
         )}
