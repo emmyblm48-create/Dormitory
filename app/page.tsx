@@ -6,7 +6,11 @@ import {
   Eye, EyeOff, PlusSquare, AlertCircle, Phone, LogOut, Package, RefreshCw
 } from 'lucide-react';
 
-// --- โลโก้ Dormitory ---
+// --- 1. ตั้งค่า Supabase Project ID และ Bucket Name ---
+const SUPABASE_PROJECT_ID = "aktyghpazejsihdbvrle";
+const BUCKET_NAME = "products"; // หรือชื่อ bucket ที่ใช้เก็บรูปภาพ
+
+// --- 2. โลโก้ Dormitory ---
 const DormitoryLogo = ({ className = "w-28 h-28" }: { className?: string }) => (
   <svg viewBox="0 0 200 200" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M100 20 L25 75 V170 H175 V75 Z" stroke="#0B3C7B" strokeWidth="12" strokeLinejoin="round" fill="none"/>
@@ -21,7 +25,7 @@ const DormitoryLogo = ({ className = "w-28 h-28" }: { className?: string }) => (
   </svg>
 );
 
-// --- ไอคอน Fallback สำรอง (กรณีรูปโหลดไม่ได้หรือไม่มีรูป) ---
+// --- 3. ไอคอน Fallback สำรอง (กรณีรูปโหลดไม่ได้หรือไม่มีรูป) ---
 const CutoutIcon = () => (
   <svg className="w-8 h-8 md:w-10 md:h-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <rect x="4" y="3" width="16" height="13" rx="2" />
@@ -63,7 +67,7 @@ const getAssetIcon = (name: string = '') => {
   return DefaultItemIcon;
 };
 
-// แปลงวันที่ให้อยู่ในฟอร์แมต YYYY-MM-DD HH:mm:ss.000
+// --- 4. ฟังก์ชันจัดการ Format วันที่ และ URL รูปภาพ ---
 const formatFullDate = (dateStr?: string) => {
   if (!dateStr) return '2026-02-24 00:00:00.000';
   const d = new Date(dateStr);
@@ -80,16 +84,43 @@ const formatFullDate = (dateStr?: string) => {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.000`;
 };
 
-// Component แสดงรูปภาพพร้อม Fallback
+// ฟังก์ชันแปลง URL ให้ถูกต้องและแก้ Project ID ให้อัตโนมัติ
+const formatImageUrl = (url?: string) => {
+  if (!url || url.trim() === "") return null;
+
+  let cleanUrl = url.trim();
+
+  // Auto-Fix: เปลี่ยน Project ID เก่าเป็น ID ใหม่
+  if (cleanUrl.includes("sdltpjvwovgjsldrixxi")) {
+    cleanUrl = cleanUrl.replace("sdltpjvwovgjsldrixxi", SUPABASE_PROJECT_ID);
+  }
+
+  // ถ้าเป็น Full URL
+  if (cleanUrl.startsWith("http://") || cleanUrl.startsWith("https://")) {
+    return cleanUrl;
+  }
+
+  // ถ้าขาด https://
+  if (cleanUrl.includes("supabase.co")) {
+    return `https://${cleanUrl.replace(/^\/+/, "")}`;
+  }
+
+  // ถ้ามีแค่ชื่อไฟล์
+  return `https://${SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/${BUCKET_NAME}/${cleanUrl.replace(/^\/+/, "")}`;
+};
+
+// --- 5. Component แสดงรูปภาพพร้อม Fallback ---
 const AssetAvatar = ({ imageUrl, name }: { imageUrl?: string; name?: string }) => {
   const [imgError, setImgError] = useState(false);
   const IconComponent = getAssetIcon(name);
 
-  if (imageUrl && !imgError) {
+  const validUrl = formatImageUrl(imageUrl);
+
+  if (validUrl && !imgError) {
     return (
       <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
         <img 
-          src={imageUrl} 
+          src={validUrl} 
           alt={name || 'ครุภัณฑ์'} 
           className="w-full h-full object-cover"
           onError={() => setImgError(true)}
@@ -105,6 +136,7 @@ const AssetAvatar = ({ imageUrl, name }: { imageUrl?: string; name?: string }) =
   );
 };
 
+// --- 6. Main App Component ---
 export default function App() {
   const [session, setSession] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
