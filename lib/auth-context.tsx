@@ -27,7 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data, error } = await supabase
       .from("user_extra")
       .select("*")
-      .eq("email", email)
+      .ilike("email", email)
       .maybeSingle();
     if (!error && data) {
       setProfile(data as UserProfile);

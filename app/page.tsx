@@ -31,10 +31,26 @@ export default function LoginPage() {
     setIsSubmitting(false);
   };
 
-  if (isLoading || (session && !profile)) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-100">
         <div className="w-8 h-8 border-4 border-[#0B3C7B] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (session && !profile) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-100 gap-4 px-6 text-center">
+        <p className="text-slate-600 text-sm max-w-xs">
+          ไม่พบข้อมูลผู้ใช้สำหรับบัญชีนี้ กรุณาติดต่อผู้ดูแลระบบ
+        </p>
+        <button
+          onClick={() => supabase.auth.signOut()}
+          className="bg-[#0B57D0] hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg text-sm"
+        >
+          ออกจากระบบ
+        </button>
       </div>
     );
   }

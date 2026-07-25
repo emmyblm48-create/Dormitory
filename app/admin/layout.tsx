@@ -13,11 +13,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (isLoading) return;
-    if (!session) {
+    if (!session || !profile) {
       router.replace("/");
       return;
     }
-    if (profile && profile.role !== "admin") {
+    if (profile.role !== "admin") {
       router.replace("/user");
     }
   }, [isLoading, session, profile, router]);
