@@ -1,0 +1,102 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth-context";
+import { DormitoryLogo } from "@/components/DormitoryLogo";
+
+export default function LoginPage() {
+  const router = useRouter();
+  const { session, profile, isLoading } = useAuth();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isLoading || !session || !profile) return;
+    router.replace(profile.role === "admin" ? "/admin" : "/user");
+  }, [isLoading, session, profile, router]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError(null);
+    setIsSubmitting(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) setLoginError("เข้าสู่ระบบไม่สำเร็จ: " + error.message);
+    setIsSubmitting(false);
+  };
+
+  if (isLoading || (session && !profile)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-100">
+        <div className="w-8 h-8 border-4 border-[#0B3C7B] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-200/80 flex justify-center items-center p-0 md:p-6">
+      <div className="w-full max-w-5xl min-h-screen md:min-h-[850px] bg-[#EEF2F6] md:rounded-[28px] shadow-2xl relative flex flex-col overflow-hidden border border-slate-300">
+        <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12">
+          <div className="w-full max-w-sm flex flex-col items-center text-center">
+            <DormitoryLogo className="w-32 h-32 md:w-40 md:h-40 mb-2" />
+            <h1 className="text-3xl font-extrabold text-[#0B3C7B] tracking-wider mb-6">DORMITORY</h1>
+
+            <h2 className="text-2xl font-bold text-slate-900 mb-1">WELCOME</h2>
+            <p className="text-slate-600 text-sm mb-6 font-medium">กรุณาเข้าสู่ระบบด้วยบัญชีห้องของท่าน</p>
+
+            <form onSubmit={handleLogin} className="w-full space-y-4">
+              <div>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="อีเมล"
+                  required
+                  className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm text-base md:text-sm"
+                />
+              </div>
+
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="รหัสผ่าน"
+                  required
+                  className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm text-base md:text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600"
+                >
+                  {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
+                </button>
+              </div>
+
+              {loginError && <p className="text-red-500 text-sm font-medium">{loginError}</p>}
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-[#1877F2] hover:bg-blue-600 text-white font-semibold py-3.5 rounded-xl shadow-md transition-colors text-base mt-2 disabled:opacity-60"
+              >
+                {isSubmitting ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
+              </button>
+            </form>
+
+            <div className="text-center text-xs text-slate-400 mt-8">
+              Dormitory Management System
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
