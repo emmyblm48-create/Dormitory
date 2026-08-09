@@ -224,10 +224,10 @@ export default function AdminTenantsPage() {
     <div className="space-y-6 max-w-3xl mx-auto w-full">
       <h2 className="text-lg md:text-xl font-bold text-slate-900">จัดการบัญชีผู้เช่า</h2>
 
-      {error && <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-2.5">{error}</div>}
-      {createSuccess && <div className="bg-emerald-50 border border-emerald-200 text-emerald-600 text-sm rounded-xl px-4 py-2.5">{createSuccess}</div>}
+      {error && <div className="bg-red-50/80 backdrop-blur-md border border-red-200/60 text-red-600 text-sm rounded-xl px-4 py-2.5">{error}</div>}
+      {createSuccess && <div className="bg-emerald-50/80 backdrop-blur-md border border-emerald-200/60 text-emerald-600 text-sm rounded-xl px-4 py-2.5">{createSuccess}</div>}
 
-      <form onSubmit={handleCreate} className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+      <form onSubmit={handleCreate} className="glass-card rounded-2xl p-4 space-y-3">
         <p className="text-sm font-bold text-slate-700">สร้างบัญชีผู้เช่าใหม่</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
@@ -237,7 +237,7 @@ export default function AdminTenantsPage() {
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="glass-input px-3 py-2 rounded-lg text-sm"
             />
           </div>
           <div>
@@ -248,7 +248,7 @@ export default function AdminTenantsPage() {
               onChange={(e) => setNewPassword(e.target.value)}
               required
               minLength={6}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="glass-input px-3 py-2 rounded-lg text-sm"
             />
           </div>
           <div>
@@ -259,7 +259,7 @@ export default function AdminTenantsPage() {
               onChange={(e) => setNewUserName(e.target.value)}
               required
               placeholder="เช่น A101"
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="glass-input px-3 py-2 rounded-lg text-sm"
             />
             <datalist id="room-list">
               {rooms.map((r) => (
@@ -277,7 +277,7 @@ export default function AdminTenantsPage() {
             <select
               value={newRole}
               onChange={(e) => setNewRole(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="glass-input px-3 py-2 rounded-lg text-sm"
             >
               <option value="user">ผู้เช่า (user)</option>
               <option value="admin">ผู้ดูแลระบบ (admin)</option>
@@ -292,7 +292,7 @@ export default function AdminTenantsPage() {
                     value={newFloor}
                     onChange={(e) => setNewFloor(e.target.value)}
                     placeholder="เช่น A1"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="glass-input px-3 py-2 rounded-lg text-sm"
                   />
                 </div>
                 <div>
@@ -302,7 +302,7 @@ export default function AdminTenantsPage() {
                     step="0.01"
                     value={newRentPrice}
                     onChange={(e) => setNewRentPrice(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="glass-input px-3 py-2 rounded-lg text-sm"
                   />
                 </div>
               </>
@@ -310,7 +310,7 @@ export default function AdminTenantsPage() {
         </div>
 
         {newRole === "user" && (
-          <div className="pt-1 border-t border-slate-100">
+          <div className="pt-1 border-t border-white/60">
             <p className="text-xs font-medium text-slate-500 mt-3 mb-2">
               ครุภัณฑ์ประจำห้อง (เลือกรายการที่จะเพิ่มให้ห้องนี้อัตโนมัติ)
             </p>
@@ -321,7 +321,7 @@ export default function AdminTenantsPage() {
                     type="checkbox"
                     checked={selectedEquipment.has(item.name)}
                     onChange={() => toggleEquipment(item.name)}
-                    className="rounded border-slate-300 text-[#3182F6] focus:ring-[#3182F6]"
+                    className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                   />
                   {item.name}
                 </label>
@@ -333,7 +333,7 @@ export default function AdminTenantsPage() {
                 value={customEquipment}
                 onChange={(e) => setCustomEquipment(e.target.value)}
                 placeholder="เช่น กระจกเงา, ราวตากผ้า"
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="glass-input px-3 py-2 rounded-lg text-sm"
               />
             </div>
           </div>
@@ -342,7 +342,7 @@ export default function AdminTenantsPage() {
         <button
           type="submit"
           disabled={isCreating}
-          className="bg-[#3182F6] hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg text-sm flex items-center gap-1.5"
+          className="btn-primary px-4 py-2 rounded-lg text-sm flex items-center gap-1.5"
         >
           <UserPlus size={16} /> {isCreating ? "กำลังสร้าง..." : "สร้างบัญชี"}
         </button>
@@ -350,10 +350,10 @@ export default function AdminTenantsPage() {
 
       {isLoading ? (
         <div className="flex justify-center py-10">
-          <Loader2 className="animate-spin text-slate-400" size={24} />
+          <Loader2 className="animate-spin text-brand-400" size={24} />
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-slate-100 divide-y divide-slate-100">
+        <div className="glass-card rounded-2xl divide-y divide-white/50">
           {tenants.map((t) => {
             const isEditing = editingEmail === t.email;
             return (
@@ -364,7 +364,7 @@ export default function AdminTenantsPage() {
                     <input
                       value={editValues.userName}
                       onChange={(e) => setEditValues((v) => ({ ...v, userName: e.target.value }))}
-                      className="px-2.5 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="glass-input px-2.5 py-1.5 rounded-lg text-sm"
                     />
                   ) : (
                     <span className="text-sm font-medium text-slate-800">{t.userName}</span>
@@ -373,13 +373,13 @@ export default function AdminTenantsPage() {
                     <select
                       value={editValues.role}
                       onChange={(e) => setEditValues((v) => ({ ...v, role: e.target.value }))}
-                      className="px-2.5 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="glass-input px-2.5 py-1.5 rounded-lg text-sm"
                     >
                       <option value="user">user</option>
                       <option value="admin">admin</option>
                     </select>
                   ) : (
-                    <span className={`text-xs font-semibold px-2 py-1 rounded-full w-fit ${t.role === "admin" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-[#3182F6]"}`}>
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-full w-fit ${t.role === "admin" ? "bg-amber-100/80 text-amber-700" : "bg-brand-100/80 text-brand-600"}`}>
                       {t.role}
                     </span>
                   )}
@@ -387,15 +387,15 @@ export default function AdminTenantsPage() {
                 <div className="flex gap-2 shrink-0">
                   {isEditing ? (
                     <>
-                      <button onClick={saveEdit} className="p-2 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100">
+                      <button onClick={saveEdit} className="p-2 rounded-lg bg-emerald-100/70 text-emerald-600 hover:bg-emerald-100">
                         <Check size={16} />
                       </button>
-                      <button onClick={() => setEditingEmail(null)} className="p-2 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200">
+                      <button onClick={() => setEditingEmail(null)} className="p-2 rounded-lg bg-white/60 text-slate-500 hover:bg-white/90">
                         <X size={16} />
                       </button>
                     </>
                   ) : (
-                    <button onClick={() => startEdit(t)} className="p-2 rounded-lg bg-blue-50 text-[#3182F6] hover:bg-blue-100">
+                    <button onClick={() => startEdit(t)} className="p-2 rounded-lg bg-brand-100/70 text-brand-600 hover:bg-brand-100">
                       <Pencil size={16} />
                     </button>
                   )}

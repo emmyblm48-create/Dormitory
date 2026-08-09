@@ -15,9 +15,9 @@ const monthLabel = (dateStr: string) => {
 };
 
 const statusBadge: Record<string, string> = {
-  pending: "bg-slate-100 text-slate-500",
-  submitted: "bg-amber-100 text-amber-700",
-  paid: "bg-emerald-100 text-emerald-700",
+  pending: "bg-slate-200/70 text-slate-500",
+  submitted: "bg-amber-100/80 text-amber-700",
+  paid: "bg-emerald-100/80 text-emerald-700",
 };
 
 const statusLabel: Record<string, string> = {
@@ -180,10 +180,10 @@ export default function AdminBillingPage() {
     <div className="space-y-6 max-w-5xl mx-auto w-full">
       <h2 className="text-lg md:text-xl font-bold text-slate-900">การชำระค่าห้อง</h2>
 
-      {error && <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-2.5">{error}</div>}
+      {error && <div className="bg-red-50/80 backdrop-blur-md border border-red-200/60 text-red-600 text-sm rounded-xl px-4 py-2.5">{error}</div>}
 
       {/* Rate settings */}
-      <form onSubmit={saveSettings} className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+      <form onSubmit={saveSettings} className="glass-card rounded-2xl p-4 space-y-3">
         <p className="text-sm font-bold text-slate-700">ตั้งค่าราคา</p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div>
@@ -193,7 +193,7 @@ export default function AdminBillingPage() {
               step="0.01"
               value={settingsForm.water_price}
               onChange={(e) => setSettingsForm((s) => ({ ...s, water_price: e.target.value }))}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="glass-input px-3 py-2 rounded-lg text-sm"
             />
           </div>
           <div>
@@ -203,7 +203,7 @@ export default function AdminBillingPage() {
               step="0.01"
               value={settingsForm.electricity_unit_price}
               onChange={(e) => setSettingsForm((s) => ({ ...s, electricity_unit_price: e.target.value }))}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="glass-input px-3 py-2 rounded-lg text-sm"
             />
           </div>
           <div>
@@ -213,7 +213,7 @@ export default function AdminBillingPage() {
               step="0.01"
               value={settingsForm.late_fee_per_day}
               onChange={(e) => setSettingsForm((s) => ({ ...s, late_fee_per_day: e.target.value }))}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="glass-input px-3 py-2 rounded-lg text-sm"
             />
           </div>
           <div>
@@ -221,21 +221,21 @@ export default function AdminBillingPage() {
             <input
               value={settingsForm.promptpay_id}
               onChange={(e) => setSettingsForm((s) => ({ ...s, promptpay_id: e.target.value }))}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="glass-input px-3 py-2 rounded-lg text-sm"
             />
           </div>
         </div>
         <button
           type="submit"
           disabled={isSavingSettings}
-          className="bg-[#3182F6] hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg text-sm flex items-center gap-1.5"
+          className="btn-primary px-4 py-2 rounded-lg text-sm flex items-center gap-1.5"
         >
           <Save size={16} /> {isSavingSettings ? "กำลังบันทึก..." : "บันทึกการตั้งค่า"}
         </button>
       </form>
 
       {/* Create bill */}
-      <form onSubmit={handleCreateBill} className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+      <form onSubmit={handleCreateBill} className="glass-card rounded-2xl p-4 space-y-3">
         <p className="text-sm font-bold text-slate-700">ออกบิลใหม่</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
@@ -244,7 +244,7 @@ export default function AdminBillingPage() {
               value={form.room_id}
               onChange={(e) => handleRoomChange(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="glass-input px-3 py-2 rounded-lg text-sm"
             >
               <option value="">-- เลือกห้องพัก --</option>
               {rooms.map((r) => (
@@ -261,7 +261,7 @@ export default function AdminBillingPage() {
               value={form.billing_month}
               onChange={(e) => setForm((f) => ({ ...f, billing_month: e.target.value }))}
               required
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="glass-input px-3 py-2 rounded-lg text-sm"
             />
           </div>
           <div>
@@ -271,7 +271,7 @@ export default function AdminBillingPage() {
               value={form.due_date}
               onChange={(e) => setForm((f) => ({ ...f, due_date: e.target.value }))}
               required
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="glass-input px-3 py-2 rounded-lg text-sm"
             />
           </div>
           <div>
@@ -281,7 +281,7 @@ export default function AdminBillingPage() {
               step="0.01"
               value={form.rent_amount}
               onChange={(e) => setForm((f) => ({ ...f, rent_amount: e.target.value }))}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="glass-input px-3 py-2 rounded-lg text-sm"
             />
           </div>
           <div>
@@ -291,7 +291,7 @@ export default function AdminBillingPage() {
               step="0.01"
               value={form.water_amount}
               onChange={(e) => setForm((f) => ({ ...f, water_amount: e.target.value }))}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="glass-input px-3 py-2 rounded-lg text-sm"
             />
           </div>
           <div />
@@ -302,7 +302,7 @@ export default function AdminBillingPage() {
               step="0.01"
               value={form.electricity_prev_reading}
               onChange={(e) => setForm((f) => ({ ...f, electricity_prev_reading: e.target.value }))}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="glass-input px-3 py-2 rounded-lg text-sm"
             />
           </div>
           <div>
@@ -313,12 +313,12 @@ export default function AdminBillingPage() {
               value={form.electricity_curr_reading}
               onChange={(e) => setForm((f) => ({ ...f, electricity_curr_reading: e.target.value }))}
               required
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="glass-input px-3 py-2 rounded-lg text-sm"
             />
           </div>
           <div>
             <label className="text-xs font-medium text-slate-500 mb-1 block">ค่าไฟโดยประมาณ</label>
-            <div className="px-3 py-2 border border-dashed border-slate-200 rounded-lg text-sm text-slate-500 bg-slate-50">
+            <div className="px-3 py-2 border border-dashed border-brand-200/70 rounded-lg text-sm text-slate-500 bg-white/40 backdrop-blur-md">
               {thb(
                 Math.max(
                   0,
@@ -332,7 +332,7 @@ export default function AdminBillingPage() {
         <button
           type="submit"
           disabled={isCreating}
-          className="bg-[#3182F6] hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg text-sm flex items-center gap-1.5"
+          className="btn-primary px-4 py-2 rounded-lg text-sm flex items-center gap-1.5"
         >
           <Plus size={16} /> {isCreating ? "กำลังออกบิล..." : "ออกบิล"}
         </button>
@@ -344,7 +344,7 @@ export default function AdminBillingPage() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="glass-input px-3 py-1.5 rounded-lg text-xs"
         >
           <option value="all">ทุกสถานะ</option>
           <option value="pending">รอชำระ</option>
@@ -355,10 +355,10 @@ export default function AdminBillingPage() {
 
       {isLoading ? (
         <div className="flex justify-center py-10">
-          <Loader2 className="animate-spin text-slate-400" size={24} />
+          <Loader2 className="animate-spin text-brand-400" size={24} />
         </div>
       ) : groupedByRoom.length === 0 ? (
-        <div className="text-center py-8 text-slate-400 text-sm bg-white rounded-2xl border border-slate-100">
+        <div className="text-center py-8 text-slate-400 text-sm glass-card rounded-2xl">
           ไม่มีรายการบิล
         </div>
       ) : (
@@ -367,7 +367,7 @@ export default function AdminBillingPage() {
             <div key={group.room_number} className="space-y-2.5">
               <div className="flex items-center justify-between px-1">
                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <DoorOpen size={16} className="text-[#3182F6]" /> ห้อง {group.room_number}
+                  <DoorOpen size={16} className="text-brand-600" /> ห้อง {group.room_number}
                 </h3>
                 {group.outstanding > 0 && (
                   <span className="text-xs font-semibold text-red-500">
@@ -377,7 +377,7 @@ export default function AdminBillingPage() {
               </div>
 
               {group.bills.map((b) => (
-                <div key={b.bill_id} className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+                <div key={b.bill_id} className="glass-card rounded-2xl p-4">
                   <div className="flex items-start justify-between gap-3 flex-wrap">
                     <div>
                       <h4 className="font-bold text-slate-900">{monthLabel(b.billing_month)}</h4>
@@ -392,23 +392,23 @@ export default function AdminBillingPage() {
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3 text-xs">
-                    <div className="bg-slate-50 rounded-lg px-3 py-2">
+                    <div className="bg-white/50 rounded-lg px-3 py-2 border border-white/60">
                       <p className="text-slate-400">ค่าห้อง</p>
                       <p className="font-semibold text-slate-800">{thb(b.rent_amount)}</p>
                     </div>
-                    <div className="bg-slate-50 rounded-lg px-3 py-2">
+                    <div className="bg-white/50 rounded-lg px-3 py-2 border border-white/60">
                       <p className="text-slate-400">ค่าน้ำ</p>
                       <p className="font-semibold text-slate-800">{thb(b.water_amount)}</p>
                     </div>
-                    <div className="bg-slate-50 rounded-lg px-3 py-2">
+                    <div className="bg-white/50 rounded-lg px-3 py-2 border border-white/60">
                       <p className="text-slate-400">
                         ค่าไฟ ({b.electricity_prev_reading}→{b.electricity_curr_reading} หน่วย)
                       </p>
                       <p className="font-semibold text-slate-800">{thb(b.electricity_amount)}</p>
                     </div>
-                    <div className="bg-blue-50 rounded-lg px-3 py-2">
-                      <p className="text-[#3182F6]/70">ยอดรวมทั้งหมด</p>
-                      <p className="font-bold text-[#3182F6]">{thb(b.grand_total)}</p>
+                    <div className="bg-gradient-to-br from-brand-500/15 to-brand-700/15 rounded-lg px-3 py-2 border border-brand-200/50">
+                      <p className="text-brand-700/70">ยอดรวมทั้งหมด</p>
+                      <p className="font-bold text-brand-700">{thb(b.grand_total)}</p>
                     </div>
                   </div>
 
@@ -416,7 +416,7 @@ export default function AdminBillingPage() {
                     {b.slip_image && (
                       <button
                         onClick={() => setSlipPreview(formatImageUrl(b.slip_image, "paymentSlip"))}
-                        className="flex items-center gap-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg"
+                        className="flex items-center gap-1.5 text-xs bg-white/60 hover:bg-white/90 text-slate-600 px-3 py-1.5 rounded-lg backdrop-blur-md border border-white/60"
                       >
                         <ImageIcon size={14} /> ดูสลิป
                       </button>
@@ -424,7 +424,7 @@ export default function AdminBillingPage() {
                     {b.status !== "paid" && (
                       <button
                         onClick={() => markPaid(b.bill_id)}
-                        className="flex items-center gap-1.5 text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-600 px-3 py-1.5 rounded-lg font-medium"
+                        className="flex items-center gap-1.5 text-xs bg-emerald-100/70 hover:bg-emerald-100 text-emerald-600 px-3 py-1.5 rounded-lg font-medium"
                       >
                         <CheckCircle2 size={14} /> ยืนยันชำระแล้ว
                       </button>
@@ -432,7 +432,7 @@ export default function AdminBillingPage() {
                     {b.status === "submitted" && (
                       <button
                         onClick={() => rejectSlip(b.bill_id)}
-                        className="flex items-center gap-1.5 text-xs bg-red-50 hover:bg-red-100 text-red-500 px-3 py-1.5 rounded-lg font-medium"
+                        className="flex items-center gap-1.5 text-xs bg-red-100/70 hover:bg-red-100 text-red-500 px-3 py-1.5 rounded-lg font-medium"
                       >
                         <RotateCcw size={14} /> ปฏิเสธสลิป
                       </button>

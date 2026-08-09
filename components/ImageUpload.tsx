@@ -70,11 +70,11 @@ export function ImageUpload({
       />
 
       {preview ? (
-        <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-slate-100 border border-slate-200">
+        <div className="relative w-full aspect-video rounded-xl overflow-hidden glass-panel">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={preview} alt="preview" className="w-full h-full object-cover" />
           {isUploading && (
-            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center">
               <Loader2 className="animate-spin text-white" size={28} />
             </div>
           )}
@@ -92,7 +92,7 @@ export function ImageUpload({
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="w-full aspect-video rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 flex flex-col items-center justify-center gap-2 text-slate-400 transition-colors"
+          className="w-full aspect-video rounded-xl border-2 border-dashed border-brand-300/60 bg-white/40 backdrop-blur-md hover:bg-white/60 flex flex-col items-center justify-center gap-2 text-brand-500 transition-colors"
         >
           <Camera size={28} />
           <span className="text-sm font-medium">{label}</span>

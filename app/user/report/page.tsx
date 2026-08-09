@@ -69,9 +69,11 @@ function ReportDamageForm() {
   if (success) {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-3 text-center px-4">
-        <CheckCircle2 className="text-emerald-500" size={48} />
-        <p className="text-slate-800 font-semibold">แจ้งซ่อมสำเร็จ</p>
-        <p className="text-slate-400 text-sm">กำลังนำท่านไปยังหน้าประวัติ...</p>
+        <div className="glass-card rounded-3xl p-8 flex flex-col items-center gap-3">
+          <CheckCircle2 className="text-emerald-500" size={48} />
+          <p className="text-slate-800 font-semibold">แจ้งซ่อมสำเร็จ</p>
+          <p className="text-slate-400 text-sm">กำลังนำท่านไปยังหน้าประวัติ...</p>
+        </div>
       </div>
     );
   }
@@ -80,14 +82,14 @@ function ReportDamageForm() {
     <div className="p-4 md:p-8 max-w-lg mx-auto w-full">
       <h3 className="text-base md:text-lg font-bold text-slate-900 mb-4">แจ้งซ่อมครุภัณฑ์เสียหาย</h3>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-4 md:p-6 space-y-4">
         <div>
           <label className="text-xs font-medium text-slate-500 mb-1 block">เลือกครุภัณฑ์</label>
           <select
             value={productId}
             onChange={(e) => setProductId(e.target.value)}
             required
-            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm text-sm"
+            className="glass-input px-4 py-3 rounded-xl text-sm"
           >
             <option value="">-- เลือกครุภัณฑ์ที่เสียหาย --</option>
             {assets.map((a) => (
@@ -106,7 +108,7 @@ function ReportDamageForm() {
             required
             rows={4}
             placeholder="อธิบายลักษณะความเสียหาย..."
-            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm text-sm resize-none"
+            className="glass-input px-4 py-3 rounded-xl text-sm resize-none"
           />
         </div>
 
@@ -120,7 +122,7 @@ function ReportDamageForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3.5 rounded-xl shadow-md transition-colors text-base disabled:opacity-60"
+          className="btn-danger w-full py-3.5 rounded-xl text-base"
         >
           {isSubmitting ? "กำลังส่ง..." : "ส่งเรื่องแจ้งซ่อม"}
         </button>

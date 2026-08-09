@@ -29,19 +29,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (isLoading || !session || !profile || profile.role !== "admin") {
     return (
-      <div className="h-dvh flex items-center justify-center bg-slate-100">
-        <div className="w-8 h-8 border-4 border-[#17203A] border-t-transparent rounded-full animate-spin"></div>
+      <div className="h-dvh flex items-center justify-center">
+        <div className="w-9 h-9 border-4 border-brand-600 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="h-dvh bg-slate-100 flex flex-col overflow-hidden">
-      <header className="shrink-0 bg-[#17203A] text-white px-6 py-4 flex justify-between items-center shadow-md z-30">
-        <h1 className="text-xl md:text-2xl font-bold">Dormitory Admin</h1>
+    <div className="h-dvh flex flex-col overflow-hidden">
+      <header className="shrink-0 glass-header text-white px-4 md:px-6 py-4 flex justify-between items-center z-30">
+        <h1 className="text-lg md:text-2xl font-bold">Dormitory Admin</h1>
         <button
           onClick={handleLogout}
-          className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg text-white text-sm font-medium transition-colors"
+          className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-lg text-white text-sm font-medium transition-colors"
           title="ออกจากระบบ"
         >
           <LogOut size={18} />

@@ -70,48 +70,48 @@ export default function UserBillingPage() {
         </button>
       </div>
 
-      {error && <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-2.5">{error}</div>}
+      {error && <div className="bg-red-50/80 backdrop-blur-md border border-red-200/60 text-red-600 text-sm rounded-xl px-4 py-2.5">{error}</div>}
 
       {bills.length === 0 ? (
-        <div className="text-center py-8 text-slate-400 text-xs bg-white rounded-2xl border border-slate-100">
+        <div className="text-center py-8 text-slate-400 text-xs glass-card rounded-2xl">
           ยังไม่มีบิลค่าห้อง
         </div>
       ) : (
         <div className="space-y-4">
           {bills.map((b) => (
-            <div key={b.bill_id} className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+            <div key={b.bill_id} className="glass-card rounded-2xl p-4 space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <h4 className="font-bold text-slate-900">{monthLabel(b.billing_month)}</h4>
                   <p className="text-xs text-slate-400">กำหนดชำระ {b.due_date}</p>
                 </div>
                 {b.status === "paid" && (
-                  <span className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 h-fit">
+                  <span className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100/80 text-emerald-700 h-fit">
                     <CheckCircle2 size={12} /> ชำระแล้ว
                   </span>
                 )}
                 {b.status === "submitted" && (
-                  <span className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 h-fit">
+                  <span className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100/80 text-amber-700 h-fit">
                     <Clock size={12} /> รอตรวจสอบสลิป
                   </span>
                 )}
                 {b.status === "pending" && (
-                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-red-100 text-red-600 h-fit">
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-red-100/80 text-red-600 h-fit">
                     ยังไม่ชำระ
                   </span>
                 )}
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="bg-slate-50 rounded-lg px-3 py-2">
+                <div className="bg-white/50 rounded-lg px-3 py-2 border border-white/60">
                   <p className="text-slate-400">ค่าห้อง</p>
                   <p className="font-semibold text-slate-800">{thb(b.rent_amount)} บาท</p>
                 </div>
-                <div className="bg-slate-50 rounded-lg px-3 py-2">
+                <div className="bg-white/50 rounded-lg px-3 py-2 border border-white/60">
                   <p className="text-slate-400">ค่าน้ำ</p>
                   <p className="font-semibold text-slate-800">{thb(b.water_amount)} บาท</p>
                 </div>
-                <div className="bg-slate-50 rounded-lg px-3 py-2 col-span-2">
+                <div className="bg-white/50 rounded-lg px-3 py-2 border border-white/60 col-span-2">
                   <p className="text-slate-400">
                     ค่าไฟ ({b.electricity_prev_reading} → {b.electricity_curr_reading} หน่วย ×{" "}
                     {thb(b.electricity_unit_price)} บาท/หน่วย)
@@ -119,14 +119,14 @@ export default function UserBillingPage() {
                   <p className="font-semibold text-slate-800">{thb(b.electricity_amount)} บาท</p>
                 </div>
                 {b.late_fee > 0 && (
-                  <div className="bg-red-50 rounded-lg px-3 py-2 col-span-2">
+                  <div className="bg-red-50/70 rounded-lg px-3 py-2 col-span-2">
                     <p className="text-red-400">ค่าปรับชำระล่าช้า</p>
                     <p className="font-semibold text-red-600">{thb(b.late_fee)} บาท</p>
                   </div>
                 )}
-                <div className="bg-blue-50 rounded-lg px-3 py-2 col-span-2">
-                  <p className="text-[#3182F6]/70">ยอดรวมที่ต้องชำระ</p>
-                  <p className="font-bold text-[#3182F6] text-base">{thb(b.grand_total)} บาท</p>
+                <div className="bg-gradient-to-br from-brand-500/15 to-brand-700/15 rounded-lg px-3 py-2 col-span-2 border border-brand-200/50">
+                  <p className="text-brand-700/70">ยอดรวมที่ต้องชำระ</p>
+                  <p className="font-bold text-brand-700 text-base">{thb(b.grand_total)} บาท</p>
                 </div>
               </div>
 
@@ -137,7 +137,7 @@ export default function UserBillingPage() {
                   <img
                     src={formatImageUrl(b.slip_image, "paymentSlip") ?? undefined}
                     alt="สลิป"
-                    className="w-full max-w-[200px] rounded-xl border border-slate-200"
+                    className="w-full max-w-[200px] rounded-xl border border-white/70 shadow-glass-sm"
                   />
                 </div>
               )}
@@ -149,13 +149,13 @@ export default function UserBillingPage() {
                   <img
                     src={formatImageUrl(b.slip_image, "paymentSlip") ?? undefined}
                     alt="สลิป"
-                    className="w-full max-w-[200px] rounded-xl border border-slate-200"
+                    className="w-full max-w-[200px] rounded-xl border border-white/70 shadow-glass-sm"
                   />
                 </div>
               )}
 
               {b.status === "pending" && (
-                <div className="pt-2 border-t border-slate-100 space-y-3">
+                <div className="pt-2 border-t border-white/60 space-y-3">
                   <div className="flex justify-center">
                     <PromptPayQR promptpayId={settings?.promptpay_id ?? ""} amount={b.grand_total} />
                   </div>
@@ -173,7 +173,7 @@ export default function UserBillingPage() {
                   <button
                     onClick={() => submitSlip(b.bill_id)}
                     disabled={!slipDrafts[b.bill_id] || submittingId === b.bill_id}
-                    className="w-full flex items-center justify-center gap-2 bg-[#3182F6] hover:bg-blue-700 text-white font-semibold py-3 rounded-xl shadow-md transition-colors text-sm disabled:opacity-50"
+                    className="btn-primary w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm"
                   >
                     {submittingId === b.bill_id ? (
                       <Loader2 className="animate-spin" size={16} />

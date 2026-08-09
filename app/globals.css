@@ -17,3 +17,69 @@ body {
 * {
   touch-action: manipulation;
 }
+
+body {
+  @apply text-slate-800;
+  background: linear-gradient(160deg, #eaf1ff 0%, #f3f7ff 45%, #e4edff 100%);
+  min-height: 100dvh;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(37, 99, 235, 0.25);
+  border-radius: 999px;
+}
+
+@layer components {
+  /* Outer app shell / phone-frame style glass panel */
+  .glass-shell {
+    @apply bg-white/45 backdrop-blur-2xl backdrop-saturate-150 border border-white/60 shadow-glass-lg;
+  }
+
+  /* Standard content card */
+  .glass-card {
+    @apply bg-white/70 backdrop-blur-xl backdrop-saturate-150 border border-white/60 shadow-glass-sm;
+  }
+
+  /* Slightly lighter panel, e.g. form sections */
+  .glass-panel {
+    @apply bg-white/55 backdrop-blur-xl backdrop-saturate-150 border border-white/60 shadow-glass-sm;
+  }
+
+  /* Header / nav bars */
+  .glass-nav {
+    @apply bg-white/55 backdrop-blur-xl backdrop-saturate-150 border-white/50;
+  }
+
+  .glass-header {
+    @apply bg-gradient-to-r from-brand-600/90 to-brand-500/90 backdrop-blur-xl border-b border-white/20;
+  }
+
+  /* Form controls */
+  .glass-input {
+    @apply w-full bg-white/55 backdrop-blur-md border border-white/70 placeholder-slate-400 text-slate-800 outline-none transition-all focus:bg-white/85 focus:border-brand-300 focus:ring-2 focus:ring-brand-400/40;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply bg-gradient-to-br from-brand-500 to-brand-700 text-white font-semibold shadow-lg shadow-brand-600/25 transition-all hover:brightness-105 hover:shadow-brand-600/35 active:brightness-95 disabled:opacity-50 disabled:shadow-none;
+  }
+
+  .btn-danger {
+    @apply bg-gradient-to-br from-red-500 to-red-600 text-white font-semibold shadow-lg shadow-red-600/20 transition-all hover:brightness-105 active:brightness-95 disabled:opacity-50;
+  }
+
+  .btn-ghost {
+    @apply bg-white/50 backdrop-blur-md border border-white/60 text-slate-600 transition-colors hover:bg-white/80;
+  }
+
+  .chip {
+    @apply backdrop-blur-md border border-white/50;
+  }
+}

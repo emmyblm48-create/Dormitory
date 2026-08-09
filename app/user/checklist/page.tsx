@@ -76,14 +76,14 @@ export default function EquipmentChecklistPage() {
       </div>
 
       {!isLoading && assets.length > 0 && (
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+        <div className="glass-card rounded-2xl p-4">
           <div className="flex items-center justify-between text-xs font-medium text-slate-500 mb-2">
             <span>เช็คแล้ว {checked.size} / {assets.length} รายการ</span>
             <span>{progress}%</span>
           </div>
-          <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+          <div className="h-2 rounded-full bg-white/60 overflow-hidden">
             <div
-              className="h-full bg-[#3182F6] rounded-full transition-all"
+              className="h-full bg-gradient-to-r from-brand-500 to-brand-600 rounded-full transition-all"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -93,7 +93,7 @@ export default function EquipmentChecklistPage() {
       {isLoading ? (
         <div className="text-center py-8 text-slate-400 text-xs">กำลังโหลดข้อมูล...</div>
       ) : assets.length === 0 ? (
-        <div className="text-center py-8 text-slate-400 text-xs bg-white rounded-2xl border border-slate-100">
+        <div className="text-center py-8 text-slate-400 text-xs glass-card rounded-2xl">
           ไม่มีรายการครุภัณฑ์ในห้องพัก
         </div>
       ) : (
@@ -104,8 +104,8 @@ export default function EquipmentChecklistPage() {
             return (
               <div
                 key={item.asset_id}
-                className={`relative rounded-2xl p-4 border shadow-sm flex flex-col items-center text-center gap-2 transition-colors ${
-                  isChecked ? "bg-emerald-50 border-emerald-200" : "bg-white border-slate-100"
+                className={`relative rounded-2xl p-4 border flex flex-col items-center text-center gap-2 transition-colors backdrop-blur-xl backdrop-saturate-150 shadow-glass-sm ${
+                  isChecked ? "bg-emerald-100/60 border-emerald-200/70" : "bg-white/70 border-white/60"
                 }`}
               >
                 <button
@@ -113,8 +113,8 @@ export default function EquipmentChecklistPage() {
                   className="flex flex-col items-center gap-2 w-full"
                 >
                   <div
-                    className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${
-                      isChecked ? "bg-emerald-500" : "bg-[#17203A]"
+                    className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors bg-gradient-to-br ${
+                      isChecked ? "from-emerald-400 to-emerald-600" : "from-brand-600 to-brand-800"
                     }`}
                   >
                     <Icon />

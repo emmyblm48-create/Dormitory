@@ -97,13 +97,13 @@ export function CrudTable({ title, table, idField, columns }: CrudTableProps) {
       <h2 className="text-lg md:text-xl font-bold text-slate-900">{title}</h2>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-2.5">
+        <div className="bg-red-50/80 backdrop-blur-md border border-red-200/60 text-red-600 text-sm rounded-xl px-4 py-2.5">
           {error}
         </div>
       )}
 
       {/* Add form */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex flex-col md:flex-row gap-3 md:items-end">
+      <div className="glass-card rounded-2xl p-4 flex flex-col md:flex-row gap-3 md:items-end">
         {columns.map((c) => (
           <div key={c.key} className="flex-1">
             <label className="text-xs font-medium text-slate-500 mb-1 block">{c.label}</label>
@@ -112,14 +112,14 @@ export function CrudTable({ title, table, idField, columns }: CrudTableProps) {
               step={c.type === "number" ? "0.01" : undefined}
               value={newValues[c.key] ?? ""}
               onChange={(e) => setNewValues((v) => ({ ...v, [c.key]: e.target.value }))}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="glass-input px-3 py-2 rounded-lg text-sm"
             />
           </div>
         ))}
         <button
           onClick={handleAdd}
           disabled={isSaving}
-          className="bg-[#3182F6] hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-1.5 shrink-0"
+          className="btn-primary px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-1.5 shrink-0"
         >
           <Plus size={16} /> เพิ่ม
         </button>
@@ -128,14 +128,14 @@ export function CrudTable({ title, table, idField, columns }: CrudTableProps) {
       {/* List */}
       {isLoading ? (
         <div className="flex justify-center py-10">
-          <Loader2 className="animate-spin text-slate-400" size={24} />
+          <Loader2 className="animate-spin text-brand-400" size={24} />
         </div>
       ) : rows.length === 0 ? (
-        <div className="text-center py-8 text-slate-400 text-sm bg-white rounded-2xl border border-slate-100">
+        <div className="text-center py-8 text-slate-400 text-sm glass-card rounded-2xl">
           ไม่มีข้อมูล
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-slate-100 divide-y divide-slate-100 overflow-hidden">
+        <div className="glass-card rounded-2xl divide-y divide-white/50 overflow-hidden">
           {rows.map((row) => {
             const isEditing = editingId === row[idField];
             return (
@@ -149,7 +149,7 @@ export function CrudTable({ title, table, idField, columns }: CrudTableProps) {
                           step={c.type === "number" ? "0.01" : undefined}
                           value={editValues[c.key] ?? ""}
                           onChange={(e) => setEditValues((v) => ({ ...v, [c.key]: e.target.value }))}
-                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="glass-input px-2.5 py-1.5 rounded-lg text-sm"
                         />
                       ) : (
                         <span className="text-sm text-slate-800">{String(row[c.key] ?? "-")}</span>
@@ -160,19 +160,19 @@ export function CrudTable({ title, table, idField, columns }: CrudTableProps) {
                 <div className="flex gap-2 shrink-0">
                   {isEditing ? (
                     <>
-                      <button onClick={saveEdit} disabled={isSaving} className="p-2 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100">
+                      <button onClick={saveEdit} disabled={isSaving} className="p-2 rounded-lg bg-emerald-100/70 text-emerald-600 hover:bg-emerald-100">
                         <Check size={16} />
                       </button>
-                      <button onClick={cancelEdit} className="p-2 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200">
+                      <button onClick={cancelEdit} className="p-2 rounded-lg bg-white/60 text-slate-500 hover:bg-white/90">
                         <X size={16} />
                       </button>
                     </>
                   ) : (
                     <>
-                      <button onClick={() => startEdit(row)} className="p-2 rounded-lg bg-blue-50 text-[#3182F6] hover:bg-blue-100">
+                      <button onClick={() => startEdit(row)} className="p-2 rounded-lg bg-brand-100/70 text-brand-600 hover:bg-brand-100">
                         <Pencil size={16} />
                       </button>
-                      <button onClick={() => handleDelete(row[idField])} className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-100">
+                      <button onClick={() => handleDelete(row[idField])} className="p-2 rounded-lg bg-red-100/70 text-red-500 hover:bg-red-100">
                         <Trash2 size={16} />
                       </button>
                     </>

@@ -30,15 +30,17 @@ export function AdminNav() {
   return (
     <>
       {/* Desktop sidebar */}
-      <nav className="hidden md:flex md:order-first md:flex-col md:w-56 md:shrink-0 md:overflow-y-auto border-r border-slate-200 bg-white py-4 gap-1">
+      <nav className="hidden md:flex md:order-first md:flex-col md:w-60 md:shrink-0 md:overflow-y-auto glass-nav border-r py-4 gap-1 px-3">
         {items.map(({ href, label, icon: Icon }) => {
           const active = href === "/admin" ? pathname === href : pathname.startsWith(href);
           return (
             <Link
               key={href}
               href={href}
-              className={`mx-3 flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                active ? "bg-blue-50 text-[#3182F6]" : "text-slate-500 hover:bg-slate-50"
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                active
+                  ? "bg-gradient-to-r from-brand-500 to-brand-600 text-white shadow-lg shadow-brand-600/25"
+                  : "text-slate-500 hover:bg-white/60"
               }`}
             >
               <Icon size={18} />
@@ -49,7 +51,7 @@ export function AdminNav() {
       </nav>
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden shrink-0 bg-white border-t border-slate-200 flex overflow-x-auto shadow-[0_-2px_8px_rgba(0,0,0,0.04)]">
+      <nav className="md:hidden shrink-0 glass-nav border-t flex overflow-x-auto">
         {items.map(({ href, label, icon: Icon }) => {
           const active = href === "/admin" ? pathname === href : pathname.startsWith(href);
           return (
@@ -57,7 +59,7 @@ export function AdminNav() {
               key={href}
               href={href}
               className={`flex-1 min-w-[64px] flex flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium transition-colors ${
-                active ? "text-[#3182F6]" : "text-slate-400"
+                active ? "text-brand-600" : "text-slate-400"
               }`}
             >
               <Icon size={20} />

@@ -30,7 +30,7 @@ export default function UserRequestsPage() {
       <div className="flex items-center justify-between">
         <h3 className="text-base md:text-lg font-bold text-slate-900">ประวัติการแจ้งซ่อม</h3>
         <div className="flex items-center gap-2">
-          <span className="text-xs bg-red-100 text-red-600 px-2.5 py-1 rounded-full font-semibold">
+          <span className="text-xs bg-red-100/80 backdrop-blur-md text-red-600 px-2.5 py-1 rounded-full font-semibold">
             {requests.length} รายการ
           </span>
           <button onClick={load} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg" title="รีเฟรช">
@@ -42,13 +42,13 @@ export default function UserRequestsPage() {
       {isLoading ? (
         <div className="text-center py-8 text-slate-400 text-xs">กำลังโหลดข้อมูล...</div>
       ) : requests.length === 0 ? (
-        <div className="text-center py-8 text-slate-400 text-xs bg-white rounded-2xl border border-slate-100">
+        <div className="text-center py-8 text-slate-400 text-xs glass-card rounded-2xl">
           ไม่มีรายการแจ้งซ่อม
         </div>
       ) : (
         <div className="space-y-3">
           {requests.map((item) => (
-            <div key={item.maintenance_request_id} className="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 flex items-center gap-3.5 hover:shadow-md transition-shadow">
+            <div key={item.maintenance_request_id} className="glass-card rounded-2xl p-3.5 flex items-center gap-3.5 hover:bg-white/85 transition-colors">
               <AssetAvatar imageUrl={item.image_path || item.product_image} name={item.product_name} />
               <div className="flex-1 min-w-0">
                 <h4 className="font-bold text-slate-900 text-base md:text-lg leading-tight truncate">

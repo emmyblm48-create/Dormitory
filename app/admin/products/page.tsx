@@ -163,10 +163,10 @@ export default function AdminProductsPage() {
       <h2 className="text-lg md:text-xl font-bold text-slate-900">จัดการครุภัณฑ์</h2>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-2.5">{error}</div>
+        <div className="bg-red-50/80 backdrop-blur-md border border-red-200/60 text-red-600 text-sm rounded-xl px-4 py-2.5">{error}</div>
       )}
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+      <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-4 space-y-3">
         <p className="text-sm font-bold text-slate-700">{editingId ? "แก้ไขครุภัณฑ์" : "เพิ่มครุภัณฑ์ใหม่"}</p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -175,7 +175,7 @@ export default function AdminProductsPage() {
             <input
               value={form.product_name}
               onChange={(e) => setForm((f) => ({ ...f, product_name: e.target.value }))}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="glass-input px-3 py-2 rounded-lg text-sm"
             />
           </div>
           <div>
@@ -183,7 +183,7 @@ export default function AdminProductsPage() {
             <select
               value={form.category_id}
               onChange={(e) => setForm((f) => ({ ...f, category_id: e.target.value }))}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="glass-input px-3 py-2 rounded-lg text-sm"
             >
               <option value="">-- เลือกหมวดหมู่ --</option>
               {categories.map((c) => (
@@ -199,7 +199,7 @@ export default function AdminProductsPage() {
               value={form.room_id}
               onChange={(e) => setForm((f) => ({ ...f, room_id: e.target.value }))}
               required
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="glass-input px-3 py-2 rounded-lg text-sm"
             >
               <option value="">-- เลือกห้องพัก --</option>
               {rooms.map((r) => (
@@ -215,7 +215,7 @@ export default function AdminProductsPage() {
               value={form.status_id}
               onChange={(e) => setForm((f) => ({ ...f, status_id: e.target.value }))}
               required
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="glass-input px-3 py-2 rounded-lg text-sm"
             >
               <option value="">-- เลือกสถานะ --</option>
               {statuses.map((s) => (
@@ -231,7 +231,7 @@ export default function AdminProductsPage() {
               type="date"
               value={form.date_recieved}
               onChange={(e) => setForm((f) => ({ ...f, date_recieved: e.target.value }))}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="glass-input px-3 py-2 rounded-lg text-sm"
             />
           </div>
         </div>
@@ -252,13 +252,13 @@ export default function AdminProductsPage() {
           <button
             type="submit"
             disabled={isSaving}
-            className="bg-[#3182F6] hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg text-sm flex items-center gap-1.5"
+            className="btn-primary px-4 py-2 rounded-lg text-sm flex items-center gap-1.5"
           >
             {editingId ? <Check size={16} /> : <Plus size={16} />}
             {editingId ? "บันทึกการแก้ไข" : "เพิ่มครุภัณฑ์"}
           </button>
           {editingId && (
-            <button type="button" onClick={resetForm} className="px-4 py-2 rounded-lg text-sm bg-slate-100 text-slate-500 hover:bg-slate-200">
+            <button type="button" onClick={resetForm} className="btn-ghost px-4 py-2 rounded-lg text-sm">
               ยกเลิก
             </button>
           )}
@@ -267,10 +267,10 @@ export default function AdminProductsPage() {
 
       {isLoading ? (
         <div className="flex justify-center py-10">
-          <Loader2 className="animate-spin text-slate-400" size={24} />
+          <Loader2 className="animate-spin text-brand-400" size={24} />
         </div>
       ) : products.length === 0 ? (
-        <div className="text-center py-8 text-slate-400 text-sm bg-white rounded-2xl border border-slate-100">
+        <div className="text-center py-8 text-slate-400 text-sm glass-card rounded-2xl">
           ยังไม่มีครุภัณฑ์
         </div>
       ) : (
@@ -278,7 +278,7 @@ export default function AdminProductsPage() {
           {products.map((p) => {
             const asset = roomAssets.find((a) => a.product_id === p.product_id);
             return (
-              <div key={p.product_id} className="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 flex items-center gap-3.5">
+              <div key={p.product_id} className="glass-card rounded-2xl p-3.5 flex items-center gap-3.5">
                 <AssetAvatar imageUrl={p.product_image} name={p.product_name} />
                 <div className="flex-1 min-w-0">
                   <h4 className="font-bold text-slate-900 truncate">{p.product_name}</h4>
@@ -287,10 +287,10 @@ export default function AdminProductsPage() {
                   </p>
                 </div>
                 <div className="flex gap-2 shrink-0">
-                  <button onClick={() => startEdit(p)} className="p-2 rounded-lg bg-blue-50 text-[#3182F6] hover:bg-blue-100">
+                  <button onClick={() => startEdit(p)} className="p-2 rounded-lg bg-brand-100/70 text-brand-600 hover:bg-brand-100">
                     <Pencil size={16} />
                   </button>
-                  <button onClick={() => handleDelete(p.product_id)} className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-100">
+                  <button onClick={() => handleDelete(p.product_id)} className="p-2 rounded-lg bg-red-100/70 text-red-500 hover:bg-red-100">
                     <Trash2 size={16} />
                   </button>
                 </div>

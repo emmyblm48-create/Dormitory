@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Prompt } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
+import { BackgroundBlobs } from "@/components/BackgroundBlobs";
 
 const prompt = Prompt({
   subsets: ["thai", "latin"],
@@ -28,7 +29,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="th" className={prompt.variable}>
-      <body>
+      <body className="relative min-h-dvh overflow-x-hidden">
+        <BackgroundBlobs />
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

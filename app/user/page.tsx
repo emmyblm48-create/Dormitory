@@ -40,21 +40,21 @@ export default function UserHomePage() {
       label: "เช็คอุปกรณ์",
       description: "ตรวจครุภัณฑ์ในห้อง",
       icon: ClipboardCheck,
-      color: "bg-[#3182F6]",
+      color: "from-brand-500 to-brand-700",
     },
     {
       href: "/user/report",
       label: "แจ้งซ่อม",
       description: "แจ้งครุภัณฑ์เสียหาย",
       icon: AlertCircle,
-      color: "bg-red-500",
+      color: "from-red-400 to-red-600",
     },
     {
       href: "/user/billing",
       label: "ค่าห้อง",
       description: "ชำระค่าห้องพัก",
       icon: Receipt,
-      color: "bg-amber-500",
+      color: "from-amber-400 to-amber-600",
       badge: unpaidBills,
     },
     {
@@ -62,7 +62,7 @@ export default function UserHomePage() {
       label: "ประวัติ",
       description: "ประวัติการแจ้งซ่อม",
       icon: ClipboardList,
-      color: "bg-emerald-500",
+      color: "from-emerald-400 to-emerald-600",
       badge: pendingRepairs,
     },
   ];
@@ -74,19 +74,19 @@ export default function UserHomePage() {
         <p className="text-sm text-slate-400">เลือกเมนูที่ต้องการใช้งาน</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4">
         {tiles.map(({ href, label, description, icon: Icon, color, badge }) => (
           <Link
             key={href}
             href={href}
-            className="relative bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col items-center text-center gap-2.5 hover:shadow-md transition-shadow"
+            className="relative glass-card rounded-2xl p-5 flex flex-col items-center text-center gap-2.5 hover:bg-white/85 hover:-translate-y-0.5 transition-all"
           >
             {!!badge && (
-              <span className="absolute top-3 right-3 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">
+              <span className="absolute top-3 right-3 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center shadow">
                 {badge}
               </span>
             )}
-            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-white ${color}`}>
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-white bg-gradient-to-br ${color} shadow-lg`}>
               <Icon size={30} />
             </div>
             <div>

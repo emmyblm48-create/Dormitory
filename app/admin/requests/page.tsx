@@ -48,7 +48,7 @@ export default function AdminRequestsPage() {
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="glass-input px-3 py-1.5 rounded-lg text-xs"
           >
             <option value="all">ทุกสถานะ</option>
             {statuses.map((s) => (
@@ -65,16 +65,16 @@ export default function AdminRequestsPage() {
 
       {isLoading ? (
         <div className="flex justify-center py-10">
-          <Loader2 className="animate-spin text-slate-400" size={24} />
+          <Loader2 className="animate-spin text-brand-400" size={24} />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-8 text-slate-400 text-sm bg-white rounded-2xl border border-slate-100">
+        <div className="text-center py-8 text-slate-400 text-sm glass-card rounded-2xl">
           ไม่มีรายการแจ้งซ่อม
         </div>
       ) : (
         <div className="space-y-3">
           {filtered.map((item) => (
-            <div key={item.maintenance_request_id} className="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 flex items-center gap-3.5">
+            <div key={item.maintenance_request_id} className="glass-card rounded-2xl p-3.5 flex items-center gap-3.5">
               <AssetAvatar imageUrl={item.image_path || item.product_image} name={item.product_name} />
               <div className="flex-1 min-w-0">
                 <h4 className="font-bold text-slate-900 truncate">{item.product_name}</h4>
@@ -86,7 +86,7 @@ export default function AdminRequestsPage() {
                 value={item.status ?? ""}
                 disabled={updatingId === item.maintenance_request_id}
                 onChange={(e) => updateStatus(item.maintenance_request_id, e.target.value)}
-                className="shrink-0 px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="glass-input shrink-0 px-2.5 py-1.5 rounded-lg text-xs"
               >
                 {statuses.map((s) => (
                   <option key={s.status_id} value={s.status_name}>

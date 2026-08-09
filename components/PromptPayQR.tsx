@@ -35,15 +35,15 @@ export function PromptPayQR({ promptpayId, amount }: PromptPayQRProps) {
 
   if (!dataUrl) {
     return (
-      <div className="w-[220px] h-[220px] flex items-center justify-center bg-slate-50 rounded-xl border border-slate-200">
-        <Loader2 className="animate-spin text-slate-300" size={28} />
+      <div className="w-[220px] h-[220px] flex items-center justify-center glass-panel rounded-xl">
+        <Loader2 className="animate-spin text-brand-300" size={28} />
       </div>
     );
   }
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+      <div className="bg-white p-3 rounded-xl border border-white/70 shadow-glass-sm">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={dataUrl} alt="PromptPay QR" width={220} height={220} />
       </div>
