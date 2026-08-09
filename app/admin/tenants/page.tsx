@@ -40,6 +40,8 @@ export default function AdminTenantsPage() {
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newUserName, setNewUserName] = useState("");
+  const [newFloor, setNewFloor] = useState("");
+  const [newRentPrice, setNewRentPrice] = useState("");
   const [newRole, setNewRole] = useState("user");
   const [selectedEquipment, setSelectedEquipment] = useState<Set<string>>(
     () => new Set(DEFAULT_EQUIPMENT.map((i) => i.name))
@@ -70,6 +72,24 @@ export default function AdminTenantsPage() {
       else next.add(name);
       return next;
     });
+  };
+
+  const resolveOrCreateRoom = async (): Promise<{ room: Room | null; created: boolean; error: string | null }> => {
+    const roomNumber = newUserName.trim();
+    const existing = rooms.find((r) => r.room_number.toLowerCase() === roomNumber.toLowerCase());
+    if (existing) return { room: existing, created: false, error: null };
+
+    const { data, error } = await supabase
+      .from("rooms")
+      .insert({
+        room_number: roomNumber,
+        floor: newFloor.trim() || null,
+        rent_price: Number(newRentPrice || 0),
+      })
+      .select()
+      .single();
+    if (error || !data) return { room: null, created: false, error: error?.message ?? "สร้างห้องไม่สำเร็จ" };
+    return { room: data as Room, created: true, error: null };
   };
 
   const addRoomEquipment = async (roomId: number) => {
@@ -142,6 +162,20 @@ export default function AdminTenantsPage() {
     if (!newEmail || !newPassword || !newUserName) return;
     setIsCreating(true);
 
+    let roomResult: { room: Room | null; created: boolean; error: string | null } = {
+      room: null,
+      created: false,
+      error: null,
+    };
+    if (newRole === "user") {
+      roomResult = await resolveOrCreateRoom();
+      if (roomResult.error) {
+        setError(`สร้างห้องไม่สำเร็จ: ${roomResult.error}`);
+        setIsCreating(false);
+        return;
+      }
+    }
+
     const { data: sessionData } = await supabase.auth.getSession();
     const accessToken = sessionData.session?.access_token;
     if (!accessToken) {
@@ -164,15 +198,13 @@ export default function AdminTenantsPage() {
     }
 
     let successMessage = `สร้างบัญชีสำหรับ ${newEmail} สำเร็จ`;
-    if (newRole === "user") {
-      const matchedRoom = rooms.find((r) => r.room_number.toLowerCase() === newUserName.trim().toLowerCase());
-      if (matchedRoom) {
-        const { added, error: equipmentError } = await addRoomEquipment(matchedRoom.room_id);
-        if (equipmentError) {
-          successMessage += ` (เพิ่มครุภัณฑ์ไม่สำเร็จ: ${equipmentError})`;
-        } else if (added > 0) {
-          successMessage += ` พร้อมเพิ่มครุภัณฑ์ ${added} รายการในห้อง`;
-        }
+    if (roomResult.created) successMessage += ` พร้อมสร้างห้อง ${newUserName.trim()} ใหม่`;
+    if (roomResult.room) {
+      const { added, error: equipmentError } = await addRoomEquipment(roomResult.room.room_id);
+      if (equipmentError) {
+        successMessage += ` (เพิ่มครุภัณฑ์ไม่สำเร็จ: ${equipmentError})`;
+      } else if (added > 0) {
+        successMessage += ` พร้อมเพิ่มครุภัณฑ์ ${added} รายการในห้อง`;
       }
     }
 
@@ -180,6 +212,8 @@ export default function AdminTenantsPage() {
     setNewEmail("");
     setNewPassword("");
     setNewUserName("");
+    setNewFloor("");
+    setNewRentPrice("");
     setNewRole("user");
     setSelectedEquipment(new Set(DEFAULT_EQUIPMENT.map((i) => i.name)));
     setCustomEquipment("");
@@ -224,7 +258,7 @@ export default function AdminTenantsPage() {
               value={newUserName}
               onChange={(e) => setNewUserName(e.target.value)}
               required
-              placeholder="เช่น a101"
+              placeholder="เช่น A101"
               className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <datalist id="room-list">
@@ -232,7 +266,11 @@ export default function AdminTenantsPage() {
                 <option key={r.room_id} value={r.room_number} />
               ))}
             </datalist>
-            <p className="text-[10px] text-slate-400 mt-1">ต้องตรงกับเลขห้อง (room_number) เพื่อให้ระบบจับคู่ห้องอัตโนมัติ</p>
+            <p className="text-[10px] text-slate-400 mt-1">
+              {rooms.some((r) => r.room_number.toLowerCase() === newUserName.trim().toLowerCase()) && newUserName.trim()
+                ? "ห้องนี้มีอยู่แล้ว จะใช้ข้อมูลห้องเดิม"
+                : "ถ้ายังไม่มีห้องนี้ในระบบ จะสร้างห้องใหม่ให้อัตโนมัติ"}
+            </p>
           </div>
           <div>
             <label className="text-xs font-medium text-slate-500 mb-1 block">บทบาท</label>
@@ -245,6 +283,30 @@ export default function AdminTenantsPage() {
               <option value="admin">ผู้ดูแลระบบ (admin)</option>
             </select>
           </div>
+          {newRole === "user" &&
+            !rooms.some((r) => r.room_number.toLowerCase() === newUserName.trim().toLowerCase()) && (
+              <>
+                <div>
+                  <label className="text-xs font-medium text-slate-500 mb-1 block">ชั้น (ห้องใหม่)</label>
+                  <input
+                    value={newFloor}
+                    onChange={(e) => setNewFloor(e.target.value)}
+                    placeholder="เช่น A1"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-500 mb-1 block">ค่าห้อง/เดือน (ห้องใหม่)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={newRentPrice}
+                    onChange={(e) => setNewRentPrice(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </>
+            )}
         </div>
 
         {newRole === "user" && (
