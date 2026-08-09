@@ -1,16 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { ImageUpload } from "@/components/ImageUpload";
 import type { ViewRoomAsset } from "@/lib/types";
 
 export default function ReportDamagePage() {
+  return (
+    <Suspense fallback={<div className="text-center py-10 text-slate-400 text-xs">กำลังโหลดข้อมูล...</div>}>
+      <ReportDamageForm />
+    </Suspense>
+  );
+}
+
+function ReportDamageForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [assets, setAssets] = useState<ViewRoomAsset[]>([]);
-  const [productId, setProductId] = useState<string>("");
+  const [productId, setProductId] = useState<string>(searchParams.get("productId") ?? "");
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [roomId, setRoomId] = useState<number | null>(null);

@@ -166,6 +166,8 @@ export default function UserBillingPage() {
                       pathPrefix={`room-${b.room_id}`}
                       value={slipDrafts[b.bill_id] ?? null}
                       onChange={(url) => setSlipDrafts((d) => ({ ...d, [b.bill_id]: url }))}
+                      cameraCapture={false}
+                      label="เลือกสลิปจากคลังภาพ"
                     />
                   </div>
                   <button

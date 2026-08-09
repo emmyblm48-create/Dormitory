@@ -9,9 +9,18 @@ interface ImageUploadProps {
   pathPrefix?: string;
   value?: string | null;
   onChange: (publicUrl: string | null) => void;
+  cameraCapture?: boolean;
+  label?: string;
 }
 
-export function ImageUpload({ bucket, pathPrefix = "", value, onChange }: ImageUploadProps) {
+export function ImageUpload({
+  bucket,
+  pathPrefix = "",
+  value,
+  onChange,
+  cameraCapture = true,
+  label = "แตะเพื่อถ่ายรูป / เลือกรูปภาพ",
+}: ImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(value ?? null);
   const [isUploading, setIsUploading] = useState(false);
@@ -52,7 +61,7 @@ export function ImageUpload({ bucket, pathPrefix = "", value, onChange }: ImageU
         ref={inputRef}
         type="file"
         accept="image/*"
-        capture="environment"
+        {...(cameraCapture ? { capture: "environment" as const } : {})}
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];
@@ -86,7 +95,7 @@ export function ImageUpload({ bucket, pathPrefix = "", value, onChange }: ImageU
           className="w-full aspect-video rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 flex flex-col items-center justify-center gap-2 text-slate-400 transition-colors"
         >
           <Camera size={28} />
-          <span className="text-sm font-medium">แตะเพื่อถ่ายรูป / เลือกรูปภาพ</span>
+          <span className="text-sm font-medium">{label}</span>
         </button>
       )}
 

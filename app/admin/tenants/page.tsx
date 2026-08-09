@@ -3,11 +3,34 @@
 import { useEffect, useState } from "react";
 import { Pencil, Check, X, Loader2, UserPlus } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import type { Room, UserProfile } from "@/lib/types";
+import type { Category, Room, Status, UserProfile } from "@/lib/types";
+
+interface DefaultEquipmentItem {
+  name: string;
+  category: string;
+}
+
+const DEFAULT_EQUIPMENT: DefaultEquipmentItem[] = [
+  { name: "เตียงนอน", category: "อุปกรณ์ทั่วไป" },
+  { name: "ตู้เสื้อผ้า", category: "อุปกรณ์ทั่วไป" },
+  { name: "โต๊ะทำงาน", category: "อุปกรณ์ทั่วไป" },
+  { name: "เก้าอี้", category: "อุปกรณ์ทั่วไป" },
+  { name: "ชั้นวางของ", category: "อุปกรณ์ทั่วไป" },
+  { name: "ผ้าม่าน", category: "อุปกรณ์ทั่วไป" },
+  { name: "ชักโครก", category: "อุปกรณ์ทั่วไป" },
+  { name: "อ่างล้างหน้า", category: "อุปกรณ์ทั่วไป" },
+  { name: "ที่ฉีดชำระ", category: "อุปกรณ์ทั่วไป" },
+  { name: "พัดลม", category: "อุปกรณ์ไฟฟ้า" },
+  { name: "เครื่องปรับอากาศ", category: "อุปกรณ์ไฟฟ้า" },
+  { name: "เครื่องทำน้ำอุ่น", category: "อุปกรณ์ไฟฟ้า" },
+  { name: "คัดเอาท์ไฟ", category: "อุปกรณ์ไฟฟ้า" },
+];
 
 export default function AdminTenantsPage() {
   const [tenants, setTenants] = useState<UserProfile[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [statuses, setStatuses] = useState<Status[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -18,18 +41,74 @@ export default function AdminTenantsPage() {
   const [newPassword, setNewPassword] = useState("");
   const [newUserName, setNewUserName] = useState("");
   const [newRole, setNewRole] = useState("user");
+  const [selectedEquipment, setSelectedEquipment] = useState<Set<string>>(
+    () => new Set(DEFAULT_EQUIPMENT.map((i) => i.name))
+  );
+  const [customEquipment, setCustomEquipment] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [createSuccess, setCreateSuccess] = useState<string | null>(null);
 
   const load = async () => {
     setIsLoading(true);
-    const [t, r] = await Promise.all([
+    const [t, r, c, s] = await Promise.all([
       supabase.from("user_extra").select("*").order("role"),
       supabase.from("rooms").select("*").order("room_number"),
+      supabase.from("categories").select("*"),
+      supabase.from("status").select("*").order("status_id"),
     ]);
     if (t.data) setTenants(t.data as UserProfile[]);
     if (r.data) setRooms(r.data as Room[]);
+    if (c.data) setCategories(c.data as Category[]);
+    if (s.data) setStatuses(s.data as Status[]);
     setIsLoading(false);
+  };
+
+  const toggleEquipment = (name: string) => {
+    setSelectedEquipment((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  };
+
+  const addRoomEquipment = async (roomId: number) => {
+    const customNames = customEquipment
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const itemNames = [...DEFAULT_EQUIPMENT.filter((i) => selectedEquipment.has(i.name)).map((i) => i.name), ...customNames];
+    if (itemNames.length === 0) return { added: 0, error: null as string | null };
+
+    const defaultStatusId =
+      statuses.find((s) => s.status_name === "สถานะปกติ")?.status_id ?? statuses[0]?.status_id;
+    const today = new Date().toISOString().slice(0, 10);
+
+    const productRows = itemNames.map((name) => {
+      const preset = DEFAULT_EQUIPMENT.find((i) => i.name === name);
+      const categoryId = preset ? categories.find((c) => c.category_name === preset.category)?.category_id ?? null : null;
+      return {
+        product_name: name,
+        category_id: categoryId,
+        room_id: roomId,
+        status_id: defaultStatusId ?? null,
+        date_recieved: today,
+      };
+    });
+
+    const { data: newProducts, error: prodErr } = await supabase.from("products").insert(productRows).select();
+    if (prodErr || !newProducts) return { added: 0, error: prodErr?.message ?? "เพิ่มครุภัณฑ์ไม่สำเร็จ" };
+
+    const assetRows = newProducts.map((p) => ({
+      product_id: p.product_id,
+      room_id: roomId,
+      status_id: defaultStatusId ?? null,
+      date_add: today,
+    }));
+    const { error: assetErr } = await supabase.from("room_asset").insert(assetRows);
+    if (assetErr) return { added: 0, error: assetErr.message };
+
+    return { added: newProducts.length, error: null as string | null };
   };
 
   useEffect(() => {
@@ -84,11 +163,26 @@ export default function AdminTenantsPage() {
       return;
     }
 
-    setCreateSuccess(`สร้างบัญชีสำหรับ ${newEmail} สำเร็จ`);
+    let successMessage = `สร้างบัญชีสำหรับ ${newEmail} สำเร็จ`;
+    if (newRole === "user") {
+      const matchedRoom = rooms.find((r) => r.room_number.toLowerCase() === newUserName.trim().toLowerCase());
+      if (matchedRoom) {
+        const { added, error: equipmentError } = await addRoomEquipment(matchedRoom.room_id);
+        if (equipmentError) {
+          successMessage += ` (เพิ่มครุภัณฑ์ไม่สำเร็จ: ${equipmentError})`;
+        } else if (added > 0) {
+          successMessage += ` พร้อมเพิ่มครุภัณฑ์ ${added} รายการในห้อง`;
+        }
+      }
+    }
+
+    setCreateSuccess(successMessage);
     setNewEmail("");
     setNewPassword("");
     setNewUserName("");
     setNewRole("user");
+    setSelectedEquipment(new Set(DEFAULT_EQUIPMENT.map((i) => i.name)));
+    setCustomEquipment("");
     load();
   };
 
@@ -152,6 +246,37 @@ export default function AdminTenantsPage() {
             </select>
           </div>
         </div>
+
+        {newRole === "user" && (
+          <div className="pt-1 border-t border-slate-100">
+            <p className="text-xs font-medium text-slate-500 mt-3 mb-2">
+              ครุภัณฑ์ประจำห้อง (เลือกรายการที่จะเพิ่มให้ห้องนี้อัตโนมัติ)
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-x-3 gap-y-1.5">
+              {DEFAULT_EQUIPMENT.map((item) => (
+                <label key={item.name} className="flex items-center gap-2 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={selectedEquipment.has(item.name)}
+                    onChange={() => toggleEquipment(item.name)}
+                    className="rounded border-slate-300 text-[#3182F6] focus:ring-[#3182F6]"
+                  />
+                  {item.name}
+                </label>
+              ))}
+            </div>
+            <div className="mt-2">
+              <label className="text-xs font-medium text-slate-500 mb-1 block">รายการเพิ่มเติม (คั่นด้วย ,)</label>
+              <input
+                value={customEquipment}
+                onChange={(e) => setCustomEquipment(e.target.value)}
+                placeholder="เช่น กระจกเงา, ราวตากผ้า"
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+        )}
+
         <button
           type="submit"
           disabled={isCreating}

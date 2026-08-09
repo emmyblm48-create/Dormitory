@@ -1,70 +1,101 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { RefreshCw } from "lucide-react";
+import Link from "next/link";
+import { ClipboardCheck, AlertCircle, Receipt, ClipboardList, type LucideIcon } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { formatFullDate } from "@/lib/format";
-import { AssetAvatar } from "@/components/AssetAvatar";
-import type { ViewRoomAsset } from "@/lib/types";
+import { useAuth } from "@/lib/auth-context";
 
-export default function UserDashboardPage() {
-  const [assets, setAssets] = useState<ViewRoomAsset[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+interface MenuTile {
+  href: string;
+  label: string;
+  description: string;
+  icon: LucideIcon;
+  color: string;
+  badge?: number;
+}
 
-  const load = async () => {
-    setIsLoading(true);
-    const { data, error } = await supabase
-      .from("view_room_asset")
-      .select("*")
-      .order("asset_id", { ascending: false });
-    if (!error && data) setAssets(data as ViewRoomAsset[]);
-    setIsLoading(false);
-  };
+export default function UserHomePage() {
+  const { profile } = useAuth();
+  const [pendingRepairs, setPendingRepairs] = useState(0);
+  const [unpaidBills, setUnpaidBills] = useState(0);
 
   useEffect(() => {
-    load();
+    (async () => {
+      const [repairs, bills] = await Promise.all([
+        supabase
+          .from("maintenance_request")
+          .select("*", { count: "exact", head: true })
+          .neq("status", "สถานะเสร็จสมบรูณ์"),
+        supabase.from("view_room_bills").select("*", { count: "exact", head: true }).neq("status", "paid"),
+      ]);
+      setPendingRepairs(repairs.count ?? 0);
+      setUnpaidBills(bills.count ?? 0);
+    })();
   }, []);
 
+  const tiles: MenuTile[] = [
+    {
+      href: "/user/checklist",
+      label: "เช็คอุปกรณ์",
+      description: "ตรวจครุภัณฑ์ในห้อง",
+      icon: ClipboardCheck,
+      color: "bg-[#3182F6]",
+    },
+    {
+      href: "/user/report",
+      label: "แจ้งซ่อม",
+      description: "แจ้งครุภัณฑ์เสียหาย",
+      icon: AlertCircle,
+      color: "bg-red-500",
+    },
+    {
+      href: "/user/billing",
+      label: "ค่าห้อง",
+      description: "ชำระค่าห้องพัก",
+      icon: Receipt,
+      color: "bg-amber-500",
+      badge: unpaidBills,
+    },
+    {
+      href: "/user/requests",
+      label: "ประวัติ",
+      description: "ประวัติการแจ้งซ่อม",
+      icon: ClipboardList,
+      color: "bg-emerald-500",
+      badge: pendingRepairs,
+    },
+  ];
+
   return (
-    <div className="p-4 md:p-8 space-y-4 max-w-3xl mx-auto w-full">
-      <div className="flex items-center justify-between">
-        <h3 className="text-base md:text-lg font-bold text-slate-900">ครุภัณฑ์ในห้องพัก</h3>
-        <div className="flex items-center gap-2">
-          <span className="text-xs bg-blue-100 text-[#3182F6] px-2.5 py-1 rounded-full font-semibold">
-            {assets.length} รายการ
-          </span>
-          <button onClick={load} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg" title="รีเฟรช">
-            <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
-          </button>
-        </div>
+    <div className="p-4 md:p-8 max-w-3xl mx-auto w-full">
+      <div className="mb-6">
+        <h3 className="text-lg font-bold text-slate-900">สวัสดี ห้อง {profile?.userName}</h3>
+        <p className="text-sm text-slate-400">เลือกเมนูที่ต้องการใช้งาน</p>
       </div>
 
-      {isLoading ? (
-        <div className="text-center py-8 text-slate-400 text-xs">กำลังโหลดข้อมูล...</div>
-      ) : assets.length === 0 ? (
-        <div className="text-center py-8 text-slate-400 text-xs bg-white rounded-2xl border border-slate-100">
-          ไม่มีรายการครุภัณฑ์ในห้องพัก
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {assets.map((item) => (
-            <div key={item.asset_id} className="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 flex items-center gap-3.5 hover:shadow-md transition-shadow">
-              <AssetAvatar imageUrl={item.product_image} name={item.product_name} />
-              <div className="flex-1 min-w-0">
-                <h4 className="font-bold text-slate-900 text-base md:text-lg leading-tight truncate">
-                  {item.product_name}
-                </h4>
-                <p className="text-[#3182F6] font-medium text-xs my-0.5">
-                  {item.status_name || "สถานะปกติ"}
-                </p>
-                <p className="text-slate-400 text-[10px] md:text-xs font-mono">
-                  {formatFullDate(item.date_add)}
-                </p>
-              </div>
+      <div className="grid grid-cols-2 gap-4">
+        {tiles.map(({ href, label, description, icon: Icon, color, badge }) => (
+          <Link
+            key={href}
+            href={href}
+            className="relative bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col items-center text-center gap-2.5 hover:shadow-md transition-shadow"
+          >
+            {!!badge && (
+              <span className="absolute top-3 right-3 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">
+                {badge}
+              </span>
+            )}
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-white ${color}`}>
+              <Icon size={30} />
             </div>
-          ))}
-        </div>
-      )}
+            <div>
+              <p className="font-bold text-slate-900 text-sm">{label}</p>
+              <p className="text-[11px] text-slate-400">{description}</p>
+            </div>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }
