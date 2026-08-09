@@ -252,7 +252,7 @@ export default function AdminProductsPage() {
           <button
             type="submit"
             disabled={isSaving}
-            className="bg-[#0B57D0] hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg text-sm flex items-center gap-1.5"
+            className="bg-[#3182F6] hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg text-sm flex items-center gap-1.5"
           >
             {editingId ? <Check size={16} /> : <Plus size={16} />}
             {editingId ? "บันทึกการแก้ไข" : "เพิ่มครุภัณฑ์"}
@@ -287,7 +287,7 @@ export default function AdminProductsPage() {
                   </p>
                 </div>
                 <div className="flex gap-2 shrink-0">
-                  <button onClick={() => startEdit(p)} className="p-2 rounded-lg bg-blue-50 text-[#0B57D0] hover:bg-blue-100">
+                  <button onClick={() => startEdit(p)} className="p-2 rounded-lg bg-blue-50 text-[#3182F6] hover:bg-blue-100">
                     <Pencil size={16} />
                   </button>
                   <button onClick={() => handleDelete(p.product_id)} className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-100">

@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 export interface CrudColumn {
   key: string;
   label: string;
+  type?: "text" | "number";
 }
 
 interface CrudTableProps {
@@ -107,6 +108,8 @@ export function CrudTable({ title, table, idField, columns }: CrudTableProps) {
           <div key={c.key} className="flex-1">
             <label className="text-xs font-medium text-slate-500 mb-1 block">{c.label}</label>
             <input
+              type={c.type === "number" ? "number" : "text"}
+              step={c.type === "number" ? "0.01" : undefined}
               value={newValues[c.key] ?? ""}
               onChange={(e) => setNewValues((v) => ({ ...v, [c.key]: e.target.value }))}
               className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -116,7 +119,7 @@ export function CrudTable({ title, table, idField, columns }: CrudTableProps) {
         <button
           onClick={handleAdd}
           disabled={isSaving}
-          className="bg-[#0B57D0] hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-1.5 shrink-0"
+          className="bg-[#3182F6] hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-1.5 shrink-0"
         >
           <Plus size={16} /> เพิ่ม
         </button>
@@ -142,6 +145,8 @@ export function CrudTable({ title, table, idField, columns }: CrudTableProps) {
                     <div key={c.key}>
                       {isEditing ? (
                         <input
+                          type={c.type === "number" ? "number" : "text"}
+                          step={c.type === "number" ? "0.01" : undefined}
                           value={editValues[c.key] ?? ""}
                           onChange={(e) => setEditValues((v) => ({ ...v, [c.key]: e.target.value }))}
                           className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -164,7 +169,7 @@ export function CrudTable({ title, table, idField, columns }: CrudTableProps) {
                     </>
                   ) : (
                     <>
-                      <button onClick={() => startEdit(row)} className="p-2 rounded-lg bg-blue-50 text-[#0B57D0] hover:bg-blue-100">
+                      <button onClick={() => startEdit(row)} className="p-2 rounded-lg bg-blue-50 text-[#3182F6] hover:bg-blue-100">
                         <Pencil size={16} />
                       </button>
                       <button onClick={() => handleDelete(row[idField])} className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-100">

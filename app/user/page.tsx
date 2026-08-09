@@ -30,7 +30,7 @@ export default function UserDashboardPage() {
       <div className="flex items-center justify-between">
         <h3 className="text-base md:text-lg font-bold text-slate-900">ครุภัณฑ์ในห้องพัก</h3>
         <div className="flex items-center gap-2">
-          <span className="text-xs bg-blue-100 text-[#0B57D0] px-2.5 py-1 rounded-full font-semibold">
+          <span className="text-xs bg-blue-100 text-[#3182F6] px-2.5 py-1 rounded-full font-semibold">
             {assets.length} รายการ
           </span>
           <button onClick={load} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg" title="รีเฟรช">
@@ -54,7 +54,7 @@ export default function UserDashboardPage() {
                 <h4 className="font-bold text-slate-900 text-base md:text-lg leading-tight truncate">
                   {item.product_name}
                 </h4>
-                <p className="text-[#0B57D0] font-medium text-xs my-0.5">
+                <p className="text-[#3182F6] font-medium text-xs my-0.5">
                   {item.status_name || "สถานะปกติ"}
                 </p>
                 <p className="text-slate-400 text-[10px] md:text-xs font-mono">

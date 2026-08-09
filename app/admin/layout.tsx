@@ -29,15 +29,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (isLoading || !session || !profile || profile.role !== "admin") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-100">
-        <div className="w-8 h-8 border-4 border-[#0B3C7B] border-t-transparent rounded-full animate-spin"></div>
+      <div className="h-dvh flex items-center justify-center bg-slate-100">
+        <div className="w-8 h-8 border-4 border-[#17203A] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col">
-      <header className="bg-[#0B3C7B] text-white px-6 py-4 flex justify-between items-center shadow-md sticky top-0 z-30">
+    <div className="h-dvh bg-slate-100 flex flex-col overflow-hidden">
+      <header className="shrink-0 bg-[#17203A] text-white px-6 py-4 flex justify-between items-center shadow-md z-30">
         <h1 className="text-xl md:text-2xl font-bold">Dormitory Admin</h1>
         <button
           onClick={handleLogout}
@@ -49,7 +49,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </button>
       </header>
 
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
         <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
         <AdminNav />
       </div>

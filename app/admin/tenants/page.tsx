@@ -155,7 +155,7 @@ export default function AdminTenantsPage() {
         <button
           type="submit"
           disabled={isCreating}
-          className="bg-[#0B57D0] hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg text-sm flex items-center gap-1.5"
+          className="bg-[#3182F6] hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg text-sm flex items-center gap-1.5"
         >
           <UserPlus size={16} /> {isCreating ? "กำลังสร้าง..." : "สร้างบัญชี"}
         </button>
@@ -192,7 +192,7 @@ export default function AdminTenantsPage() {
                       <option value="admin">admin</option>
                     </select>
                   ) : (
-                    <span className={`text-xs font-semibold px-2 py-1 rounded-full w-fit ${t.role === "admin" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-[#0B57D0]"}`}>
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-full w-fit ${t.role === "admin" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-[#3182F6]"}`}>
                       {t.role}
                     </span>
                   )}
@@ -208,7 +208,7 @@ export default function AdminTenantsPage() {
                       </button>
                     </>
                   ) : (
-                    <button onClick={() => startEdit(t)} className="p-2 rounded-lg bg-blue-50 text-[#0B57D0] hover:bg-blue-100">
+                    <button onClick={() => startEdit(t)} className="p-2 rounded-lg bg-blue-50 text-[#3182F6] hover:bg-blue-100">
                       <Pencil size={16} />
                     </button>
                   )}

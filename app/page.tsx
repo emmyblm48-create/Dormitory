@@ -33,21 +33,21 @@ export default function LoginPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-100">
-        <div className="w-8 h-8 border-4 border-[#0B3C7B] border-t-transparent rounded-full animate-spin"></div>
+      <div className="h-dvh flex items-center justify-center bg-slate-100">
+        <div className="w-8 h-8 border-4 border-[#17203A] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   if (session && !profile) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-100 gap-4 px-6 text-center">
+      <div className="h-dvh flex flex-col items-center justify-center bg-slate-100 gap-4 px-6 text-center">
         <p className="text-slate-600 text-sm max-w-xs">
           ไม่พบข้อมูลผู้ใช้สำหรับบัญชีนี้ กรุณาติดต่อผู้ดูแลระบบ
         </p>
         <button
           onClick={() => supabase.auth.signOut()}
-          className="bg-[#0B57D0] hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg text-sm"
+          className="bg-[#3182F6] hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg text-sm"
         >
           ออกจากระบบ
         </button>
@@ -56,12 +56,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-200/80 flex justify-center items-center p-0 md:p-6">
-      <div className="w-full max-w-5xl min-h-screen md:min-h-[850px] bg-[#EEF2F6] md:rounded-[28px] shadow-2xl relative flex flex-col overflow-hidden border border-slate-300">
-        <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12">
+    <div className="h-dvh bg-slate-200/80 flex justify-center items-center p-0 md:p-6">
+      <div className="w-full max-w-5xl h-dvh md:h-[850px] bg-[#F2F4F7] md:rounded-[28px] shadow-2xl relative flex flex-col overflow-hidden border border-slate-300">
+        <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 overflow-y-auto">
           <div className="w-full max-w-sm flex flex-col items-center text-center">
             <DormitoryLogo className="w-32 h-32 md:w-40 md:h-40 mb-2" />
-            <h1 className="text-3xl font-extrabold text-[#0B3C7B] tracking-wider mb-6">DORMITORY</h1>
+            <h1 className="text-3xl font-extrabold text-[#17203A] tracking-wider mb-6">DORMITORY</h1>
 
             <h2 className="text-2xl font-bold text-slate-900 mb-1">WELCOME</h2>
             <p className="text-slate-600 text-sm mb-6 font-medium">กรุณาเข้าสู่ระบบด้วยบัญชีห้องของท่าน</p>
@@ -101,7 +101,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-[#1877F2] hover:bg-blue-600 text-white font-semibold py-3.5 rounded-xl shadow-md transition-colors text-base mt-2 disabled:opacity-60"
+                className="w-full bg-[#3182F6] hover:bg-blue-600 text-white font-semibold py-3.5 rounded-xl shadow-md transition-colors text-base mt-2 disabled:opacity-60"
               >
                 {isSubmitting ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
               </button>

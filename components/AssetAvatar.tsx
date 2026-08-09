@@ -25,7 +25,7 @@ export const AssetAvatar = ({ imageUrl, name }: { imageUrl?: string | null; name
   }
 
   return (
-    <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-[#0B3C7B] flex items-center justify-center shrink-0">
+    <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-[#17203A] flex items-center justify-center shrink-0">
       <IconComponent />
     </div>
   );

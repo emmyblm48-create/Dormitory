@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DoorOpen, Package, Wrench, Users } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -16,19 +16,33 @@ interface RepairStat {
   total_repairs: number;
 }
 
+interface MonthlyStat {
+  report_year: number;
+  report_month: number;
+  total_repairs: number;
+}
+
+const MONTH_LABELS = [
+  "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
+  "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค.",
+];
+
 export default function AdminOverviewPage() {
   const [stats, setStats] = useState<Stats>({ rooms: 0, products: 0, pendingRequests: 0, tenants: 0 });
   const [topRepairs, setTopRepairs] = useState<RepairStat[]>([]);
+  const [monthlyStats, setMonthlyStats] = useState<MonthlyStat[]>([]);
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
-      const [rooms, products, pending, tenants, repairStats] = await Promise.all([
+      const [rooms, products, pending, tenants, repairStats, monthly] = await Promise.all([
         supabase.from("rooms").select("*", { count: "exact", head: true }),
         supabase.from("products").select("*", { count: "exact", head: true }),
         supabase.from("maintenance_request").select("*", { count: "exact", head: true }).eq("status", "สถานะแจ้งซ่อม"),
         supabase.from("user_extra").select("*", { count: "exact", head: true }).eq("role", "user"),
         supabase.from("view_repair_stats").select("*").order("total_repairs", { ascending: false }).limit(5),
+        supabase.from("view_repair_monthly_stats").select("*"),
       ]);
       setStats({
         rooms: rooms.count ?? 0,
@@ -37,12 +51,31 @@ export default function AdminOverviewPage() {
         tenants: tenants.count ?? 0,
       });
       if (repairStats.data) setTopRepairs(repairStats.data as RepairStat[]);
+      if (monthly.data) {
+        const data = monthly.data as MonthlyStat[];
+        setMonthlyStats(data);
+        if (data.length > 0) setSelectedYear(Math.max(...data.map((d) => d.report_year)));
+      }
       setIsLoading(false);
     })();
   }, []);
 
+  const availableYears = useMemo(() => {
+    const years = Array.from(new Set(monthlyStats.map((d) => d.report_year))).sort((a, b) => b - a);
+    return years.length > 0 ? years : [new Date().getFullYear()];
+  }, [monthlyStats]);
+
+  const yearData = useMemo(() => {
+    const byMonth = new Map(
+      monthlyStats.filter((d) => d.report_year === selectedYear).map((d) => [d.report_month, d.total_repairs])
+    );
+    return MONTH_LABELS.map((label, i) => ({ label, total: byMonth.get(i + 1) ?? 0 }));
+  }, [monthlyStats, selectedYear]);
+
+  const maxMonthly = Math.max(1, ...yearData.map((d) => d.total));
+
   const cards = [
-    { label: "ห้องพักทั้งหมด", value: stats.rooms, icon: DoorOpen, color: "bg-blue-50 text-[#0B57D0]" },
+    { label: "ห้องพักทั้งหมด", value: stats.rooms, icon: DoorOpen, color: "bg-blue-50 text-[#3182F6]" },
     { label: "ครุภัณฑ์ทั้งหมด", value: stats.products, icon: Package, color: "bg-emerald-50 text-emerald-600" },
     { label: "รอดำเนินการซ่อม", value: stats.pendingRequests, icon: Wrench, color: "bg-red-50 text-red-500" },
     { label: "ผู้เช่าทั้งหมด", value: stats.tenants, icon: Users, color: "bg-amber-50 text-amber-600" },
@@ -62,6 +95,42 @@ export default function AdminOverviewPage() {
             <p className="text-xs text-slate-400 font-medium">{label}</p>
           </div>
         ))}
+      </div>
+
+      <div className="bg-white rounded-2xl border border-slate-100 p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-bold text-slate-900">สถิติการแจ้งซ่อมรายเดือน</h3>
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(Number(e.target.value))}
+            className="px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {availableYears.map((y) => (
+              <option key={y} value={y}>
+                ปี {y + 543}
+              </option>
+            ))}
+          </select>
+        </div>
+        {isLoading ? (
+          <div className="text-center py-6 text-slate-400 text-xs">กำลังโหลดข้อมูล...</div>
+        ) : yearData.every((d) => d.total === 0) ? (
+          <div className="text-center py-6 text-slate-400 text-xs">ยังไม่มีข้อมูลในปีนี้</div>
+        ) : (
+          <div className="flex items-end justify-between gap-1.5 h-40">
+            {yearData.map((d) => (
+              <div key={d.label} className="flex-1 flex flex-col items-center justify-end gap-1.5 h-full">
+                <span className="text-[10px] font-semibold text-slate-500">{d.total > 0 ? d.total : ""}</span>
+                <div
+                  className="w-full max-w-[22px] bg-[#3182F6] rounded-t-md transition-all"
+                  style={{ height: `${Math.max(4, (d.total / maxMonthly) * 100)}%` }}
+                  title={`${d.label}: ${d.total} ครั้ง`}
+                />
+                <span className="text-[10px] text-slate-400">{d.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div>

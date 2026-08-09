@@ -2,6 +2,7 @@ export interface Room {
   room_id: number;
   room_number: string;
   floor: string | null;
+  rent_price: number;
 }
 
 export interface Category {
@@ -70,4 +71,40 @@ export interface ViewHomeUser {
   image_path: string | null;
   room_number: string;
   room_id: number;
+}
+
+export interface BillingSettings {
+  id: number;
+  water_price: number;
+  electricity_unit_price: number;
+  late_fee_per_day: number;
+  promptpay_id: string;
+  updated_at: string;
+}
+
+export type BillStatus = "pending" | "submitted" | "paid";
+
+export interface RoomBill {
+  bill_id: number;
+  room_id: number;
+  billing_month: string;
+  rent_amount: number;
+  water_amount: number;
+  electricity_prev_reading: number;
+  electricity_curr_reading: number;
+  electricity_unit_price: number;
+  electricity_amount: number;
+  due_date: string;
+  status: BillStatus;
+  slip_image: string | null;
+  submitted_at: string | null;
+  paid_at: string | null;
+  created_at: string;
+}
+
+// Row shape returned by the `view_room_bills` view
+export interface ViewRoomBill extends RoomBill {
+  room_number: string;
+  late_fee: number;
+  grand_total: number;
 }
