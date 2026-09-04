@@ -17,7 +17,12 @@ export const formatFullDate = (dateStr?: string | null) => {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.000`;
 };
 
-export const formatImageUrl = (url?: string | null, bucket: string = BUCKET_NAME) => {
+export const formatCurrency = (value?: number | null) => {
+  const amount = Number(value ?? 0);
+  return `${amount.toLocaleString("th-TH", { minimumFractionDigits: 0, maximumFractionDigits: 2 })} บาท`;
+};
+
+export const formatImageUrl =(url?: string | null, bucket: string = BUCKET_NAME) => {
   if (!url || url.trim() === "") return null;
 
   let cleanUrl = url.trim();

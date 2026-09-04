@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { DoorOpen, Package, Wrench, Users } from "lucide-react";
+import { DoorOpen, Package, Wrench, Users, Banknote } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { formatCurrency } from "@/lib/format";
+import type { RepairCostStat } from "@/lib/types";
 
 interface Stats {
   rooms: number;
@@ -31,18 +33,20 @@ export default function AdminOverviewPage() {
   const [stats, setStats] = useState<Stats>({ rooms: 0, products: 0, pendingRequests: 0, tenants: 0 });
   const [topRepairs, setTopRepairs] = useState<RepairStat[]>([]);
   const [monthlyStats, setMonthlyStats] = useState<MonthlyStat[]>([]);
+  const [costStats, setCostStats] = useState<RepairCostStat[]>([]);
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
-      const [rooms, products, pending, tenants, repairStats, monthly] = await Promise.all([
+      const [rooms, products, pending, tenants, repairStats, monthly, cost] = await Promise.all([
         supabase.from("rooms").select("*", { count: "exact", head: true }),
         supabase.from("products").select("*", { count: "exact", head: true }),
         supabase.from("maintenance_request").select("*", { count: "exact", head: true }).eq("status", "สถานะแจ้งซ่อม"),
         supabase.from("user_extra").select("*", { count: "exact", head: true }).eq("role", "user"),
         supabase.from("view_repair_stats").select("*").order("total_repairs", { ascending: false }).limit(5),
         supabase.from("view_repair_monthly_stats").select("*"),
+        supabase.from("view_repair_cost_stats").select("*"),
       ]);
       setStats({
         rooms: rooms.count ?? 0,
@@ -56,9 +60,13 @@ export default function AdminOverviewPage() {
         setMonthlyStats(data);
         if (data.length > 0) setSelectedYear(Math.max(...data.map((d) => d.report_year)));
       }
+      if (cost.data) setCostStats(cost.data as RepairCostStat[]);
       setIsLoading(false);
     })();
   }, []);
+
+  const totalRepairCost = useMemo(() => costStats.reduce((sum, c) => sum + Number(c.total_cost), 0), [costStats]);
+  const maxCost = Math.max(1, ...costStats.map((c) => Number(c.total_cost)));
 
   const availableYears = useMemo(() => {
     const years = Array.from(new Set(monthlyStats.map((d) => d.report_year))).sort((a, b) => b - a);
@@ -95,6 +103,16 @@ export default function AdminOverviewPage() {
             <p className="text-xs text-slate-400 font-medium">{label}</p>
           </div>
         ))}
+      </div>
+
+      <div className="glass-card rounded-2xl p-4 flex items-center gap-4 bg-gradient-to-r from-amber-50/80 to-white/50">
+        <div className="w-12 h-12 shrink-0 rounded-xl flex items-center justify-center text-white bg-gradient-to-br from-amber-400 to-amber-600 shadow-glass-sm">
+          <Banknote size={22} />
+        </div>
+        <div>
+          <p className="text-2xl font-bold text-slate-900">{isLoading ? "-" : formatCurrency(totalRepairCost)}</p>
+          <p className="text-xs text-slate-500 font-medium">ค่าใช้จ่ายในการซ่อมทั้งหมด</p>
+        </div>
       </div>
 
       <div className="glass-card rounded-2xl p-4">
@@ -147,6 +165,32 @@ export default function AdminOverviewPage() {
                 <span className="text-xs bg-red-100/80 text-red-600 px-2.5 py-1 rounded-full font-semibold">
                   {r.total_repairs} ครั้ง
                 </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <h3 className="text-sm font-bold text-slate-900 mb-3">ค่าใช้จ่ายซ่อมแยกตามครุภัณฑ์</h3>
+        {costStats.length === 0 ? (
+          <div className="text-center py-8 text-slate-400 text-xs glass-card rounded-2xl">
+            ยังไม่มีการบันทึกค่าใช้จ่ายซ่อม
+          </div>
+        ) : (
+          <div className="glass-card rounded-2xl p-4 space-y-3">
+            {costStats.map((c) => (
+              <div key={c.product_name}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm text-slate-800 font-medium">{c.product_name}</span>
+                  <span className="text-xs font-semibold text-amber-600">{formatCurrency(c.total_cost)}</span>
+                </div>
+                <div className="h-2 rounded-full bg-white/60 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-600"
+                    style={{ width: `${Math.max(4, (Number(c.total_cost) / maxCost) * 100)}%` }}
+                  />
+                </div>
               </div>
             ))}
           </div>
