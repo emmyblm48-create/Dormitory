@@ -6,6 +6,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { DormitoryLogo } from "@/components/DormitoryLogo";
+import { ScrollReveal } from "@/components/ScrollReveal";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -59,9 +60,10 @@ export default function LoginPage() {
 
   return (
     <div className="h-dvh flex justify-center items-center p-0 md:p-6">
-      <div className="w-full max-w-5xl h-dvh md:h-[850px] glass-shell md:rounded-[32px] relative flex flex-col overflow-hidden">
+      <ScrollReveal />
+      <div className="reveal is-visible w-full max-w-5xl h-dvh md:h-[850px] glass-shell md:rounded-[32px] relative flex flex-col overflow-hidden">
         <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 overflow-y-auto">
-          <div className="w-full max-w-sm flex flex-col items-center text-center">
+          <div className="w-full max-w-sm flex flex-col items-center text-center reveal">
             <div className="p-4 rounded-3xl bg-white/50 backdrop-blur-md border border-white/60 shadow-glass-sm mb-2">
               <DormitoryLogo className="w-24 h-24 md:w-32 md:h-32" />
             </div>

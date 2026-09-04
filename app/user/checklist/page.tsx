@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CheckCircle2, RefreshCw, RotateCcw, AlertCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { getAssetIcon } from "@/components/icons";
+import { ScrollReveal } from "@/components/ScrollReveal";
 import type { ViewRoomAsset } from "@/lib/types";
 
 const storageKey = (roomId: number) => `equipment-checklist-room-${roomId}`;
@@ -63,6 +64,7 @@ export default function EquipmentChecklistPage() {
 
   return (
     <div className="p-4 md:p-8 space-y-4 max-w-3xl mx-auto w-full">
+      <ScrollReveal />
       <div className="flex items-center justify-between">
         <h3 className="text-base md:text-lg font-bold text-slate-900">เช็คอุปกรณ์ครุภัณฑ์</h3>
         <div className="flex items-center gap-2">
@@ -98,13 +100,14 @@ export default function EquipmentChecklistPage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {assets.map((item) => {
+          {assets.map((item, i) => {
             const Icon = getAssetIcon(item.product_name);
             const isChecked = checked.has(item.asset_id);
             return (
               <div
                 key={item.asset_id}
-                className={`relative rounded-2xl p-4 border flex flex-col items-center text-center gap-2 transition-colors backdrop-blur-xl backdrop-saturate-150 shadow-glass-sm ${
+                style={{ transitionDelay: `${i * 40}ms` }}
+                className={`reveal tilt-card relative rounded-3xl p-4 border flex flex-col items-center text-center gap-2 transition-colors backdrop-blur-xl backdrop-saturate-150 shadow-glass-sm ${
                   isChecked ? "bg-emerald-100/60 border-emerald-200/70" : "bg-white/70 border-white/60"
                 }`}
               >
@@ -113,8 +116,8 @@ export default function EquipmentChecklistPage() {
                   className="flex flex-col items-center gap-2 w-full"
                 >
                   <div
-                    className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors bg-gradient-to-br ${
-                      isChecked ? "from-emerald-400 to-emerald-600" : "from-brand-600 to-brand-800"
+                    className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors bg-gradient-to-br ${
+                      isChecked ? "from-emerald-400 to-emerald-600" : i % 2 === 0 ? "from-brand-400 to-brand-700" : "from-bloom-400 to-bloom-600"
                     }`}
                   >
                     <Icon />

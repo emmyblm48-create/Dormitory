@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ClipboardCheck, AlertCircle, ClipboardList, Megaphone, type LucideIcon } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
+import { ScrollReveal } from "@/components/ScrollReveal";
 
 interface MenuTile {
   href: string;
@@ -63,24 +64,26 @@ export default function UserHomePage() {
 
   return (
     <div className="p-4 md:p-8 max-w-3xl mx-auto w-full">
+      <ScrollReveal />
       <div className="mb-6">
         <h3 className="text-lg font-bold text-slate-900">สวัสดี ห้อง {profile?.userName}</h3>
         <p className="text-sm text-slate-400">เลือกเมนูที่ต้องการใช้งาน</p>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        {tiles.map(({ href, label, description, icon: Icon, color, badge }) => (
+        {tiles.map(({ href, label, description, icon: Icon, color, badge }, i) => (
           <Link
             key={href}
             href={href}
-            className="relative glass-card rounded-2xl p-5 flex flex-col items-center text-center gap-2.5 hover:bg-white/85 hover:-translate-y-0.5 transition-all"
+            style={{ transitionDelay: `${i * 70}ms` }}
+            className="reveal tilt-card relative glass-card rounded-3xl p-5 flex flex-col items-center text-center gap-2.5 hover:bg-white/85 transition-colors"
           >
             {!!badge && (
               <span className="absolute top-3 right-3 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center shadow">
                 {badge}
               </span>
             )}
-            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-white bg-gradient-to-br ${color} shadow-lg`}>
+            <div className={`w-16 h-16 rounded-3xl flex items-center justify-center text-white bg-gradient-to-br ${color} shadow-lg`}>
               <Icon size={30} />
             </div>
             <div>

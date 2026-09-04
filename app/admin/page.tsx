@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { DoorOpen, Package, Wrench, Users, Banknote } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { formatCurrency } from "@/lib/format";
+import { ScrollReveal } from "@/components/ScrollReveal";
 import type { RepairCostStat } from "@/lib/types";
 
 interface Stats {
@@ -91,15 +92,20 @@ export default function AdminOverviewPage() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto w-full">
+      <ScrollReveal />
       <h2 className="text-lg md:text-xl font-bold text-slate-900">ภาพรวมระบบ</h2>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {cards.map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="glass-card rounded-2xl p-4">
+        {cards.map(({ label, value, icon: Icon, color }, i) => (
+          <div
+            key={label}
+            style={{ transitionDelay: `${i * 60}ms` }}
+            className="reveal tilt-card glass-card rounded-2xl p-4"
+          >
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 text-white bg-gradient-to-br ${color} shadow-glass-sm`}>
               <Icon size={20} />
             </div>
-            <p className="text-2xl font-bold text-slate-900">{isLoading ? "-" : value}</p>
+            <p className="text-2xl font-bold text-slate-900 tabular-nums">{isLoading ? "-" : value}</p>
             <p className="text-xs text-slate-400 font-medium">{label}</p>
           </div>
         ))}
