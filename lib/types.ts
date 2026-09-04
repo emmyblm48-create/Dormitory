@@ -43,6 +43,17 @@ export interface MaintenanceRequest {
   room_id: number | null;
 }
 
+export interface Announcement {
+  announcement_id: number;
+  title: string;
+  content: string;
+  category: string;
+  image_path: string | null;
+  is_pinned: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface UserProfile {
   userName: string;
   role: "admin" | "user" | string;

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ClipboardCheck, AlertCircle, ClipboardList, type LucideIcon } from "lucide-react";
+import { ClipboardCheck, AlertCircle, ClipboardList, Megaphone, type LucideIcon } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 
@@ -51,6 +51,13 @@ export default function UserHomePage() {
       icon: ClipboardList,
       color: "from-emerald-400 to-emerald-600",
       badge: pendingRepairs,
+    },
+    {
+      href: "/user/announcements",
+      label: "ข่าวสาร",
+      description: "ข่าวสารและกฎระเบียบ",
+      icon: Megaphone,
+      color: "from-amber-400 to-amber-600",
     },
   ];
 

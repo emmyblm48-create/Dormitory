@@ -10,6 +10,7 @@ import {
   Package,
   Wrench,
   Users,
+  Megaphone,
 } from "lucide-react";
 
 const items = [
@@ -20,6 +21,7 @@ const items = [
   { href: "/admin/products", label: "ครุภัณฑ์", icon: Package },
   { href: "/admin/requests", label: "แจ้งซ่อม", icon: Wrench },
   { href: "/admin/tenants", label: "ผู้เช่า", icon: Users },
+  { href: "/admin/announcements", label: "ข่าวสาร", icon: Megaphone },
 ];
 
 export function AdminNav() {
