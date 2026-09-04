@@ -2,13 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, AlertCircle, ClipboardList, Receipt } from "lucide-react";
+import { Home, AlertCircle, ClipboardList } from "lucide-react";
 
 const items = [
   { href: "/user", label: "หน้าหลัก", icon: Home },
   { href: "/user/report", label: "แจ้งซ่อม", icon: AlertCircle },
   { href: "/user/requests", label: "ประวัติ", icon: ClipboardList },
-  { href: "/user/billing", label: "ค่าห้อง", icon: Receipt },
 ];
 
 export function BottomNav() {

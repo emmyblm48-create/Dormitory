@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ClipboardCheck, AlertCircle, Receipt, ClipboardList, type LucideIcon } from "lucide-react";
+import { ClipboardCheck, AlertCircle, ClipboardList, type LucideIcon } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 
@@ -18,19 +18,14 @@ interface MenuTile {
 export default function UserHomePage() {
   const { profile } = useAuth();
   const [pendingRepairs, setPendingRepairs] = useState(0);
-  const [unpaidBills, setUnpaidBills] = useState(0);
 
   useEffect(() => {
     (async () => {
-      const [repairs, bills] = await Promise.all([
-        supabase
-          .from("maintenance_request")
-          .select("*", { count: "exact", head: true })
-          .neq("status", "สถานะเสร็จสมบรูณ์"),
-        supabase.from("view_room_bills").select("*", { count: "exact", head: true }).neq("status", "paid"),
-      ]);
+      const repairs = await supabase
+        .from("maintenance_request")
+        .select("*", { count: "exact", head: true })
+        .neq("status", "สถานะเสร็จสมบรูณ์");
       setPendingRepairs(repairs.count ?? 0);
-      setUnpaidBills(bills.count ?? 0);
     })();
   }, []);
 
@@ -48,14 +43,6 @@ export default function UserHomePage() {
       description: "แจ้งครุภัณฑ์เสียหาย",
       icon: AlertCircle,
       color: "from-red-400 to-red-600",
-    },
-    {
-      href: "/user/billing",
-      label: "ค่าห้อง",
-      description: "ชำระค่าห้องพัก",
-      icon: Receipt,
-      color: "from-amber-400 to-amber-600",
-      badge: unpaidBills,
     },
     {
       href: "/user/requests",

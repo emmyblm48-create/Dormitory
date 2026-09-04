@@ -10,7 +10,6 @@ import {
   Package,
   Wrench,
   Users,
-  Receipt,
 } from "lucide-react";
 
 const items = [
@@ -20,7 +19,6 @@ const items = [
   { href: "/admin/statuses", label: "สถานะ", icon: ListChecks },
   { href: "/admin/products", label: "ครุภัณฑ์", icon: Package },
   { href: "/admin/requests", label: "แจ้งซ่อม", icon: Wrench },
-  { href: "/admin/billing", label: "ค่าห้อง", icon: Receipt },
   { href: "/admin/tenants", label: "ผู้เช่า", icon: Users },
 ];
 
