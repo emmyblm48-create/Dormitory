@@ -36,22 +36,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="h-dvh flex flex-col overflow-hidden">
-      <header className="shrink-0 glass-header text-white px-4 md:px-6 py-4 flex justify-between items-center z-30">
-        <h1 className="text-lg md:text-2xl font-bold">Dormitory Admin</h1>
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-lg text-white text-sm font-medium transition-colors"
-          title="ออกจากระบบ"
-        >
-          <LogOut size={18} />
-          <span className="hidden md:inline">ออกจากระบบ</span>
-        </button>
-      </header>
+    <div className="min-h-dvh flex flex-col md:flex-row">
+      <AdminNav />
 
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
-        <AdminNav />
+      <div className="flex-1 flex flex-col min-h-dvh min-w-0">
+        <header className="shrink-0 sticky top-0 z-20 glass-header text-white px-4 md:px-8 py-4 flex justify-between items-center border-b-2 border-dashed border-cream-50/30">
+          <h1 className="text-lg md:text-2xl font-display tracking-wide">Dormitory Admin</h1>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-lg text-white text-sm font-medium transition-colors"
+            title="ออกจากระบบ"
+          >
+            <LogOut size={18} />
+            <span className="hidden md:inline">ออกจากระบบ</span>
+          </button>
+        </header>
+
+        <main className="flex-1 overflow-y-auto">
+          <div className="max-w-6xl mx-auto w-full p-4 pb-24 md:p-8 md:pb-8 lg:p-10">{children}</div>
+        </main>
       </div>
     </div>
   );

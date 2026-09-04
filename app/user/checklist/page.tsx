@@ -6,9 +6,8 @@ import { CheckCircle2, RefreshCw, RotateCcw, AlertCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { getAssetIcon } from "@/components/icons";
 import { ScrollReveal } from "@/components/ScrollReveal";
+import { storageKey, readChecked } from "@/lib/checklist";
 import type { ViewRoomAsset } from "@/lib/types";
-
-const storageKey = (roomId: number) => `equipment-checklist-room-${roomId}`;
 
 export default function EquipmentChecklistPage() {
   const [assets, setAssets] = useState<ViewRoomAsset[]>([]);
@@ -33,12 +32,7 @@ export default function EquipmentChecklistPage() {
 
   useEffect(() => {
     if (roomId == null) return;
-    try {
-      const saved = localStorage.getItem(storageKey(roomId));
-      if (saved) setChecked(new Set(JSON.parse(saved)));
-    } catch {
-      // ignore malformed storage
-    }
+    setChecked(readChecked(roomId));
   }, [roomId]);
 
   const persist = (next: Set<number>) => {

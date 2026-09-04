@@ -130,4 +130,27 @@ body {
   .stamp-chip {
     @apply inline-flex items-center gap-1 bg-cream-50 border border-dashed border-brand-300 text-brand-700 text-[10px] font-bold uppercase tracking-wide rounded-full px-2.5 py-1 shadow-stamp;
   }
+
+  /* Ticket-stub look: punched-out circles on the left/right edge */
+  .card-notched {
+    position: relative;
+  }
+  .card-notched::before,
+  .card-notched::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 22px;
+    height: 22px;
+    background: #fdede3;
+    border-radius: 9999px;
+    transform: translateY(-50%);
+    z-index: 1;
+  }
+  .card-notched::before {
+    left: -11px;
+  }
+  .card-notched::after {
+    right: -11px;
+  }
 }
