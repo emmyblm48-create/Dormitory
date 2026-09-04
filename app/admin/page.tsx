@@ -171,26 +171,27 @@ export default function AdminOverviewPage() {
         )}
       </div>
 
-      <div>
-        <h3 className="text-sm font-bold text-slate-900 mb-3">ค่าใช้จ่ายซ่อมแยกตามครุภัณฑ์</h3>
-        {costStats.length === 0 ? (
-          <div className="text-center py-8 text-slate-400 text-xs glass-card rounded-2xl">
-            ยังไม่มีการบันทึกค่าใช้จ่ายซ่อม
-          </div>
+      <div className="glass-card rounded-2xl p-4">
+        <h3 className="text-sm font-bold text-slate-900 mb-4">ค่าใช้จ่ายซ่อมแยกตามครุภัณฑ์</h3>
+        {isLoading ? (
+          <div className="text-center py-6 text-slate-400 text-xs">กำลังโหลดข้อมูล...</div>
+        ) : costStats.length === 0 ? (
+          <div className="text-center py-6 text-slate-400 text-xs">ยังไม่มีการบันทึกค่าใช้จ่ายซ่อม</div>
         ) : (
-          <div className="glass-card rounded-2xl p-4 space-y-3">
+          <div className="flex items-end gap-3 h-40 overflow-x-auto">
             {costStats.map((c) => (
-              <div key={c.product_name}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm text-slate-800 font-medium">{c.product_name}</span>
-                  <span className="text-xs font-semibold text-amber-600">{formatCurrency(c.total_cost)}</span>
-                </div>
-                <div className="h-2 rounded-full bg-white/60 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-600"
-                    style={{ width: `${Math.max(4, (Number(c.total_cost) / maxCost) * 100)}%` }}
-                  />
-                </div>
+              <div key={c.product_name} className="flex flex-col items-center justify-end gap-1.5 h-full shrink-0 w-16">
+                <span className="text-[10px] font-semibold text-slate-500 whitespace-nowrap">
+                  {formatCurrency(c.total_cost)}
+                </span>
+                <div
+                  className="w-full max-w-[28px] bg-gradient-to-t from-amber-600 to-amber-400 rounded-t-md transition-all"
+                  style={{ height: `${Math.max(4, (Number(c.total_cost) / maxCost) * 100)}%` }}
+                  title={`${c.product_name}: ${formatCurrency(c.total_cost)}`}
+                />
+                <span className="text-[10px] text-slate-400 text-center leading-tight line-clamp-2">
+                  {c.product_name}
+                </span>
               </div>
             ))}
           </div>
