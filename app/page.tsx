@@ -7,6 +7,8 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { DormitoryLogo } from "@/components/DormitoryLogo";
 import { ScrollReveal } from "@/components/ScrollReveal";
+import { Sparkle } from "@/components/Sparkle";
+import { Paperclip } from "@/components/Paperclip";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -64,10 +66,18 @@ export default function LoginPage() {
       <div className="reveal is-visible w-full max-w-5xl h-dvh md:h-[850px] glass-shell md:rounded-[32px] relative flex flex-col overflow-hidden">
         <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 overflow-y-auto">
           <div className="w-full max-w-sm flex flex-col items-center text-center reveal">
-            <div className="p-4 rounded-3xl bg-white/50 backdrop-blur-md border border-white/60 shadow-glass-sm mb-2">
+            <div className="relative p-4 rounded-3xl bg-cream-50 border border-brand-100 shadow-glass-sm mb-2">
+              <Paperclip className="absolute -top-4 -right-3 w-8 h-9 text-brand-400 rotate-12" />
+              <Sparkle className="absolute -top-3 -left-4 w-4 h-4 text-mustard-500 animate-sparkle" />
+              <Sparkle className="absolute -bottom-2 -right-5 w-3 h-3 text-mint-500 animate-sparkle [animation-delay:1.1s]" />
               <DormitoryLogo className="w-24 h-24 md:w-32 md:h-32" />
             </div>
-            <h1 className="text-3xl font-extrabold text-brand-800 tracking-wider mb-6 mt-2">DORMITORY</h1>
+            <h1
+              className="font-display text-4xl text-brand-600 tracking-wide mb-6 mt-2"
+              style={{ textShadow: "0 1px 0 #FFFBF3, 0 2px 0 #FADCD5, 0 3px 6px rgba(110,40,25,0.25)" }}
+            >
+              DORMITORY
+            </h1>
 
             <h2 className="text-2xl font-bold text-slate-900 mb-1">WELCOME</h2>
             <p className="text-slate-500 text-sm mb-6 font-medium">กรุณาเข้าสู่ระบบด้วยบัญชีห้องของท่าน</p>

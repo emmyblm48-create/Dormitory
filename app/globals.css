@@ -20,7 +20,9 @@ body {
 
 body {
   @apply text-slate-800;
-  background: linear-gradient(155deg, #f1effd 0%, #f8eef6 48%, #fcefe9 100%);
+  background:
+    radial-gradient(circle, rgba(201, 58, 46, 0.07) 1.5px, transparent 1.5px) 0 0 / 28px 28px,
+    linear-gradient(160deg, #fffbf3 0%, #fdede3 45%, #fbe0d6 100%);
   min-height: 100dvh;
 }
 
@@ -32,31 +34,31 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(124, 108, 240, 0.3);
+  background: rgba(201, 58, 46, 0.3);
   border-radius: 999px;
 }
 
-/* Scroll-reveal: fade + rise into place, once, as elements enter the viewport */
+/* Scroll-reveal: fade + rise + settle into place, once, as elements enter the viewport */
 .reveal {
   opacity: 0;
-  transform: translateY(18px);
+  transform: translateY(18px) rotate(-2deg);
   transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .reveal.is-visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateY(0) rotate(0deg);
 }
 
-/* Playful hover pop for card-like, tappable elements */
+/* Playful hover pop for card-like, tappable elements -- picked-up-paper feel */
 .tilt-card {
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
 }
 .tilt-card:hover {
-  transform: translateY(-5px) rotate(-1deg) scale(1.015);
-  box-shadow: 0 22px 46px -18px rgba(76, 58, 166, 0.38);
+  transform: translateY(-5px) rotate(-1.5deg) scale(1.02);
+  box-shadow: 0 22px 46px -18px rgba(110, 40, 25, 0.38);
 }
 .tilt-card:active {
-  transform: translateY(-1px) scale(0.99);
+  transform: translateY(-1px) rotate(0deg) scale(0.99);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -70,31 +72,32 @@ body {
     transition: none;
     transform: none;
   }
-  .animate-blob,
-  .animate-ribbon {
+  .animate-drift,
+  .animate-sparkle,
+  .animate-pop-in {
     animation: none !important;
   }
 }
 
 @layer components {
-  /* Outer app shell / phone-frame style glass panel */
+  /* Outer app shell / phone-frame style paper panel */
   .glass-shell {
-    @apply bg-white/45 backdrop-blur-2xl backdrop-saturate-150 border border-white/60 shadow-glass-lg;
+    @apply bg-cream-50/90 backdrop-blur-md border border-brand-100 shadow-glass-lg;
   }
 
-  /* Standard content card */
+  /* Standard content card -- perforated postage-stamp edge */
   .glass-card {
-    @apply bg-white/70 backdrop-blur-xl backdrop-saturate-150 border border-white/60 shadow-glass-sm;
+    @apply bg-cream-50/95 border border-brand-100 shadow-glass-sm outline outline-2 outline-dashed outline-brand-200/70 -outline-offset-[6px];
   }
 
   /* Slightly lighter panel, e.g. form sections */
   .glass-panel {
-    @apply bg-white/55 backdrop-blur-xl backdrop-saturate-150 border border-white/60 shadow-glass-sm;
+    @apply bg-cream-50/80 border border-brand-100 shadow-glass-sm;
   }
 
   /* Header / nav bars */
   .glass-nav {
-    @apply bg-white/55 backdrop-blur-xl backdrop-saturate-150 border-white/50;
+    @apply bg-cream-50/90 backdrop-blur-md border-brand-100;
   }
 
   .glass-header {
@@ -103,12 +106,12 @@ body {
 
   /* Form controls */
   .glass-input {
-    @apply w-full bg-white/55 backdrop-blur-md border border-white/70 placeholder-slate-400 text-slate-800 outline-none transition-all focus:bg-white/85 focus:border-brand-300 focus:ring-2 focus:ring-brand-400/40;
+    @apply w-full bg-white/70 border border-brand-200/70 placeholder-slate-400 text-slate-800 outline-none transition-all focus:bg-white focus:border-brand-400 focus:ring-2 focus:ring-brand-400/30;
   }
 
   /* Buttons */
   .btn-primary {
-    @apply bg-gradient-to-br from-bloom-500 to-brand-700 text-white font-semibold shadow-bloom transition-all hover:brightness-105 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:brightness-95 disabled:opacity-50 disabled:shadow-none disabled:translate-y-0;
+    @apply bg-gradient-to-br from-brand-500 to-brand-700 text-white font-semibold border-2 border-cream-50/70 shadow-bloom transition-all hover:brightness-105 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-95 active:brightness-95 disabled:opacity-50 disabled:shadow-none disabled:translate-y-0;
   }
 
   .btn-danger {
@@ -116,10 +119,15 @@ body {
   }
 
   .btn-ghost {
-    @apply bg-white/50 backdrop-blur-md border border-white/60 text-slate-600 transition-colors hover:bg-white/80;
+    @apply bg-white/60 border border-brand-100 text-slate-600 transition-colors hover:bg-white;
   }
 
   .chip {
-    @apply backdrop-blur-md border border-white/50;
+    @apply border border-brand-100/70;
+  }
+
+  /* Small postage-stamp style badge/pill: dashed border, tracked uppercase label */
+  .stamp-chip {
+    @apply inline-flex items-center gap-1 bg-cream-50 border border-dashed border-brand-300 text-brand-700 text-[10px] font-bold uppercase tracking-wide rounded-full px-2.5 py-1 shadow-stamp;
   }
 }
