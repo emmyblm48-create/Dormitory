@@ -21,8 +21,8 @@ body {
 body {
   @apply text-slate-800;
   background:
-    radial-gradient(circle, rgba(201, 58, 46, 0.07) 1.5px, transparent 1.5px) 0 0 / 28px 28px,
-    linear-gradient(160deg, #fffbf3 0%, #fdede3 45%, #fbe0d6 100%);
+    radial-gradient(circle, rgba(37, 99, 235, 0.07) 1.5px, transparent 1.5px) 0 0 / 28px 28px,
+    linear-gradient(160deg, #ffffff 0%, #eef5ff 45%, #dbeafe 100%);
   min-height: 100dvh;
 }
 
@@ -34,7 +34,7 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(201, 58, 46, 0.3);
+  background: rgba(37, 99, 235, 0.3);
   border-radius: 999px;
 }
 
@@ -55,7 +55,7 @@ body {
 }
 .tilt-card:hover {
   transform: translateY(-5px) rotate(-1.5deg) scale(1.02);
-  box-shadow: 0 22px 46px -18px rgba(110, 40, 25, 0.38);
+  box-shadow: 0 22px 46px -18px rgba(30, 64, 175, 0.38);
 }
 .tilt-card:active {
   transform: translateY(-1px) rotate(0deg) scale(0.99);
@@ -142,7 +142,7 @@ body {
     top: 50%;
     width: 22px;
     height: 22px;
-    background: #fdede3;
+    background: #eef5ff;
     border-radius: 9999px;
     transform: translateY(-50%);
     z-index: 1;

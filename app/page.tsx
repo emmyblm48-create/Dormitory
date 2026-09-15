@@ -74,7 +74,7 @@ export default function LoginPage() {
             </div>
             <h1
               className="font-display text-4xl text-brand-600 tracking-wide mb-6 mt-2"
-              style={{ textShadow: "0 1px 0 #FFFBF3, 0 2px 0 #FADCD5, 0 3px 6px rgba(110,40,25,0.25)" }}
+              style={{ textShadow: "0 1px 0 #FFFFFF, 0 2px 0 #DBEAFE, 0 3px 6px rgba(30,64,175,0.25)" }}
             >
               DORMITORY
             </h1>
