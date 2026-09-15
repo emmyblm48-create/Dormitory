@@ -41,6 +41,7 @@ export interface MaintenanceRequest {
   product_id: number | null;
   image_path: string | null;
   room_id: number | null;
+  repair_cost: number | null;
 }
 
 export interface Announcement {
@@ -80,6 +81,15 @@ export interface ViewHomeUser {
   reported_date: string | null;
   description: string | null;
   image_path: string | null;
+  repair_cost: number | null;
   room_number: string;
   room_id: number;
+}
+
+// Row shape returned by the `view_repair_cost_stats` view
+export interface RepairCostStat {
+  product_name: string;
+  product_image: string | null;
+  total_cost: number;
+  costed_repairs: number;
 }

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { RefreshCw, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { formatFullDate } from "@/lib/format";
+import { formatFullDate, formatCurrency } from "@/lib/format";
 import { AssetAvatar } from "@/components/AssetAvatar";
 import type { ViewHomeUser, Status } from "@/lib/types";
 
@@ -34,6 +34,15 @@ export default function AdminRequestsPage() {
     const { error } = await supabase.from("maintenance_request").update({ status }).eq("maintenance_request_id", id);
     if (!error) {
       setRequests((prev) => prev.map((r) => (r.maintenance_request_id === id ? { ...r, status } : r)));
+    }
+    setUpdatingId(null);
+  };
+
+  const updateCost = async (id: number, repair_cost: number | null) => {
+    setUpdatingId(id);
+    const { error } = await supabase.from("maintenance_request").update({ repair_cost }).eq("maintenance_request_id", id);
+    if (!error) {
+      setRequests((prev) => prev.map((r) => (r.maintenance_request_id === id ? { ...r, repair_cost } : r)));
     }
     setUpdatingId(null);
   };
@@ -81,19 +90,38 @@ export default function AdminRequestsPage() {
                 <p className="text-xs text-slate-500">ห้อง {item.room_number}</p>
                 {item.description && <p className="text-xs text-slate-500 truncate">{item.description}</p>}
                 <p className="text-slate-400 text-[10px] font-mono">{formatFullDate(item.reported_date)}</p>
+                {!!item.repair_cost && (
+                  <p className="text-xs font-semibold text-emerald-600 mt-0.5">ค่าซ่อม {formatCurrency(item.repair_cost)}</p>
+                )}
               </div>
-              <select
-                value={item.status ?? ""}
-                disabled={updatingId === item.maintenance_request_id}
-                onChange={(e) => updateStatus(item.maintenance_request_id, e.target.value)}
-                className="glass-input shrink-0 px-2.5 py-1.5 rounded-lg text-xs"
-              >
-                {statuses.map((s) => (
-                  <option key={s.status_id} value={s.status_name}>
-                    {s.status_name}
-                  </option>
-                ))}
-              </select>
+              <div className="flex flex-col gap-1.5 shrink-0 items-end">
+                <select
+                  value={item.status ?? ""}
+                  disabled={updatingId === item.maintenance_request_id}
+                  onChange={(e) => updateStatus(item.maintenance_request_id, e.target.value)}
+                  className="glass-input px-2.5 py-1.5 rounded-lg text-xs"
+                >
+                  {statuses.map((s) => (
+                    <option key={s.status_id} value={s.status_name}>
+                      {s.status_name}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="ค่าซ่อม (บาท)"
+                  defaultValue={item.repair_cost ?? ""}
+                  disabled={updatingId === item.maintenance_request_id}
+                  onBlur={(e) => {
+                    const v = e.target.value.trim();
+                    const cost = v === "" ? null : Number(v);
+                    if (cost !== item.repair_cost) updateCost(item.maintenance_request_id, cost);
+                  }}
+                  className="glass-input px-2.5 py-1.5 rounded-lg text-xs w-32 text-right"
+                />
+              </div>
             </div>
           ))}
         </div>

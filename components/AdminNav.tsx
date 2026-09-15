@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef } from "react";
 import {
   LayoutDashboard,
   DoorOpen,
@@ -26,47 +27,60 @@ const items = [
 
 export function AdminNav() {
   const pathname = usePathname();
+  const activeRef = useRef<HTMLAnchorElement>(null);
+
+  useEffect(() => {
+    activeRef.current?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }, [pathname]);
 
   return (
     <>
-      {/* Desktop sidebar */}
-      <nav className="hidden md:flex md:order-first md:flex-col md:w-60 md:shrink-0 md:overflow-y-auto glass-nav border-r py-4 gap-1 px-3">
+      {/* Tablet+desktop rail: icon-only at md, icon+label at lg */}
+      <nav className="hidden md:flex md:flex-col md:w-16 lg:w-56 md:shrink-0 md:sticky md:top-0 md:h-dvh md:overflow-y-auto glass-nav border-r-2 border-dashed border-brand-200 py-5 gap-1 px-2 lg:px-3">
         {items.map(({ href, label, icon: Icon }) => {
           const active = href === "/admin" ? pathname === href : pathname.startsWith(href);
           return (
             <Link
               key={href}
               href={href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+              title={label}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all justify-center lg:justify-start ${
                 active
-                  ? "bg-gradient-to-r from-brand-500 to-brand-600 text-white shadow-lg shadow-brand-600/25"
-                  : "text-slate-500 hover:bg-white/60"
+                  ? "bg-gradient-to-r from-bloom-500 to-brand-600 text-white shadow-lg shadow-brand-600/25"
+                  : "text-slate-500 hover:bg-white/70"
               }`}
             >
-              <Icon size={18} />
-              {label}
+              <Icon size={18} className="shrink-0" />
+              <span className="hidden lg:inline">{label}</span>
             </Link>
           );
         })}
       </nav>
 
-      {/* Mobile bottom nav */}
-      <nav className="md:hidden shrink-0 glass-nav border-t flex overflow-x-auto">
-        {items.map(({ href, label, icon: Icon }) => {
-          const active = href === "/admin" ? pathname === href : pathname.startsWith(href);
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={`flex-1 min-w-[64px] flex flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium transition-colors ${
-                active ? "text-brand-600" : "text-slate-400"
-              }`}
-            >
-              <Icon size={20} />
-              {label}
-            </Link>
-          );
-        })}
+      {/* Mobile floating dock: swipeable slider, since all sections don't fit at once */}
+      <nav className="md:hidden fixed bottom-3 left-3 right-3 z-30 bg-cream-50/95 backdrop-blur-md border border-brand-100 rounded-2xl shadow-paper">
+        <div className="relative">
+          <div className="flex items-stretch gap-1 overflow-x-auto no-scrollbar snap-x snap-mandatory scroll-smooth px-2 py-1">
+            {items.map(({ href, label, icon: Icon }) => {
+              const active = href === "/admin" ? pathname === href : pathname.startsWith(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  ref={active ? activeRef : undefined}
+                  className={`w-[68px] shrink-0 snap-center flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl text-[10px] font-medium transition-colors ${
+                    active ? "bg-brand-50 text-brand-600" : "text-slate-400"
+                  }`}
+                >
+                  <Icon size={19} />
+                  {label}
+                </Link>
+              );
+            })}
+          </div>
+          <div className="absolute inset-y-0 left-0 w-4 rounded-l-2xl bg-gradient-to-r from-cream-50 to-transparent pointer-events-none" />
+          <div className="absolute inset-y-0 right-0 w-4 rounded-r-2xl bg-gradient-to-l from-cream-50 to-transparent pointer-events-none" />
+        </div>
       </nav>
     </>
   );

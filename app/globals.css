@@ -20,7 +20,9 @@ body {
 
 body {
   @apply text-slate-800;
-  background: linear-gradient(160deg, #eaf1ff 0%, #f3f7ff 45%, #e4edff 100%);
+  background:
+    radial-gradient(circle, rgba(37, 99, 235, 0.07) 1.5px, transparent 1.5px) 0 0 / 28px 28px,
+    linear-gradient(160deg, #ffffff 0%, #eef5ff 45%, #dbeafe 100%);
   min-height: 100dvh;
 }
 
@@ -32,43 +34,91 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(37, 99, 235, 0.25);
+  background: rgba(37, 99, 235, 0.3);
   border-radius: 999px;
 }
 
+/* Fully hidden scrollbar, e.g. for swipeable nav sliders */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Scroll-reveal: fade + rise into place, once, as elements enter the viewport */
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Subtle lift for card-like, tappable elements */
+.tilt-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.tilt-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 34px -18px rgba(30, 64, 175, 0.30);
+}
+.tilt-card:active {
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .tilt-card,
+  .tilt-card:hover {
+    transition: none;
+    transform: none;
+  }
+  .animate-drift {
+    animation: none !important;
+  }
+}
+
 @layer components {
-  /* Outer app shell / phone-frame style glass panel */
+  /* Outer app shell panel */
   .glass-shell {
-    @apply bg-white/45 backdrop-blur-2xl backdrop-saturate-150 border border-white/60 shadow-glass-lg;
+    @apply bg-cream-50/90 backdrop-blur-md border border-brand-100 shadow-glass-lg;
   }
 
   /* Standard content card */
   .glass-card {
-    @apply bg-white/70 backdrop-blur-xl backdrop-saturate-150 border border-white/60 shadow-glass-sm;
+    @apply bg-cream-50/95 border border-brand-100 shadow-glass-sm;
   }
 
   /* Slightly lighter panel, e.g. form sections */
   .glass-panel {
-    @apply bg-white/55 backdrop-blur-xl backdrop-saturate-150 border border-white/60 shadow-glass-sm;
+    @apply bg-cream-50/80 border border-brand-100 shadow-glass-sm;
   }
 
   /* Header / nav bars */
   .glass-nav {
-    @apply bg-white/55 backdrop-blur-xl backdrop-saturate-150 border-white/50;
+    @apply bg-cream-50/90 backdrop-blur-md border-brand-100;
   }
 
   .glass-header {
-    @apply bg-gradient-to-r from-brand-600/90 to-brand-500/90 backdrop-blur-xl border-b border-white/20;
+    @apply bg-gradient-to-r from-bloom-600/90 via-brand-500/90 to-brand-700/90 backdrop-blur-xl border-b border-white/20;
   }
 
   /* Form controls */
   .glass-input {
-    @apply w-full bg-white/55 backdrop-blur-md border border-white/70 placeholder-slate-400 text-slate-800 outline-none transition-all focus:bg-white/85 focus:border-brand-300 focus:ring-2 focus:ring-brand-400/40;
+    @apply w-full bg-white/70 border border-brand-200/70 placeholder-slate-400 text-slate-800 outline-none transition-all focus:bg-white focus:border-brand-400 focus:ring-2 focus:ring-brand-400/30;
   }
 
   /* Buttons */
   .btn-primary {
-    @apply bg-gradient-to-br from-brand-500 to-brand-700 text-white font-semibold shadow-lg shadow-brand-600/25 transition-all hover:brightness-105 hover:shadow-brand-600/35 active:brightness-95 disabled:opacity-50 disabled:shadow-none;
+    @apply bg-gradient-to-br from-brand-500 to-brand-700 text-white font-semibold border-2 border-cream-50/70 shadow-bloom transition-all hover:brightness-105 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-95 active:brightness-95 disabled:opacity-50 disabled:shadow-none disabled:translate-y-0;
   }
 
   .btn-danger {
@@ -76,10 +126,15 @@ body {
   }
 
   .btn-ghost {
-    @apply bg-white/50 backdrop-blur-md border border-white/60 text-slate-600 transition-colors hover:bg-white/80;
+    @apply bg-white/60 border border-brand-100 text-slate-600 transition-colors hover:bg-white;
   }
 
   .chip {
-    @apply backdrop-blur-md border border-white/50;
+    @apply border border-brand-100/70;
+  }
+
+  /* Small status badge/pill */
+  .stamp-chip {
+    @apply inline-flex items-center gap-1 bg-brand-50 border border-brand-100 text-brand-700 text-[10px] font-bold uppercase tracking-wide rounded-full px-2.5 py-1;
   }
 }

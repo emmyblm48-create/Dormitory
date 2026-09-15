@@ -36,11 +36,13 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
   }
 
   return (
-    <div className="h-dvh flex justify-center items-center p-0 md:p-6">
-      <div className="w-full max-w-5xl h-dvh md:h-[850px] glass-shell md:rounded-[32px] relative flex flex-col overflow-hidden">
-        <header className="shrink-0 glass-header text-white px-6 py-4 flex justify-between items-center z-20">
+    <div className="min-h-dvh flex flex-col md:flex-row">
+      <BottomNav />
+
+      <div className="flex-1 flex flex-col min-h-dvh min-w-0">
+        <header className="shrink-0 sticky top-0 z-20 glass-header text-white px-4 md:px-8 py-4 flex justify-between items-center border-b-2 border-dashed border-cream-50/30">
           <div>
-            <h1 className="text-xl md:text-2xl font-bold">Home</h1>
+            <h1 className="text-xl md:text-2xl font-display tracking-wide">Home</h1>
             <p className="text-xs text-white/75">ห้อง {profile.userName}</p>
           </div>
           <button
@@ -53,9 +55,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
           </button>
         </header>
 
-        <main className="flex-1 overflow-y-auto min-h-0">{children}</main>
-
-        <BottomNav />
+        <main className="flex-1 overflow-y-auto pb-24 md:pb-0">{children}</main>
       </div>
     </div>
   );

@@ -2,7 +2,7 @@ export const DormitoryLogo = ({ className = "w-28 h-28" }: { className?: string 
   <svg viewBox="0 0 200 200" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <linearGradient id="dormitory-logo-gradient" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
-        <stop offset="0" stopColor="#2563EB" />
+        <stop offset="0" stopColor="#38BDF8" />
         <stop offset="1" stopColor="#1D4ED8" />
       </linearGradient>
     </defs>
