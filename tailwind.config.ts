@@ -9,7 +9,7 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ["var(--font-prompt)", "system-ui", "sans-serif"],
-        display: ["var(--font-display)", "system-ui", "sans-serif"],
+        display: ["var(--font-prompt)", "system-ui", "sans-serif"],
       },
       colors: {
         brand: {
@@ -36,18 +36,6 @@ const config: Config = {
           100: "#F0F7FF",
           200: "#E0EFFE",
         },
-        mustard: {
-          300: "#C7D2FE",
-          400: "#A5B4FC",
-          500: "#818CF8",
-          600: "#6366F1",
-        },
-        mint: {
-          300: "#A5F3FC",
-          400: "#67E8F9",
-          500: "#22D3EE",
-          600: "#06B6D4",
-        },
       },
       boxShadow: {
         glass: "0 8px 32px 0 rgba(30, 64, 175, 0.14)",
@@ -59,24 +47,12 @@ const config: Config = {
       },
       keyframes: {
         drift: {
-          "0%, 100%": { transform: "translate(0px, 0px) rotate(var(--r, 0deg)) scale(1)" },
-          "33%": { transform: "translate(20px, -26px) rotate(calc(var(--r, 0deg) + 4deg)) scale(1.06)" },
-          "66%": { transform: "translate(-16px, 16px) rotate(calc(var(--r, 0deg) - 3deg)) scale(0.96)" },
-        },
-        sparkle: {
-          "0%, 100%": { opacity: "0.25", transform: "scale(0.7) rotate(0deg)" },
-          "50%": { opacity: "1", transform: "scale(1.15) rotate(20deg)" },
-        },
-        pop: {
-          "0%": { transform: "scale(0.85)", opacity: "0" },
-          "60%": { transform: "scale(1.05)", opacity: "1" },
-          "100%": { transform: "scale(1)", opacity: "1" },
+          "0%, 100%": { transform: "translate(0px, 0px) scale(1)" },
+          "50%": { transform: "translate(14px, -18px) scale(1.04)" },
         },
       },
       animation: {
-        drift: "drift 22s infinite ease-in-out",
-        sparkle: "sparkle 3.2s infinite ease-in-out",
-        "pop-in": "pop 0.4s cubic-bezier(0.16, 1, 0.3, 1) both",
+        drift: "drift 26s infinite ease-in-out",
       },
       backdropBlur: {
         xs: "2px",
