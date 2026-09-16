@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Check, RefreshCw, RotateCcw, AlertCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { getAssetIcon } from "@/components/icons";
+import { AssetAvatar } from "@/components/AssetAvatar";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { storageKey, readChecked } from "@/lib/checklist";
 import type { ViewRoomAsset } from "@/lib/types";
@@ -103,7 +103,6 @@ export default function EquipmentChecklistPage() {
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {assets.map((item, i) => {
-            const Icon = getAssetIcon(item.product_name);
             const isChecked = checked.has(item.asset_id);
             return (
               <div
@@ -128,11 +127,11 @@ export default function EquipmentChecklistPage() {
                   </span>
 
                   <div
-                    className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors bg-gradient-to-br ${
-                      isChecked ? "from-emerald-400 to-emerald-600" : i % 2 === 0 ? "from-brand-400 to-brand-700" : "from-bloom-400 to-bloom-600"
+                    className={`rounded-full transition-all ${
+                      isChecked ? "ring-2 ring-emerald-400 ring-offset-2 ring-offset-emerald-100/60" : ""
                     }`}
                   >
-                    <Icon />
+                    <AssetAvatar imageUrl={item.product_image} name={item.product_name} />
                   </div>
                   <span className="text-xs font-semibold text-slate-800 leading-tight">{item.product_name}</span>
                   <span className="text-[10px] text-slate-400">{item.status_name || "สถานะปกติ"}</span>
