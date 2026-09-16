@@ -21,8 +21,8 @@ body {
 body {
   @apply text-slate-800;
   background:
-    radial-gradient(circle, rgba(37, 99, 235, 0.07) 1.5px, transparent 1.5px) 0 0 / 28px 28px,
-    linear-gradient(160deg, #ffffff 0%, #eef5ff 45%, #dbeafe 100%);
+    radial-gradient(circle, rgba(8, 80, 176, 0.07) 1.5px, transparent 1.5px) 0 0 / 28px 28px,
+    linear-gradient(160deg, #ffffff 0%, #f0f6fe 45%, #ddebfd 100%);
   min-height: 100dvh;
 }
 
@@ -64,7 +64,7 @@ body {
 }
 .tilt-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 16px 34px -18px rgba(30, 64, 175, 0.30);
+  box-shadow: 0 16px 34px -18px rgba(4, 44, 98, 0.30);
 }
 .tilt-card:active {
   transform: translateY(-1px);
