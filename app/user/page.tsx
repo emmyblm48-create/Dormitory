@@ -19,15 +19,17 @@ export default function UserHomePage() {
   const [announcement, setAnnouncement] = useState<Announcement | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const [roomId, setRoomId] = useState<number | null>(null);
+
   useEffect(() => {
     (async () => {
-      const [pending, total, roomAssets, latestAnnouncement] = await Promise.all([
+      const [pending, total, { data: myRoomId }, latestAnnouncement] = await Promise.all([
         supabase
           .from("maintenance_request")
           .select("*", { count: "exact", head: true })
           .neq("status", "สถานะเสร็จสมบรูณ์"),
         supabase.from("maintenance_request").select("*", { count: "exact", head: true }),
-        supabase.from("view_room_asset").select("*").order("product_name"),
+        supabase.rpc("get_user_room_id"),
         supabase
           .from("announcements")
           .select("*")
@@ -37,13 +39,19 @@ export default function UserHomePage() {
       ]);
       setPendingRepairs(pending.count ?? 0);
       setTotalRepairs(total.count ?? 0);
-      if (roomAssets.data) setAssets(roomAssets.data as ViewRoomAsset[]);
       if (latestAnnouncement.data?.[0]) setAnnouncement(latestAnnouncement.data[0] as Announcement);
+      if (typeof myRoomId === "number") {
+        setRoomId(myRoomId);
+        const { data: roomAssets } = await supabase
+          .from("view_room_asset")
+          .select("*")
+          .eq("room_id", myRoomId)
+          .order("product_name");
+        if (roomAssets) setAssets(roomAssets as ViewRoomAsset[]);
+      }
       setIsLoading(false);
     })();
   }, []);
-
-  const roomId = assets[0]?.room_id ?? null;
 
   useEffect(() => {
     if (roomId == null) return;

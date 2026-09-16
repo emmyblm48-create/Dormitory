@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, RefreshCw, RotateCcw, AlertCircle } from "lucide-react";
+import { Check, RefreshCw, RotateCcw, AlertCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { getAssetIcon } from "@/components/icons";
 import { ScrollReveal } from "@/components/ScrollReveal";
@@ -11,16 +11,24 @@ import type { ViewRoomAsset } from "@/lib/types";
 
 export default function EquipmentChecklistPage() {
   const [assets, setAssets] = useState<ViewRoomAsset[]>([]);
+  const [roomId, setRoomId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [checked, setChecked] = useState<Set<number>>(new Set());
 
-  const roomId = assets[0]?.room_id ?? null;
-
   const load = async () => {
     setIsLoading(true);
+    const { data: myRoomId } = await supabase.rpc("get_user_room_id");
+    if (typeof myRoomId !== "number") {
+      setAssets([]);
+      setRoomId(null);
+      setIsLoading(false);
+      return;
+    }
+    setRoomId(myRoomId);
     const { data, error } = await supabase
       .from("view_room_asset")
       .select("*")
+      .eq("room_id", myRoomId)
       .order("product_name");
     if (!error && data) setAssets(data as ViewRoomAsset[]);
     setIsLoading(false);
@@ -107,8 +115,18 @@ export default function EquipmentChecklistPage() {
               >
                 <button
                   onClick={() => toggle(item.asset_id)}
+                  aria-pressed={isChecked}
+                  aria-label={`เช็ค ${item.product_name}`}
                   className="flex flex-col items-center gap-2 w-full"
                 >
+                  <span
+                    className={`absolute top-2 right-2 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                      isChecked ? "bg-emerald-500 border-emerald-500" : "bg-white/80 border-slate-300"
+                    }`}
+                  >
+                    {isChecked && <Check size={14} strokeWidth={3} className="text-white" />}
+                  </span>
+
                   <div
                     className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors bg-gradient-to-br ${
                       isChecked ? "from-emerald-400 to-emerald-600" : i % 2 === 0 ? "from-brand-400 to-brand-700" : "from-bloom-400 to-bloom-600"
@@ -120,12 +138,9 @@ export default function EquipmentChecklistPage() {
                   <span className="text-[10px] text-slate-400">{item.status_name || "สถานะปกติ"}</span>
                 </button>
 
-                {isChecked && (
-                  <CheckCircle2 className="absolute top-2 right-2 text-emerald-500 bg-white rounded-full" size={18} />
-                )}
-
                 <Link
                   href={`/user/report?productId=${item.product_id}`}
+                  onClick={(e) => e.stopPropagation()}
                   className="flex items-center gap-1 text-[10px] font-medium text-red-500 hover:text-red-600 mt-1"
                 >
                   <AlertCircle size={12} /> แจ้งปัญหา
