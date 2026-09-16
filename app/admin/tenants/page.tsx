@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Pencil, Check, X, Loader2, UserPlus } from "lucide-react";
+import { Pencil, Check, X, Loader2, UserPlus, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth-context";
 import type { Category, Room, Status, UserProfile } from "@/lib/types";
 
 interface DefaultEquipmentItem {
@@ -27,6 +28,7 @@ const DEFAULT_EQUIPMENT: DefaultEquipmentItem[] = [
 ];
 
 export default function AdminTenantsPage() {
+  const { session } = useAuth();
   const [tenants, setTenants] = useState<UserProfile[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -49,6 +51,7 @@ export default function AdminTenantsPage() {
   const [customEquipment, setCustomEquipment] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [createSuccess, setCreateSuccess] = useState<string | null>(null);
+  const [deletingEmail, setDeletingEmail] = useState<string | null>(null);
 
   const load = async () => {
     setIsLoading(true);
@@ -152,6 +155,33 @@ export default function AdminTenantsPage() {
       return;
     }
     setEditingEmail(null);
+    load();
+  };
+
+  const handleDelete = async (email: string) => {
+    if (!confirm(`ยืนยันการลบบัญชี ${email}?`)) return;
+    setError(null);
+    setDeletingEmail(email);
+
+    const accessToken = session?.access_token;
+    if (!accessToken) {
+      setError("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่");
+      setDeletingEmail(null);
+      return;
+    }
+
+    const res = await fetch("/api/admin/delete-tenant", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify({ email }),
+    });
+    const json = await res.json();
+    setDeletingEmail(null);
+
+    if (!res.ok) {
+      setError(json.error || "ลบบัญชีไม่สำเร็จ");
+      return;
+    }
     load();
   };
 
@@ -395,9 +425,19 @@ export default function AdminTenantsPage() {
                       </button>
                     </>
                   ) : (
-                    <button onClick={() => startEdit(t)} className="p-2 rounded-lg bg-brand-100/70 text-brand-600 hover:bg-brand-100">
-                      <Pencil size={16} />
-                    </button>
+                    <>
+                      <button onClick={() => startEdit(t)} className="p-2 rounded-lg bg-brand-100/70 text-brand-600 hover:bg-brand-100">
+                        <Pencil size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(t.email)}
+                        disabled={deletingEmail === t.email || t.email.toLowerCase() === session?.user?.email?.toLowerCase()}
+                        title={t.email.toLowerCase() === session?.user?.email?.toLowerCase() ? "ไม่สามารถลบบัญชีของตัวเองได้" : "ลบบัญชี"}
+                        className="p-2 rounded-lg bg-red-100/70 text-red-500 hover:bg-red-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        {deletingEmail === t.email ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
