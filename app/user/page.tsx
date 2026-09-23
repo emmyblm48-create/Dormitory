@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { ProgressRing } from "@/components/ProgressRing";
+import { AssetAvatar } from "@/components/AssetAvatar";
 import { readChecked } from "@/lib/checklist";
 import type { Announcement, ViewRoomAsset } from "@/lib/types";
 
@@ -180,6 +181,32 @@ export default function UserHomePage() {
           <ChevronRight size={18} className="text-slate-300 shrink-0" />
         </Link>
       </div>
+
+      {/* Room equipment */}
+      {assets.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-slate-900 text-sm">ครุภัณฑ์ในห้อง</h3>
+            <Link href="/user/checklist" className="flex items-center gap-0.5 text-xs font-semibold text-brand-600 hover:text-brand-700">
+              ดูทั้งหมด <ChevronRight size={14} />
+            </Link>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-1">
+            {assets.map((item) => (
+              <Link
+                key={item.asset_id}
+                href="/user/checklist"
+                className="tilt-card shrink-0 w-24 glass-card rounded-2xl p-3 flex flex-col items-center text-center gap-2"
+              >
+                <AssetAvatar imageUrl={item.product_image} name={item.product_name} />
+                <span className="text-[11px] font-semibold text-slate-800 leading-tight line-clamp-2">
+                  {item.product_name}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

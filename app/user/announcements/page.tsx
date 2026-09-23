@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Pin, Megaphone } from "lucide-react";
+import { Loader2, Pin, Megaphone, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { Announcement } from "@/lib/types";
 
@@ -10,6 +10,7 @@ export default function UserAnnouncementsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string>("ทั้งหมด");
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -72,35 +73,64 @@ export default function UserAnnouncementsPage() {
           {visible.map((a) => {
             const expanded = expandedId === a.announcement_id;
             return (
-              <button
-                key={a.announcement_id}
-                onClick={() => setExpandedId(expanded ? null : a.announcement_id)}
-                className="w-full text-left glass-card rounded-2xl p-4 hover:bg-white/85 transition-colors"
-              >
+              <div key={a.announcement_id} className="glass-card rounded-2xl p-4">
                 {a.image_path && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={a.image_path} alt="" className="w-full max-h-48 rounded-xl object-cover mb-3" />
+                  <button
+                    onClick={() => setLightboxImage(a.image_path)}
+                    className="block w-full aspect-square rounded-xl overflow-hidden mb-3"
+                    aria-label="ดูรูปเต็ม"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={a.image_path} alt="" className="w-full h-full object-cover" />
+                  </button>
                 )}
-                <div className="flex items-start gap-2">
-                  {a.is_pinned && <Pin size={15} className="text-amber-500 shrink-0 mt-0.5" />}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[10px] font-semibold bg-brand-100/80 text-brand-600 px-2 py-0.5 rounded-full">
-                        {a.category}
-                      </span>
-                      <span className="text-[11px] text-slate-400">
-                        {new Date(a.created_at).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" })}
-                      </span>
+                <button
+                  onClick={() => setExpandedId(expanded ? null : a.announcement_id)}
+                  className="w-full text-left hover:opacity-90 transition-opacity"
+                >
+                  <div className="flex items-start gap-2">
+                    {a.is_pinned && <Pin size={15} className="text-amber-500 shrink-0 mt-0.5" />}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] font-semibold bg-brand-100/80 text-brand-600 px-2 py-0.5 rounded-full">
+                          {a.category}
+                        </span>
+                        <span className="text-[11px] text-slate-400">
+                          {new Date(a.created_at).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" })}
+                        </span>
+                      </div>
+                      <h4 className="font-bold text-slate-900 mt-1">{a.title}</h4>
+                      <p className={`text-sm text-slate-600 mt-1 whitespace-pre-wrap ${expanded ? "" : "line-clamp-2"}`}>
+                        {a.content}
+                      </p>
                     </div>
-                    <h4 className="font-bold text-slate-900 mt-1">{a.title}</h4>
-                    <p className={`text-sm text-slate-600 mt-1 whitespace-pre-wrap ${expanded ? "" : "line-clamp-2"}`}>
-                      {a.content}
-                    </p>
                   </div>
-                </div>
-              </button>
+                </button>
+              </div>
             );
           })}
+        </div>
+      )}
+
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setLightboxImage(null)}
+        >
+          <button
+            onClick={() => setLightboxImage(null)}
+            aria-label="ปิด"
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center"
+          >
+            <X size={20} />
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={lightboxImage}
+            alt=""
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-full max-h-full rounded-xl object-contain"
+          />
         </div>
       )}
     </div>
