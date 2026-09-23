@@ -191,7 +191,7 @@ export default function UserHomePage() {
               ดูทั้งหมด <ChevronRight size={14} />
             </Link>
           </div>
-          <div className="flex gap-3 overflow-x-auto pb-1">
+          <div className="flex gap-3 overflow-x-auto no-scrollbar touch-pan-x overscroll-x-contain pb-1">
             {assets.map((item) => (
               <Link
                 key={item.asset_id}

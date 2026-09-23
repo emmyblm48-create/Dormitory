@@ -20,9 +20,7 @@ body {
 
 body {
   @apply text-slate-800;
-  background:
-    radial-gradient(circle, rgba(8, 80, 176, 0.07) 1.5px, transparent 1.5px) 0 0 / 28px 28px,
-    linear-gradient(160deg, #ffffff 0%, #f0f6fe 45%, #ddebfd 100%);
+  background: #ffffff;
   min-height: 100dvh;
 }
 
