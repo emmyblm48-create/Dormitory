@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Pencil, Check, X, Loader2, UserPlus, Trash2 } from "lucide-react";
+import { Pencil, Check, X, Loader2, UserPlus, Trash2, KeyRound, Plus, DoorOpen } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import type { Category, Room, Status, UserProfile } from "@/lib/types";
@@ -52,6 +52,20 @@ export default function AdminTenantsPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [createSuccess, setCreateSuccess] = useState<string | null>(null);
   const [deletingEmail, setDeletingEmail] = useState<string | null>(null);
+
+  const [passwordEmail, setPasswordEmail] = useState<string | null>(null);
+  const [passwordValue, setPasswordValue] = useState("");
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
+
+  const [editingRoomId, setEditingRoomId] = useState<number | null>(null);
+  const [editRoomValues, setEditRoomValues] = useState<{ room_number: string; floor: string; rent_price: string }>({
+    room_number: "",
+    floor: "",
+    rent_price: "",
+  });
+  const [addRoomValues, setAddRoomValues] = useState({ room_number: "", floor: "", rent_price: "" });
+  const [isSavingRoom, setIsSavingRoom] = useState(false);
+  const [deletingRoomId, setDeletingRoomId] = useState<number | null>(null);
 
   const load = async () => {
     setIsLoading(true);
@@ -185,6 +199,106 @@ export default function AdminTenantsPage() {
     load();
   };
 
+  const startPasswordEdit = (email: string) => {
+    setPasswordEmail(email);
+    setPasswordValue("");
+    setError(null);
+  };
+
+  const savePassword = async () => {
+    if (!passwordEmail) return;
+    if (passwordValue.length < 6) {
+      setError("รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร");
+      return;
+    }
+    setError(null);
+    setIsSavingPassword(true);
+
+    const accessToken = session?.access_token;
+    if (!accessToken) {
+      setError("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่");
+      setIsSavingPassword(false);
+      return;
+    }
+
+    const res = await fetch("/api/admin/reset-tenant-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify({ email: passwordEmail, password: passwordValue }),
+    });
+    const json = await res.json();
+    setIsSavingPassword(false);
+
+    if (!res.ok) {
+      setError(json.error || "เปลี่ยนรหัสผ่านไม่สำเร็จ");
+      return;
+    }
+    setCreateSuccess(`เปลี่ยนรหัสผ่านสำหรับ ${passwordEmail} สำเร็จ`);
+    setPasswordEmail(null);
+    setPasswordValue("");
+  };
+
+  const startRoomEdit = (r: Room) => {
+    setEditingRoomId(r.room_id);
+    setEditRoomValues({
+      room_number: r.room_number,
+      floor: r.floor ?? "",
+      rent_price: String(r.rent_price ?? ""),
+    });
+  };
+
+  const saveRoomEdit = async () => {
+    if (editingRoomId == null) return;
+    setError(null);
+    setIsSavingRoom(true);
+    const { error } = await supabase
+      .from("rooms")
+      .update({
+        room_number: editRoomValues.room_number,
+        floor: editRoomValues.floor || null,
+        rent_price: Number(editRoomValues.rent_price || 0),
+      })
+      .eq("room_id", editingRoomId);
+    setIsSavingRoom(false);
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    setEditingRoomId(null);
+    load();
+  };
+
+  const handleAddRoom = async () => {
+    if (!addRoomValues.room_number.trim()) return;
+    setError(null);
+    setIsSavingRoom(true);
+    const { error } = await supabase.from("rooms").insert({
+      room_number: addRoomValues.room_number.trim(),
+      floor: addRoomValues.floor.trim() || null,
+      rent_price: Number(addRoomValues.rent_price || 0),
+    });
+    setIsSavingRoom(false);
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    setAddRoomValues({ room_number: "", floor: "", rent_price: "" });
+    load();
+  };
+
+  const handleDeleteRoom = async (roomId: number) => {
+    if (!confirm("ยืนยันการลบห้องนี้?")) return;
+    setError(null);
+    setDeletingRoomId(roomId);
+    const { error } = await supabase.from("rooms").delete().eq("room_id", roomId);
+    setDeletingRoomId(null);
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    load();
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -251,8 +365,8 @@ export default function AdminTenantsPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto w-full">
-      <h2 className="text-lg md:text-xl font-bold text-slate-900">จัดการบัญชีผู้เช่า</h2>
+    <div className="space-y-6 max-w-4xl mx-auto w-full">
+      <h2 className="text-lg md:text-xl font-bold text-slate-900">จัดการผู้เช่าและห้องพัก</h2>
 
       {error && <div className="bg-red-50/80 backdrop-blur-md border border-red-200/60 text-red-600 text-sm rounded-xl px-4 py-2.5">{error}</div>}
       {createSuccess && <div className="bg-emerald-50/80 backdrop-blur-md border border-emerald-200/60 text-emerald-600 text-sm rounded-xl px-4 py-2.5">{createSuccess}</div>}
@@ -386,56 +500,206 @@ export default function AdminTenantsPage() {
         <div className="glass-card rounded-2xl divide-y divide-white/50">
           {tenants.map((t) => {
             const isEditing = editingEmail === t.email;
+            const isChangingPassword = passwordEmail === t.email;
             return (
-              <div key={t.email} className="p-3.5 flex flex-col md:flex-row md:items-center gap-2">
-                <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-2">
-                  <span className="text-sm text-slate-500">{t.email}</span>
-                  {isEditing ? (
+              <div key={t.email} className="p-3.5 flex flex-col gap-2">
+                <div className="flex flex-col md:flex-row md:items-center gap-2">
+                  <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <span className="text-sm text-slate-500">{t.email}</span>
+                    {isEditing ? (
+                      <input
+                        value={editValues.userName}
+                        onChange={(e) => setEditValues((v) => ({ ...v, userName: e.target.value }))}
+                        className="glass-input px-2.5 py-1.5 rounded-lg text-sm"
+                      />
+                    ) : (
+                      <span className="text-sm font-medium text-slate-800">{t.userName}</span>
+                    )}
+                    {isEditing ? (
+                      <select
+                        value={editValues.role}
+                        onChange={(e) => setEditValues((v) => ({ ...v, role: e.target.value }))}
+                        className="glass-input px-2.5 py-1.5 rounded-lg text-sm"
+                      >
+                        <option value="user">user</option>
+                        <option value="admin">admin</option>
+                      </select>
+                    ) : (
+                      <span className={`text-xs font-semibold px-2 py-1 rounded-full w-fit ${t.role === "admin" ? "bg-amber-100/80 text-amber-700" : "bg-brand-100/80 text-brand-600"}`}>
+                        {t.role}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    {isEditing ? (
+                      <>
+                        <button onClick={saveEdit} className="p-2 rounded-lg bg-emerald-100/70 text-emerald-600 hover:bg-emerald-100">
+                          <Check size={16} />
+                        </button>
+                        <button onClick={() => setEditingEmail(null)} className="p-2 rounded-lg bg-white/60 text-slate-500 hover:bg-white/90">
+                          <X size={16} />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button onClick={() => startEdit(t)} title="แก้ไขข้อมูล" className="p-2 rounded-lg bg-brand-100/70 text-brand-600 hover:bg-brand-100">
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          onClick={() => (isChangingPassword ? setPasswordEmail(null) : startPasswordEdit(t.email))}
+                          title="เปลี่ยนรหัสผ่าน"
+                          className="p-2 rounded-lg bg-slate-100/70 text-slate-600 hover:bg-slate-100"
+                        >
+                          <KeyRound size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(t.email)}
+                          disabled={deletingEmail === t.email || t.email.toLowerCase() === session?.user?.email?.toLowerCase()}
+                          title={t.email.toLowerCase() === session?.user?.email?.toLowerCase() ? "ไม่สามารถลบบัญชีของตัวเองได้" : "ลบบัญชี"}
+                          className="p-2 rounded-lg bg-red-100/70 text-red-500 hover:bg-red-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          {deletingEmail === t.email ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+                {isChangingPassword && (
+                  <div className="flex flex-col md:flex-row md:items-center gap-2 pt-2 border-t border-white/60">
                     <input
-                      value={editValues.userName}
-                      onChange={(e) => setEditValues((v) => ({ ...v, userName: e.target.value }))}
-                      className="glass-input px-2.5 py-1.5 rounded-lg text-sm"
+                      type="text"
+                      autoFocus
+                      value={passwordValue}
+                      onChange={(e) => setPasswordValue(e.target.value)}
+                      placeholder="รหัสผ่านใหม่ (อย่างน้อย 6 ตัวอักษร)"
+                      minLength={6}
+                      className="glass-input px-2.5 py-1.5 rounded-lg text-sm flex-1"
                     />
+                    <div className="flex gap-2 shrink-0">
+                      <button
+                        onClick={savePassword}
+                        disabled={isSavingPassword}
+                        className="btn-primary px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5"
+                      >
+                        {isSavingPassword ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />} บันทึก
+                      </button>
+                      <button
+                        onClick={() => setPasswordEmail(null)}
+                        className="p-2 rounded-lg bg-white/60 text-slate-500 hover:bg-white/90"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <h2 className="text-lg md:text-xl font-bold text-slate-900 pt-4 flex items-center gap-2">
+        <DoorOpen size={20} className="text-brand-600" /> จัดการห้องพัก
+      </h2>
+
+      <div className="glass-card rounded-2xl p-4 flex flex-col md:flex-row gap-3 md:items-end">
+        <div className="flex-1">
+          <label className="text-xs font-medium text-slate-500 mb-1 block">เลขห้อง</label>
+          <input
+            value={addRoomValues.room_number}
+            onChange={(e) => setAddRoomValues((v) => ({ ...v, room_number: e.target.value }))}
+            className="glass-input px-3 py-2 rounded-lg text-sm"
+          />
+        </div>
+        <div className="flex-1">
+          <label className="text-xs font-medium text-slate-500 mb-1 block">ชั้น</label>
+          <input
+            value={addRoomValues.floor}
+            onChange={(e) => setAddRoomValues((v) => ({ ...v, floor: e.target.value }))}
+            className="glass-input px-3 py-2 rounded-lg text-sm"
+          />
+        </div>
+        <div className="flex-1">
+          <label className="text-xs font-medium text-slate-500 mb-1 block">ค่าห้อง/เดือน</label>
+          <input
+            type="number"
+            step="0.01"
+            value={addRoomValues.rent_price}
+            onChange={(e) => setAddRoomValues((v) => ({ ...v, rent_price: e.target.value }))}
+            className="glass-input px-3 py-2 rounded-lg text-sm"
+          />
+        </div>
+        <button
+          onClick={handleAddRoom}
+          disabled={isSavingRoom}
+          className="btn-primary px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-1.5 shrink-0"
+        >
+          <Plus size={16} /> เพิ่มห้อง
+        </button>
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center py-10">
+          <Loader2 className="animate-spin text-brand-400" size={24} />
+        </div>
+      ) : rooms.length === 0 ? (
+        <div className="text-center py-8 text-slate-400 text-sm glass-card rounded-2xl">ไม่มีข้อมูลห้องพัก</div>
+      ) : (
+        <div className="glass-card rounded-2xl divide-y divide-white/50 overflow-hidden">
+          {rooms.map((r) => {
+            const isEditingRoom = editingRoomId === r.room_id;
+            return (
+              <div key={r.room_id} className="p-3.5 flex flex-col md:flex-row md:items-center gap-2">
+                <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-2">
+                  {isEditingRoom ? (
+                    <>
+                      <input
+                        value={editRoomValues.room_number}
+                        onChange={(e) => setEditRoomValues((v) => ({ ...v, room_number: e.target.value }))}
+                        className="glass-input px-2.5 py-1.5 rounded-lg text-sm"
+                      />
+                      <input
+                        value={editRoomValues.floor}
+                        onChange={(e) => setEditRoomValues((v) => ({ ...v, floor: e.target.value }))}
+                        className="glass-input px-2.5 py-1.5 rounded-lg text-sm"
+                      />
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={editRoomValues.rent_price}
+                        onChange={(e) => setEditRoomValues((v) => ({ ...v, rent_price: e.target.value }))}
+                        className="glass-input px-2.5 py-1.5 rounded-lg text-sm"
+                      />
+                    </>
                   ) : (
-                    <span className="text-sm font-medium text-slate-800">{t.userName}</span>
-                  )}
-                  {isEditing ? (
-                    <select
-                      value={editValues.role}
-                      onChange={(e) => setEditValues((v) => ({ ...v, role: e.target.value }))}
-                      className="glass-input px-2.5 py-1.5 rounded-lg text-sm"
-                    >
-                      <option value="user">user</option>
-                      <option value="admin">admin</option>
-                    </select>
-                  ) : (
-                    <span className={`text-xs font-semibold px-2 py-1 rounded-full w-fit ${t.role === "admin" ? "bg-amber-100/80 text-amber-700" : "bg-brand-100/80 text-brand-600"}`}>
-                      {t.role}
-                    </span>
+                    <>
+                      <span className="text-sm font-medium text-slate-800">{r.room_number}</span>
+                      <span className="text-sm text-slate-500">{r.floor ?? "-"}</span>
+                      <span className="text-sm text-slate-500">{r.rent_price}</span>
+                    </>
                   )}
                 </div>
                 <div className="flex gap-2 shrink-0">
-                  {isEditing ? (
+                  {isEditingRoom ? (
                     <>
-                      <button onClick={saveEdit} className="p-2 rounded-lg bg-emerald-100/70 text-emerald-600 hover:bg-emerald-100">
+                      <button onClick={saveRoomEdit} disabled={isSavingRoom} className="p-2 rounded-lg bg-emerald-100/70 text-emerald-600 hover:bg-emerald-100">
                         <Check size={16} />
                       </button>
-                      <button onClick={() => setEditingEmail(null)} className="p-2 rounded-lg bg-white/60 text-slate-500 hover:bg-white/90">
+                      <button onClick={() => setEditingRoomId(null)} className="p-2 rounded-lg bg-white/60 text-slate-500 hover:bg-white/90">
                         <X size={16} />
                       </button>
                     </>
                   ) : (
                     <>
-                      <button onClick={() => startEdit(t)} className="p-2 rounded-lg bg-brand-100/70 text-brand-600 hover:bg-brand-100">
+                      <button onClick={() => startRoomEdit(r)} className="p-2 rounded-lg bg-brand-100/70 text-brand-600 hover:bg-brand-100">
                         <Pencil size={16} />
                       </button>
                       <button
-                        onClick={() => handleDelete(t.email)}
-                        disabled={deletingEmail === t.email || t.email.toLowerCase() === session?.user?.email?.toLowerCase()}
-                        title={t.email.toLowerCase() === session?.user?.email?.toLowerCase() ? "ไม่สามารถลบบัญชีของตัวเองได้" : "ลบบัญชี"}
+                        onClick={() => handleDeleteRoom(r.room_id)}
+                        disabled={deletingRoomId === r.room_id}
                         className="p-2 rounded-lg bg-red-100/70 text-red-500 hover:bg-red-100 disabled:opacity-40 disabled:cursor-not-allowed"
                       >
-                        {deletingEmail === t.email ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                        {deletingRoomId === r.room_id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
                       </button>
                     </>
                   )}

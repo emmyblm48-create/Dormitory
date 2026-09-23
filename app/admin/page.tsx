@@ -85,7 +85,7 @@ export default function AdminOverviewPage() {
   const maxMonthly = Math.max(1, ...yearData.map((d) => d.total));
 
   const cards = [
-    { label: "ห้องพักทั้งหมด", value: stats.rooms, icon: DoorOpen, color: "from-brand-500 to-brand-700", href: "/admin/rooms" },
+    { label: "ห้องพักทั้งหมด", value: stats.rooms, icon: DoorOpen, color: "from-brand-500 to-brand-700", href: "/admin/tenants" },
     { label: "ครุภัณฑ์ทั้งหมด", value: stats.products, icon: Package, color: "from-emerald-400 to-emerald-600", href: "/admin/products" },
     { label: "รอดำเนินการซ่อม", value: stats.pendingRequests, icon: Wrench, color: "from-red-400 to-red-600", href: "/admin/requests" },
     { label: "ผู้เช่าทั้งหมด", value: stats.tenants, icon: Users, color: "from-amber-400 to-amber-600", href: "/admin/tenants" },

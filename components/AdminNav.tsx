@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import {
   LayoutDashboard,
-  DoorOpen,
   Tags,
   ListChecks,
   Package,
@@ -16,12 +15,11 @@ import {
 
 const items = [
   { href: "/admin", label: "ภาพรวม", icon: LayoutDashboard },
-  { href: "/admin/rooms", label: "ห้องพัก", icon: DoorOpen },
   { href: "/admin/categories", label: "หมวดหมู่", icon: Tags },
   { href: "/admin/statuses", label: "สถานะ", icon: ListChecks },
   { href: "/admin/products", label: "ครุภัณฑ์", icon: Package },
   { href: "/admin/requests", label: "แจ้งซ่อม", icon: Wrench },
-  { href: "/admin/tenants", label: "ผู้เช่า", icon: Users },
+  { href: "/admin/tenants", label: "ผู้เช่า/ห้องพัก", icon: Users },
   { href: "/admin/announcements", label: "ข่าวสาร", icon: Megaphone },
 ];
 
