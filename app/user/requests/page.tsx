@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { formatFullDate, statusTextClass } from "@/lib/format";
+import { formatFullDate, formatCurrency, statusTextClass } from "@/lib/format";
 import { AssetAvatar } from "@/components/AssetAvatar";
 import type { ViewHomeUser } from "@/lib/types";
 
@@ -64,6 +64,11 @@ export default function UserRequestsPage() {
                 <p className="text-slate-400 text-[10px] md:text-xs">
                   {formatFullDate(item.reported_date)}
                 </p>
+                {!!item.repair_cost && (
+                  <p className="text-xs font-semibold text-emerald-600 mt-0.5">
+                    ค่าซ่อม {formatCurrency(item.repair_cost)}
+                  </p>
+                )}
               </div>
             </div>
           ))}
