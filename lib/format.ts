@@ -21,6 +21,19 @@ export const formatFullDate = (dateStr?: string | null) => {
   return `${day} ${month} ${buddhistYear} เวลา ${hours}:${minutes} น.`;
 };
 
+export const statusTextClass = (status?: string | null) => {
+  switch (status) {
+    case "สถานะเสร็จสมบรูณ์":
+      return "text-emerald-600";
+    case "สถานะกำลังดำเนินการ":
+      return "text-amber-500";
+    case "สถานะแจ้งซ่อม":
+      return "text-red-500";
+    default:
+      return "text-red-500";
+  }
+};
+
 export const formatCurrency = (value?: number | null) => {
   const amount = Number(value ?? 0);
   return `${amount.toLocaleString("th-TH", { minimumFractionDigits: 0, maximumFractionDigits: 2 })} บาท`;

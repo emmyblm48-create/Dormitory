@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { formatFullDate } from "@/lib/format";
+import { formatFullDate, statusTextClass } from "@/lib/format";
 import { AssetAvatar } from "@/components/AssetAvatar";
 import type { ViewHomeUser } from "@/lib/types";
 
@@ -58,7 +58,7 @@ export default function UserRequestsPage() {
                 {item.description && (
                   <p className="text-slate-500 text-xs truncate">{item.description}</p>
                 )}
-                <p className="text-red-500 font-medium text-xs my-0.5">
+                <p className={`font-medium text-xs my-0.5 ${statusTextClass(item.status)}`}>
                   {item.status || "สถานะแจ้งซ่อม"}
                 </p>
                 <p className="text-slate-400 text-[10px] md:text-xs">
