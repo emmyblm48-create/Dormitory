@@ -77,11 +77,17 @@ export default function UserAnnouncementsPage() {
                 {a.image_path && (
                   <button
                     onClick={() => setLightboxImage(a.image_path)}
-                    className="block w-full aspect-square rounded-xl overflow-hidden mb-3"
+                    className="block w-full rounded-xl overflow-hidden mb-3"
                     aria-label="ดูรูปเต็ม"
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={a.image_path} alt="" className="w-full h-full object-cover" />
+                    {/* Square crop via the padding-top trick (not the `aspect-ratio` CSS
+                        property + h-full image) since some mobile browsers fail to resolve
+                        the image's percentage height, which lets it render at its full
+                        natural (often much taller) size instead of being cropped square. */}
+                    <span className="relative block w-full pt-[100%]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={a.image_path} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                    </span>
                   </button>
                 )}
                 <button

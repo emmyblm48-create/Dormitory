@@ -61,7 +61,7 @@ export default function LoginPage() {
   return (
     <div className="h-dvh flex justify-center items-center p-0 md:p-6">
       <ScrollReveal />
-      <div className="reveal is-visible w-full max-w-5xl h-dvh md:h-[850px] glass-shell md:rounded-[32px] relative flex flex-col overflow-hidden">
+      <div className="reveal w-full max-w-5xl h-dvh md:h-[850px] glass-shell md:rounded-[32px] relative flex flex-col overflow-hidden">
         <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 overflow-y-auto">
           <div className="w-full max-w-sm flex flex-col items-center text-center reveal">
             <div className="relative p-4 rounded-3xl bg-cream-50 border border-brand-100 shadow-glass-sm mb-2">

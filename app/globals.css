@@ -45,15 +45,14 @@ body {
   display: none;
 }
 
-/* Scroll-reveal: fade + rise into place, once, as elements enter the viewport */
+/* Scroll-reveal: fade + rise into place, once, as elements enter the viewport.
+   ScrollReveal.tsx flips opacity/transform to their revealed values via
+   inline style (see that file for why), so this only sets the starting
+   state and the transition. */
 .reveal {
   opacity: 0;
   transform: translateY(14px);
   transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.reveal.is-visible {
-  opacity: 1;
-  transform: translateY(0);
 }
 
 /* Subtle lift for card-like, tappable elements */
