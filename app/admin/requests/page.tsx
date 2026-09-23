@@ -89,7 +89,7 @@ export default function AdminRequestsPage() {
                 <h4 className="font-bold text-slate-900 truncate">{item.product_name}</h4>
                 <p className="text-xs text-slate-500">ห้อง {item.room_number}</p>
                 {item.description && <p className="text-xs text-slate-500 truncate">{item.description}</p>}
-                <p className="text-slate-400 text-[10px] font-mono">{formatFullDate(item.reported_date)}</p>
+                <p className="text-slate-400 text-[10px]">{formatFullDate(item.reported_date)}</p>
                 {!!item.repair_cost && (
                   <p className="text-xs font-semibold text-emerald-600 mt-0.5">ค่าซ่อม {formatCurrency(item.repair_cost)}</p>
                 )}

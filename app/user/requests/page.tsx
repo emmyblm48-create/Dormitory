@@ -16,6 +16,7 @@ export default function UserRequestsPage() {
     const { data, error } = await supabase
       .from("view_home_user")
       .select("*")
+      .neq("status", "สถานะเสร็จสมบรูณ์")
       .order("reported_date", { ascending: false });
     if (!error && data) setRequests(data as ViewHomeUser[]);
     setIsLoading(false);
@@ -60,7 +61,7 @@ export default function UserRequestsPage() {
                 <p className="text-red-500 font-medium text-xs my-0.5">
                   {item.status || "สถานะแจ้งซ่อม"}
                 </p>
-                <p className="text-slate-400 text-[10px] md:text-xs font-mono">
+                <p className="text-slate-400 text-[10px] md:text-xs">
                   {formatFullDate(item.reported_date)}
                 </p>
               </div>
