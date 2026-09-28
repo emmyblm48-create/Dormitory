@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { DormitoryLogo } from "@/components/DormitoryLogo";
 import { ScrollReveal } from "@/components/ScrollReveal";
+import { AppShowcase } from "@/components/AppShowcase";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -61,7 +62,15 @@ export default function LoginPage() {
   return (
     <div className="h-dvh flex justify-center items-center p-0 md:p-6">
       <ScrollReveal />
-      <div className="reveal w-full max-w-5xl h-dvh md:h-[850px] glass-shell md:rounded-[32px] relative flex flex-col overflow-hidden">
+      <div className="reveal w-full max-w-5xl h-dvh md:h-[850px] glass-shell md:rounded-[32px] relative flex flex-col lg:flex-row overflow-hidden">
+        {/* Motion-graphic showcase — desktop only, so phones go straight to the form */}
+        <div className="hidden lg:flex flex-[1.15] flex-col bg-gradient-to-br from-brand-50 via-cream-100 to-brand-100 border-r border-brand-100">
+          <div className="px-10 pt-10">
+            <p className="text-xs uppercase tracking-[0.2em] text-brand-500 font-display">Dormitory App</p>
+            <p className="text-2xl font-bold text-slate-900 mt-1">แจ้งซ่อม ติดตามสถานะ ครบในแอปเดียว</p>
+          </div>
+          <AppShowcase className="flex-1" />
+        </div>
         <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 overflow-y-auto">
           <div className="w-full max-w-sm flex flex-col items-center text-center reveal">
             <div className="relative p-4 rounded-3xl bg-cream-50 border border-brand-100 shadow-glass-sm mb-2">

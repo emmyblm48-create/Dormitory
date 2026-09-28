@@ -1,0 +1,463 @@
+/* Three-phone app showcase. Timeline mirrors the original GSAP composition:
+   build (0–2s) → breathe (2–4s) → resolve (4–5.5s), then an ambient float.
+   Everything is laid out on a fixed 1000×760 stage that AppShowcase.tsx
+   scales to fit its container. */
+
+.frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.stage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1000px;
+  height: 760px;
+  transform-origin: center center;
+}
+
+.inner {
+  position: absolute;
+  inset: 0;
+  transform-origin: center center;
+  animation: stagePush 3.5s cubic-bezier(0.37, 0, 0.63, 1) 2s both;
+}
+
+.glow {
+  position: absolute;
+  width: 760px;
+  height: 760px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(128, 180, 249, 0.35) 0%, transparent 70%);
+  animation: fadeIn 1.2s ease-out 0.2s both;
+}
+
+/* ── Phones ── */
+.phone {
+  position: absolute;
+  width: 300px;
+  height: 610px;
+  top: 75px;
+  left: 350px;
+}
+.phoneCenter {
+  z-index: 3;
+  animation: centerIn 0.7s cubic-bezier(0.34, 1.4, 0.64, 1) 0.2s both;
+}
+.phoneLeft {
+  z-index: 2;
+  animation: fanLeft 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+}
+.phoneRight {
+  z-index: 2;
+  animation: fanRight 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
+}
+
+.bezel {
+  width: 100%;
+  height: 100%;
+  border-radius: 40px;
+  background: #031f44;
+  padding: 8px;
+  box-shadow: 0 24px 64px rgba(4, 44, 98, 0.35), 0 4px 16px rgba(4, 44, 98, 0.15);
+  position: relative;
+  overflow: hidden;
+  animation: float 5s ease-in-out 5.5s infinite;
+}
+.phoneLeft .bezel {
+  animation-delay: 5.9s;
+}
+.phoneRight .bezel {
+  animation-delay: 6.3s;
+}
+
+.notch {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 96px;
+  height: 24px;
+  background: #031f44;
+  border-radius: 0 0 16px 16px;
+  z-index: 5;
+}
+
+.screen {
+  width: 100%;
+  height: 100%;
+  border-radius: 32px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── Left screen: lifestyle ── */
+.screenLeft {
+  background: linear-gradient(160deg, #f0f6fe 0%, #ddebfd 50%, #b6d4fc 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.leftArt {
+  position: absolute;
+  top: 36px;
+  left: 0;
+  width: 100%;
+  height: 380px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.leftArt svg {
+  width: 220px;
+  height: 300px;
+}
+.leftBottom {
+  padding: 0 26px 36px;
+  position: relative;
+}
+.tagline {
+  font-size: 26px;
+  font-weight: 700;
+  color: #031f44;
+  line-height: 1.25;
+  margin-bottom: 14px;
+  animation: riseIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) 2.2s both;
+}
+.cta {
+  display: inline-block;
+  background: #0850b0;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 24px;
+  border-radius: 999px;
+  animation: riseInSmall 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 2.5s both;
+}
+
+/* ── Center screen: dashboard ── */
+.screenCenter {
+  background: #06152e;
+  padding: 40px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  color: #f0f6fe;
+}
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #80b4f9, #0b68e5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.userInfo {
+  flex: 1;
+  min-width: 0;
+}
+.name {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.subtitle {
+  font-size: 11px;
+  color: #7d93b5;
+}
+.bell {
+  position: relative;
+  color: #7d93b5;
+}
+.bellDot {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #3c8cf6;
+}
+
+.goal {
+  background: #0d2447;
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.cardLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: #7d93b5;
+  align-self: flex-start;
+}
+.ringWrap {
+  position: relative;
+  width: 124px;
+  height: 124px;
+}
+.ringWrap svg {
+  width: 100%;
+  height: 100%;
+}
+.ringFill {
+  stroke-dasharray: 100;
+  animation: ringFill 1.2s cubic-bezier(0, 0.55, 0.45, 1) 1.8s both, pulse 1.2s ease-in-out 4s;
+}
+.ringCount {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  padding-top: 38px;
+}
+.ringNum {
+  font-size: 34px;
+  font-weight: 700;
+  color: #80b4f9;
+}
+.ringDen {
+  font-size: 20px;
+  color: #7d93b5;
+  margin-left: 2px;
+}
+.ringCaption {
+  font-size: 11px;
+  color: #7d93b5;
+}
+
+.progress {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.progressHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.progressTitle {
+  font-size: 14px;
+  font-weight: 500;
+}
+.progressLink {
+  font-size: 11px;
+  color: #80b4f9;
+}
+.barRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.barIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #0d2447;
+  color: #80b4f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.barInfo {
+  width: 84px;
+  flex-shrink: 0;
+}
+.barName {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.barVal {
+  display: block;
+  font-size: 10px;
+  color: #7d93b5;
+}
+.barTrack {
+  flex: 1;
+  height: 8px;
+  background: #0d2447;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.barValue {
+  height: 100%;
+  width: var(--w);
+  border-radius: 4px;
+  background: linear-gradient(90deg, #3c8cf6, #80b4f9);
+  transform-origin: left center;
+  animation: barGrow 0.8s cubic-bezier(0.215, 0.61, 0.355, 1) var(--d) both, pulse 1.2s ease-in-out 4.1s;
+}
+
+/* ── Right screen: data ── */
+.screenRight {
+  background: #fff;
+  padding: 40px 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.rightTitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+}
+.rightValue {
+  font-size: 38px;
+  font-weight: 700;
+  color: #031f44;
+  line-height: 1.05;
+}
+.rightUnit {
+  font-size: 18px;
+  font-weight: 400;
+  color: #64748b;
+}
+.graphWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.graph {
+  width: 100%;
+  flex: 1;
+}
+.graphLine {
+  stroke-dasharray: 1;
+  animation: draw 1.4s cubic-bezier(0.37, 0, 0.63, 1) 2s both, pulse 1.2s ease-in-out 4.05s;
+}
+.graphArea {
+  animation: fadeInArea 0.8s ease-out 2.6s both;
+}
+.graphDot {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: popIn 0.3s cubic-bezier(0.34, 2, 0.64, 1) var(--d) both;
+}
+.graphLabels {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 2px;
+  font-size: 9px;
+  color: #64748b;
+}
+.stats {
+  display: flex;
+  gap: 8px;
+}
+.pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #f0f6fe;
+  border-radius: 999px;
+  padding: 7px 11px;
+  white-space: nowrap;
+}
+.pillDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.pillLabel {
+  font-size: 10px;
+  color: #64748b;
+}
+.pillNum {
+  font-size: 12px;
+  font-weight: 700;
+  color: #031f44;
+}
+
+/* ── Keyframes ── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes centerIn {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes fanLeft {
+  from { opacity: 0; transform: translateX(0) rotate(0deg); }
+  55% { opacity: 1; }
+  to { opacity: 1; transform: translateX(-260px) rotate(-12deg); }
+}
+@keyframes fanRight {
+  from { opacity: 0; transform: translateX(0) rotate(0deg); }
+  55% { opacity: 1; }
+  to { opacity: 1; transform: translateX(260px) rotate(12deg); }
+}
+@keyframes stagePush {
+  from { transform: scale(1); }
+  to { transform: scale(1.03); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes riseInSmall {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes ringFill {
+  from { stroke-dashoffset: 100; }
+  to { stroke-dashoffset: 33.33; }
+}
+@keyframes barGrow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes fadeInArea {
+  from { opacity: 0; }
+  to { opacity: 0.18; }
+}
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .frame * {
+    animation-duration: 1ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+  }
+}
