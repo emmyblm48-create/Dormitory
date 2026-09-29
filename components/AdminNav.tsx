@@ -6,7 +6,6 @@ import { useEffect, useRef } from "react";
 import {
   LayoutDashboard,
   Tags,
-  ListChecks,
   Package,
   Wrench,
   Users,
@@ -15,8 +14,7 @@ import {
 
 const items = [
   { href: "/admin", label: "ภาพรวม", icon: LayoutDashboard },
-  { href: "/admin/categories", label: "หมวดหมู่", icon: Tags },
-  { href: "/admin/statuses", label: "สถานะ", icon: ListChecks },
+  { href: "/admin/categories", label: "หมวดหมู่/สถานะ", icon: Tags },
   { href: "/admin/products", label: "ครุภัณฑ์", icon: Package },
   { href: "/admin/requests", label: "แจ้งซ่อม", icon: Wrench },
   { href: "/admin/tenants", label: "ผู้เช่า/ห้องพัก", icon: Users },

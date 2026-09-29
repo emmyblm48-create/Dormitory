@@ -15,11 +15,12 @@ interface CrudTableProps {
   table: string;
   idField: string;
   columns: CrudColumn[];
+  note?: string;
 }
 
 type Row = Record<string, any>;
 
-export function CrudTable({ title, table, idField, columns }: CrudTableProps) {
+export function CrudTable({ title, table, idField, columns, note }: CrudTableProps) {
   const [rows, setRows] = useState<Row[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingId, setEditingId] = useState<number | string | null>(null);
@@ -93,8 +94,11 @@ export function CrudTable({ title, table, idField, columns }: CrudTableProps) {
   };
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-lg md:text-xl font-bold text-slate-900">{title}</h2>
+    <section className="space-y-3">
+      <div>
+        <h3 className="text-base font-bold text-slate-800">{title}</h3>
+        {note && <p className="text-xs text-slate-500 mt-0.5">{note}</p>}
+      </div>
 
       {error && (
         <div className="bg-red-50/80 backdrop-blur-md border border-red-200/60 text-red-600 text-sm rounded-xl px-4 py-2.5">
@@ -183,6 +187,6 @@ export function CrudTable({ title, table, idField, columns }: CrudTableProps) {
           })}
         </div>
       )}
-    </div>
+    </section>
   );
 }
