@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Pencil, Trash2, Plus, Loader2, Check, Search, DoorOpen } from "lucide-react";
+import { Pencil, Trash2, Plus, Loader2, Check, Search } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { ImageUpload } from "@/components/ImageUpload";
 import { AssetAvatar } from "@/components/AssetAvatar";
-import type { Room, Category, Product, RoomAsset } from "@/lib/types";
+import type { Category, Product, RoomAsset } from "@/lib/types";
 
 interface FormState {
   product_name: string;
@@ -21,12 +21,11 @@ const emptyForm = (): FormState => ({
   product_image: null,
 });
 
-// Products are the dormitory's equipment catalog. Rooms get items from here on
-// the tenants page, which links them through room_asset (one row per room).
+// Products are the web app's equipment catalog — one row per kind of item, not
+// tied to any room. Rooms pick items from here on the tenants page (room_asset).
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [roomAssets, setRoomAssets] = useState<RoomAsset[]>([]);
-  const [rooms, setRooms] = useState<Room[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,15 +37,13 @@ export default function AdminProductsPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
 
   const load = async () => {
-    const [p, ra, r, c] = await Promise.all([
+    const [p, ra, c] = await Promise.all([
       supabase.from("products").select("*").order("product_name"),
       supabase.from("room_asset").select("*"),
-      supabase.from("rooms").select("*").order("room_number"),
       supabase.from("categories").select("*").order("category_name"),
     ]);
     if (p.data) setProducts(p.data as Product[]);
     if (ra.data) setRoomAssets(ra.data as RoomAsset[]);
-    if (r.data) setRooms(r.data as Room[]);
     if (c.data) setCategories(c.data as Category[]);
     setIsLoading(false);
   };
@@ -83,7 +80,7 @@ export default function AdminProductsPage() {
       (p) => p.product_id !== editingId && p.product_name.trim().toLowerCase() === name.toLowerCase()
     );
     if (duplicate) {
-      setError(`มี "${name}" ในหอพักอยู่แล้ว`);
+      setError(`มี "${name}" ในระบบอยู่แล้ว`);
       return;
     }
 
@@ -104,15 +101,15 @@ export default function AdminProductsPage() {
       setError(saveErr.message || "บันทึกไม่สำเร็จ");
       return;
     }
-    setSuccess(editingId ? `บันทึก "${name}" แล้ว` : `เพิ่ม "${name}" เข้าหอพักแล้ว เลือกใส่ห้องได้ที่หน้าผู้เช่า`);
+    setSuccess(editingId ? `บันทึก "${name}" แล้ว` : `เพิ่ม "${name}" เข้าสู่ระบบแล้ว`);
     resetForm();
     load();
   };
 
   const handleDelete = async (product: Product) => {
     const usedIn = roomAssets.filter((a) => a.product_id === product.product_id).length;
-    const warning = usedIn > 0 ? `\nรายการนี้อยู่ใน ${usedIn} ห้อง จะถูกนำออกจากทุกห้องและประวัติแจ้งซ่อมที่เกี่ยวข้องจะถูกลบด้วย` : "";
-    if (!confirm(`ยืนยันการลบ "${product.product_name}" ออกจากหอพัก?${warning}`)) return;
+    const warning = usedIn > 0 ? `\nรายการนี้ถูกใช้งานอยู่ จะถูกนำออกจากห้องที่ใช้และประวัติแจ้งซ่อมที่เกี่ยวข้องจะถูกลบด้วย` : "";
+    if (!confirm(`ยืนยันการลบ "${product.product_name}" ออกจากระบบ?${warning}`)) return;
     setError(null);
     setSuccess(null);
     const { error: assetErr } = await supabase.from("room_asset").delete().eq("product_id", product.product_id);
@@ -131,11 +128,6 @@ export default function AdminProductsPage() {
 
   const categoryLabel = (id: number | null) => categories.find((c) => c.category_id === id)?.category_name ?? "ไม่ระบุหมวดหมู่";
 
-  const roomsUsing = (productId: number) => {
-    const ids = new Set(roomAssets.filter((a) => a.product_id === productId).map((a) => a.room_id));
-    return rooms.filter((r) => ids.has(r.room_id)).map((r) => r.room_number);
-  };
-
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return products;
@@ -145,10 +137,8 @@ export default function AdminProductsPage() {
   return (
     <div className="space-y-4 max-w-4xl mx-auto w-full">
       <div>
-        <h2 className="text-lg md:text-xl font-bold text-slate-900">ครุภัณฑ์ของหอพัก</h2>
-        <p className="text-xs text-slate-500 mt-0.5">
-          เพิ่มรายการครุภัณฑ์ของหอพักที่นี่ แล้วเลือกใส่แต่ละห้องได้ที่หน้า “ผู้เช่า”
-        </p>
+        <h2 className="text-lg md:text-xl font-bold text-slate-900">จัดการครุภัณฑ์</h2>
+        <p className="text-xs text-slate-500 mt-0.5">รายการครุภัณฑ์ทั้งหมดในระบบ เพิ่มหรือแก้ไขได้ที่นี่</p>
       </div>
 
       {error && (
@@ -159,7 +149,7 @@ export default function AdminProductsPage() {
       )}
 
       <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-4 space-y-3">
-        <p className="text-sm font-bold text-slate-700">{editingId ? "แก้ไขครุภัณฑ์" : "เพิ่มครุภัณฑ์เข้าหอพัก"}</p>
+        <p className="text-sm font-bold text-slate-700">{editingId ? "แก้ไขครุภัณฑ์" : "เพิ่มครุภัณฑ์เข้าสู่ระบบ"}</p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
@@ -213,7 +203,7 @@ export default function AdminProductsPage() {
         <div className="flex gap-2">
           <button type="submit" disabled={isSaving} className="btn-primary px-4 py-2 rounded-lg text-sm flex items-center gap-1.5">
             {isSaving ? <Loader2 size={16} className="animate-spin" /> : editingId ? <Check size={16} /> : <Plus size={16} />}
-            {editingId ? "บันทึกการแก้ไข" : "เพิ่มเข้าหอพัก"}
+            {editingId ? "บันทึกการแก้ไข" : "เพิ่มครุภัณฑ์"}
           </button>
           {editingId && (
             <button type="button" onClick={resetForm} className="btn-ghost px-4 py-2 rounded-lg text-sm">
@@ -241,12 +231,11 @@ export default function AdminProductsPage() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-8 text-slate-400 text-sm glass-card rounded-2xl">
-          {products.length === 0 ? "ยังไม่มีครุภัณฑ์ในหอพัก" : "ไม่พบครุภัณฑ์ที่ค้นหา"}
+          {products.length === 0 ? "ยังไม่มีครุภัณฑ์ในระบบ" : "ไม่พบครุภัณฑ์ที่ค้นหา"}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {filtered.map((p) => {
-            const usedRooms = roomsUsing(p.product_id);
             return (
               <div
                 key={p.product_id}
@@ -256,19 +245,12 @@ export default function AdminProductsPage() {
                 <div className="flex-1 min-w-0">
                   <h4 className="font-bold text-slate-900 truncate">{p.product_name}</h4>
                   <p className="text-xs text-slate-400">{categoryLabel(p.category_id)}</p>
-                  <p
-                    className="text-xs text-brand-600 mt-0.5 flex items-center gap-1 truncate"
-                    title={usedRooms.length > 0 ? usedRooms.join(", ") : undefined}
-                  >
-                    <DoorOpen size={12} className="shrink-0" />
-                    {usedRooms.length > 0 ? `ใช้ใน ${usedRooms.length} ห้อง` : "ยังไม่ได้ใส่ห้องใด"}
-                  </p>
                 </div>
                 <div className="flex gap-2 shrink-0">
                   <button onClick={() => startEdit(p)} title="แก้ไข" className="p-2 rounded-lg bg-brand-100/70 text-brand-600 hover:bg-brand-100">
                     <Pencil size={16} />
                   </button>
-                  <button onClick={() => handleDelete(p)} title="ลบออกจากหอพัก" className="p-2 rounded-lg bg-red-100/70 text-red-500 hover:bg-red-100">
+                  <button onClick={() => handleDelete(p)} title="ลบออกจากระบบ" className="p-2 rounded-lg bg-red-100/70 text-red-500 hover:bg-red-100">
                     <Trash2 size={16} />
                   </button>
                 </div>
