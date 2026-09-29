@@ -1,27 +1,28 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { Check, DoorOpen, Eye, EyeOff, Loader2, Package, Pencil, Plus, Shuffle, Trash2, UserPlus, Users, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { formatCurrency } from "@/lib/format";
 import { AssetAvatar } from "@/components/AssetAvatar";
 import { TenantAccountRow } from "@/components/admin/TenantAccountRow";
 import {
-  addRoomEquipment,
+  assignProductsToRoom,
   assetStatusChipClass,
   callAdminApi,
   generatePassword,
   shortStatus,
   type RoomAssetDetail,
 } from "@/lib/tenant-admin";
-import type { Category, Room, Status, UserProfile } from "@/lib/types";
+import type { Product, Room, Status, UserProfile } from "@/lib/types";
 
 interface Props {
   room: Room;
   accounts: UserProfile[];
   assets: RoomAssetDetail[];
   statuses: Status[];
-  categories: Category[];
+  catalog: Product[];
   sessionEmail?: string | null;
   knownPasswords: Record<string, string>;
   onPasswordSet: (email: string, password: string) => void;
@@ -36,7 +37,7 @@ export function RoomDetailModal({
   accounts,
   assets,
   statuses,
-  categories,
+  catalog,
   sessionEmail,
   knownPasswords,
   onPasswordSet,
@@ -56,7 +57,7 @@ export function RoomDetailModal({
   const [showNewPassword, setShowNewPassword] = useState(true);
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
 
-  const [newItem, setNewItem] = useState("");
+  const [pickedProducts, setPickedProducts] = useState<Set<number>>(() => new Set());
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [busyAssetId, setBusyAssetId] = useState<number | null>(null);
 
@@ -163,9 +164,6 @@ export function RoomDetailModal({
   const changeAssetStatus = async (asset: RoomAssetDetail, statusId: number) => {
     setBusyAssetId(asset.asset_id);
     const { error } = await supabase.from("room_asset").update({ status_id: statusId }).eq("asset_id", asset.asset_id);
-    if (!error && asset.product_id) {
-      await supabase.from("products").update({ status_id: statusId }).eq("product_id", asset.product_id);
-    }
     setBusyAssetId(null);
     if (error) return fail(error.message);
     onChanged();
@@ -173,37 +171,39 @@ export function RoomDetailModal({
 
   const deleteAsset = async (asset: RoomAssetDetail) => {
     const name = asset.products?.product_name ?? "ครุภัณฑ์นี้";
-    if (!confirm(`ยืนยันการลบ ${name} ออกจากห้อง?`)) return;
+    if (!confirm(`ยืนยันการนำ ${name} ออกจากห้อง ${room.room_number}?
+(รายการยังอยู่ในครุภัณฑ์ของหอพัก)`)) return;
     setBusyAssetId(asset.asset_id);
-    const { error: assetErr } = await supabase.from("room_asset").delete().eq("asset_id", asset.asset_id);
-    if (assetErr) {
-      setBusyAssetId(null);
-      return fail(assetErr.message);
-    }
-    if (asset.product_id) {
-      const { error: prodErr } = await supabase.from("products").delete().eq("product_id", asset.product_id);
-      if (prodErr) {
-        setBusyAssetId(null);
-        return fail("ไม่สามารถลบได้ อาจมีประวัติแจ้งซ่อมของครุภัณฑ์นี้อยู่: " + prodErr.message);
-      }
-    }
+    const { error } = await supabase.from("room_asset").delete().eq("asset_id", asset.asset_id);
     setBusyAssetId(null);
+    if (error) return fail(error.message);
     onChanged();
   };
 
-  const addItems = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const names = newItem
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-    if (names.length === 0) return;
+  // Catalog items this room doesn't have yet
+  const availableProducts = useMemo(() => {
+    const inRoom = new Set(assets.map((a) => a.product_id));
+    return catalog.filter((p) => !inRoom.has(p.product_id));
+  }, [catalog, assets]);
+
+  const togglePicked = (productId: number) => {
+    setPickedProducts((prev) => {
+      const next = new Set(prev);
+      if (next.has(productId)) next.delete(productId);
+      else next.add(productId);
+      return next;
+    });
+  };
+
+  const addItems = async () => {
+    const ids = availableProducts.filter((p) => pickedProducts.has(p.product_id)).map((p) => p.product_id);
+    if (ids.length === 0) return;
     setIsAddingItem(true);
-    const { added, error } = await addRoomEquipment(room.room_id, names, categories, statuses);
+    const { added, error } = await assignProductsToRoom(room.room_id, ids, statuses);
     setIsAddingItem(false);
     if (error) return fail(error);
-    ok(`เพิ่มครุภัณฑ์ ${added} รายการแล้ว`);
-    setNewItem("");
+    ok(`เพิ่มครุภัณฑ์ ${added} รายการเข้าห้องแล้ว`);
+    setPickedProducts(new Set());
     onChanged();
   };
 
@@ -459,7 +459,7 @@ export function RoomDetailModal({
                       <button
                         onClick={() => deleteAsset(a)}
                         disabled={busyAssetId === a.asset_id}
-                        title="ลบออกจากห้อง"
+                        title="นำออกจากห้อง"
                         className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-40 shrink-0"
                       >
                         {busyAssetId === a.asset_id ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
@@ -470,21 +470,51 @@ export function RoomDetailModal({
               </ul>
             )}
 
-            <form onSubmit={addItems} className="flex gap-2">
-              <input
-                value={newItem}
-                onChange={(e) => setNewItem(e.target.value)}
-                placeholder="เพิ่มครุภัณฑ์ (คั่นหลายรายการด้วย ,)"
-                className="glass-input px-3 py-2 rounded-lg text-sm"
-              />
-              <button
-                type="submit"
-                disabled={isAddingItem || !newItem.trim()}
-                className="btn-primary px-3 py-2 rounded-lg text-sm flex items-center gap-1 shrink-0"
-              >
-                {isAddingItem ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />} เพิ่ม
-              </button>
-            </form>
+            <div className="rounded-xl bg-white/40 border border-brand-100/70 p-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <p className="text-xs font-semibold text-slate-600 flex-1">เพิ่มจากครุภัณฑ์ของหอพัก</p>
+                <Link href="/admin/products" className="text-xs text-slate-500 hover:text-brand-600 hover:underline">
+                  + รายการใหม่
+                </Link>
+              </div>
+              {availableProducts.length === 0 ? (
+                <p className="text-xs text-slate-400">
+                  {catalog.length === 0 ? "ยังไม่มีครุภัณฑ์ในหอพัก" : "ห้องนี้มีครุภัณฑ์ครบทุกรายการของหอพักแล้ว"}
+                </p>
+              ) : (
+                <>
+                  <div className="flex flex-wrap gap-1.5">
+                    {availableProducts.map((p) => {
+                      const picked = pickedProducts.has(p.product_id);
+                      return (
+                        <button
+                          type="button"
+                          key={p.product_id}
+                          onClick={() => togglePicked(p.product_id)}
+                          aria-pressed={picked}
+                          className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
+                            picked ? "bg-brand-600 border-brand-600 text-white" : "bg-white/70 border-brand-100 text-slate-500 hover:bg-white"
+                          }`}
+                        >
+                          {p.product_name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={addItems}
+                      disabled={isAddingItem || pickedProducts.size === 0}
+                      className="btn-primary px-3 py-1.5 rounded-lg text-xs flex items-center gap-1"
+                    >
+                      {isAddingItem ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} เพิ่มเข้าห้อง
+                      {pickedProducts.size > 0 && ` (${pickedProducts.size})`}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </section>
         </div>
       </div>

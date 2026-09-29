@@ -1,26 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import type { Category, Status } from "@/lib/types";
-
-export interface DefaultEquipmentItem {
-  name: string;
-  category: string;
-}
-
-export const DEFAULT_EQUIPMENT: DefaultEquipmentItem[] = [
-  { name: "เตียงนอน", category: "อุปกรณ์ทั่วไป" },
-  { name: "ตู้เสื้อผ้า", category: "อุปกรณ์ทั่วไป" },
-  { name: "โต๊ะทำงาน", category: "อุปกรณ์ทั่วไป" },
-  { name: "เก้าอี้", category: "อุปกรณ์ทั่วไป" },
-  { name: "ชั้นวางของ", category: "อุปกรณ์ทั่วไป" },
-  { name: "ผ้าม่าน", category: "อุปกรณ์ทั่วไป" },
-  { name: "ชักโครก", category: "อุปกรณ์ทั่วไป" },
-  { name: "อ่างล้างหน้า", category: "อุปกรณ์ทั่วไป" },
-  { name: "ที่ฉีดชำระ", category: "อุปกรณ์ทั่วไป" },
-  { name: "พัดลม", category: "อุปกรณ์ไฟฟ้า" },
-  { name: "เครื่องปรับอากาศ", category: "อุปกรณ์ไฟฟ้า" },
-  { name: "เครื่องทำน้ำอุ่น", category: "อุปกรณ์ไฟฟ้า" },
-  { name: "คัดเอาท์ไฟ", category: "อุปกรณ์ไฟฟ้า" },
-];
+import type { Status } from "@/lib/types";
 
 // room_asset row joined with its product, as loaded by the tenants page
 export interface RoomAssetDetail {
@@ -89,35 +68,24 @@ export const callAdminApi = async (path: string, body: Record<string, unknown>) 
   return { ok: true, error: null };
 };
 
-// Inserts products + matching room_asset rows for a room, all with the "normal" status
-export const addRoomEquipment = async (
+// Links catalog products to a room (one room_asset row each), all with the "normal" status
+export const assignProductsToRoom = async (
   roomId: number,
-  itemNames: string[],
-  categories: Category[],
+  productIds: number[],
   statuses: Status[]
 ): Promise<{ added: number; error: string | null }> => {
-  if (itemNames.length === 0) return { added: 0, error: null };
+  if (productIds.length === 0) return { added: 0, error: null };
 
   const defaultStatusId = statuses.find((s) => s.status_name === "สถานะปกติ")?.status_id ?? statuses[0]?.status_id ?? null;
   const today = new Date().toISOString().slice(0, 10);
 
-  const productRows = itemNames.map((name) => {
-    const preset = DEFAULT_EQUIPMENT.find((i) => i.name === name);
-    const categoryId = preset ? categories.find((c) => c.category_name === preset.category)?.category_id ?? null : null;
-    return { product_name: name, category_id: categoryId, room_id: roomId, status_id: defaultStatusId, date_recieved: today };
-  });
-
-  const { data: newProducts, error: prodErr } = await supabase.from("products").insert(productRows).select();
-  if (prodErr || !newProducts) return { added: 0, error: prodErr?.message ?? "เพิ่มครุภัณฑ์ไม่สำเร็จ" };
-
-  const assetRows = newProducts.map((p) => ({
-    product_id: p.product_id,
+  const rows = productIds.map((productId) => ({
+    product_id: productId,
     room_id: roomId,
     status_id: defaultStatusId,
     date_add: today,
   }));
-  const { error: assetErr } = await supabase.from("room_asset").insert(assetRows);
-  if (assetErr) return { added: 0, error: assetErr.message };
-
-  return { added: newProducts.length, error: null };
+  const { error } = await supabase.from("room_asset").insert(rows);
+  if (error) return { added: 0, error: error.message };
+  return { added: rows.length, error: null };
 };

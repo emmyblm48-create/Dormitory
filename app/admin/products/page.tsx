@@ -1,57 +1,53 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Pencil, Trash2, Plus, Loader2, Check } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Pencil, Trash2, Plus, Loader2, Check, Search, DoorOpen } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { ImageUpload } from "@/components/ImageUpload";
 import { AssetAvatar } from "@/components/AssetAvatar";
-import type { Room, Category, Status, Product, RoomAsset } from "@/lib/types";
+import type { Room, Category, Product, RoomAsset } from "@/lib/types";
 
 interface FormState {
   product_name: string;
   category_id: string;
-  room_id: string;
-  status_id: string;
   date_recieved: string;
   product_image: string | null;
 }
 
-const emptyForm: FormState = {
+const emptyForm = (): FormState => ({
   product_name: "",
   category_id: "",
-  room_id: "",
-  status_id: "",
   date_recieved: new Date().toISOString().slice(0, 10),
   product_image: null,
-};
+});
 
+// Products are the dormitory's equipment catalog. Rooms get items from here on
+// the tenants page, which links them through room_asset (one row per room).
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [roomAssets, setRoomAssets] = useState<RoomAsset[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [statuses, setStatuses] = useState<Status[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [query, setQuery] = useState("");
 
   const [form, setForm] = useState<FormState>(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
 
   const load = async () => {
-    setIsLoading(true);
-    const [p, ra, r, c, s] = await Promise.all([
-      supabase.from("products").select("*").order("product_id", { ascending: false }),
+    const [p, ra, r, c] = await Promise.all([
+      supabase.from("products").select("*").order("product_name"),
       supabase.from("room_asset").select("*"),
       supabase.from("rooms").select("*").order("room_number"),
       supabase.from("categories").select("*").order("category_name"),
-      supabase.from("status").select("*").order("status_id"),
     ]);
     if (p.data) setProducts(p.data as Product[]);
     if (ra.data) setRoomAssets(ra.data as RoomAsset[]);
     if (r.data) setRooms(r.data as Room[]);
     if (c.data) setCategories(c.data as Category[]);
-    if (s.data) setStatuses(s.data as Status[]);
     setIsLoading(false);
   };
 
@@ -60,121 +56,119 @@ export default function AdminProductsPage() {
   }, []);
 
   const resetForm = () => {
-    setForm(emptyForm);
+    setForm(emptyForm());
     setEditingId(null);
   };
 
   const startEdit = (product: Product) => {
-    const asset = roomAssets.find((a) => a.product_id === product.product_id);
     setEditingId(product.product_id);
+    setSuccess(null);
     setForm({
       product_name: product.product_name,
       category_id: String(product.category_id ?? ""),
-      room_id: String(asset?.room_id ?? product.room_id ?? ""),
-      status_id: String(asset?.status_id ?? product.status_id ?? ""),
       date_recieved: product.date_recieved ?? new Date().toISOString().slice(0, 10),
       product_image: product.product_image,
     });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.product_name.trim() || !form.room_id || !form.status_id) return;
+    const name = form.product_name.trim();
+    if (!name) return;
     setError(null);
-    setIsSaving(true);
+    setSuccess(null);
 
-    const productPatch = {
-      product_name: form.product_name.trim(),
+    const duplicate = products.find(
+      (p) => p.product_id !== editingId && p.product_name.trim().toLowerCase() === name.toLowerCase()
+    );
+    if (duplicate) {
+      setError(`มี "${name}" ในหอพักอยู่แล้ว`);
+      return;
+    }
+
+    setIsSaving(true);
+    const patch = {
+      product_name: name,
       category_id: form.category_id ? Number(form.category_id) : null,
-      room_id: Number(form.room_id),
-      status_id: Number(form.status_id),
       date_recieved: form.date_recieved,
       product_image: form.product_image,
     };
 
-    try {
-      if (editingId) {
-        const { error: updErr } = await supabase.from("products").update(productPatch).eq("product_id", editingId);
-        if (updErr) throw updErr;
+    const { error: saveErr } = editingId
+      ? await supabase.from("products").update(patch).eq("product_id", editingId)
+      : await supabase.from("products").insert({ ...patch, room_id: null, status_id: null });
+    setIsSaving(false);
 
-        const existingAsset = roomAssets.find((a) => a.product_id === editingId);
-        if (existingAsset) {
-          const { error: assetErr } = await supabase
-            .from("room_asset")
-            .update({ room_id: productPatch.room_id, status_id: productPatch.status_id, date_add: form.date_recieved })
-            .eq("asset_id", existingAsset.asset_id);
-          if (assetErr) throw assetErr;
-        } else {
-          const { error: assetErr } = await supabase.from("room_asset").insert({
-            product_id: editingId,
-            room_id: productPatch.room_id,
-            status_id: productPatch.status_id,
-            date_add: form.date_recieved,
-          });
-          if (assetErr) throw assetErr;
-        }
-      } else {
-        const { data: newProduct, error: insErr } = await supabase
-          .from("products")
-          .insert(productPatch)
-          .select()
-          .single();
-        if (insErr) throw insErr;
-
-        const { error: assetErr } = await supabase.from("room_asset").insert({
-          product_id: newProduct.product_id,
-          room_id: productPatch.room_id,
-          status_id: productPatch.status_id,
-          date_add: form.date_recieved,
-        });
-        if (assetErr) throw assetErr;
-      }
-
-      resetForm();
-      load();
-    } catch (err: any) {
-      setError(err.message || "บันทึกไม่สำเร็จ");
-    } finally {
-      setIsSaving(false);
+    if (saveErr) {
+      setError(saveErr.message || "บันทึกไม่สำเร็จ");
+      return;
     }
+    setSuccess(editingId ? `บันทึก "${name}" แล้ว` : `เพิ่ม "${name}" เข้าหอพักแล้ว เลือกใส่ห้องได้ที่หน้าผู้เช่า`);
+    resetForm();
+    load();
   };
 
-  const handleDelete = async (productId: number) => {
-    if (!confirm("ยืนยันการลบครุภัณฑ์นี้?")) return;
+  const handleDelete = async (product: Product) => {
+    const usedIn = roomAssets.filter((a) => a.product_id === product.product_id).length;
+    const warning = usedIn > 0 ? `\nรายการนี้อยู่ใน ${usedIn} ห้อง จะถูกนำออกจากทุกห้องและประวัติแจ้งซ่อมที่เกี่ยวข้องจะถูกลบด้วย` : "";
+    if (!confirm(`ยืนยันการลบ "${product.product_name}" ออกจากหอพัก?${warning}`)) return;
     setError(null);
-    const { error: assetErr } = await supabase.from("room_asset").delete().eq("product_id", productId);
+    setSuccess(null);
+    const { error: assetErr } = await supabase.from("room_asset").delete().eq("product_id", product.product_id);
     if (assetErr) {
       setError(assetErr.message);
       return;
     }
-    const { error: prodErr } = await supabase.from("products").delete().eq("product_id", productId);
+    const { error: prodErr } = await supabase.from("products").delete().eq("product_id", product.product_id);
     if (prodErr) {
-      setError("ไม่สามารถลบได้ อาจมีประวัติแจ้งซ่อมของครุภัณฑ์นี้อยู่: " + prodErr.message);
+      setError(prodErr.message);
       return;
     }
+    if (editingId === product.product_id) resetForm();
     load();
   };
 
-  const roomLabel = (id: number | null) => rooms.find((r) => r.room_id === id)?.room_number ?? "-";
-  const statusLabel = (id: number | null) => statuses.find((s) => s.status_id === id)?.status_name ?? "-";
+  const categoryLabel = (id: number | null) => categories.find((c) => c.category_id === id)?.category_name ?? "ไม่ระบุหมวดหมู่";
+
+  const roomsUsing = (productId: number) => {
+    const ids = new Set(roomAssets.filter((a) => a.product_id === productId).map((a) => a.room_id));
+    return rooms.filter((r) => ids.has(r.room_id)).map((r) => r.room_number);
+  };
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return products;
+    return products.filter((p) => p.product_name.toLowerCase().includes(q));
+  }, [products, query]);
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto w-full">
-      <h2 className="text-lg md:text-xl font-bold text-slate-900">จัดการครุภัณฑ์</h2>
+      <div>
+        <h2 className="text-lg md:text-xl font-bold text-slate-900">ครุภัณฑ์ของหอพัก</h2>
+        <p className="text-xs text-slate-500 mt-0.5">
+          เพิ่มรายการครุภัณฑ์ของหอพักที่นี่ แล้วเลือกใส่แต่ละห้องได้ที่หน้า “ผู้เช่า”
+        </p>
+      </div>
 
       {error && (
         <div className="bg-red-50/80 backdrop-blur-md border border-red-200/60 text-red-600 text-sm rounded-xl px-4 py-2.5">{error}</div>
       )}
+      {success && (
+        <div className="bg-emerald-50/80 backdrop-blur-md border border-emerald-200/60 text-emerald-600 text-sm rounded-xl px-4 py-2.5">{success}</div>
+      )}
 
       <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-4 space-y-3">
-        <p className="text-sm font-bold text-slate-700">{editingId ? "แก้ไขครุภัณฑ์" : "เพิ่มครุภัณฑ์ใหม่"}</p>
+        <p className="text-sm font-bold text-slate-700">{editingId ? "แก้ไขครุภัณฑ์" : "เพิ่มครุภัณฑ์เข้าหอพัก"}</p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
             <label className="text-xs font-medium text-slate-500 mb-1 block">ชื่อครุภัณฑ์</label>
             <input
               value={form.product_name}
               onChange={(e) => setForm((f) => ({ ...f, product_name: e.target.value }))}
+              required
+              placeholder="เช่น ตู้เย็น"
               className="glass-input px-3 py-2 rounded-lg text-sm"
             />
           </div>
@@ -189,38 +183,6 @@ export default function AdminProductsPage() {
               {categories.map((c) => (
                 <option key={c.category_id} value={c.category_id}>
                   {c.category_name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-slate-500 mb-1 block">ห้องพัก</label>
-            <select
-              value={form.room_id}
-              onChange={(e) => setForm((f) => ({ ...f, room_id: e.target.value }))}
-              required
-              className="glass-input px-3 py-2 rounded-lg text-sm"
-            >
-              <option value="">-- เลือกห้องพัก --</option>
-              {rooms.map((r) => (
-                <option key={r.room_id} value={r.room_id}>
-                  {r.room_number}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-slate-500 mb-1 block">สถานะ</label>
-            <select
-              value={form.status_id}
-              onChange={(e) => setForm((f) => ({ ...f, status_id: e.target.value }))}
-              required
-              className="glass-input px-3 py-2 rounded-lg text-sm"
-            >
-              <option value="">-- เลือกสถานะ --</option>
-              {statuses.map((s) => (
-                <option key={s.status_id} value={s.status_id}>
-                  {s.status_name}
                 </option>
               ))}
             </select>
@@ -249,13 +211,9 @@ export default function AdminProductsPage() {
         </div>
 
         <div className="flex gap-2">
-          <button
-            type="submit"
-            disabled={isSaving}
-            className="btn-primary px-4 py-2 rounded-lg text-sm flex items-center gap-1.5"
-          >
-            {editingId ? <Check size={16} /> : <Plus size={16} />}
-            {editingId ? "บันทึกการแก้ไข" : "เพิ่มครุภัณฑ์"}
+          <button type="submit" disabled={isSaving} className="btn-primary px-4 py-2 rounded-lg text-sm flex items-center gap-1.5">
+            {isSaving ? <Loader2 size={16} className="animate-spin" /> : editingId ? <Check size={16} /> : <Plus size={16} />}
+            {editingId ? "บันทึกการแก้ไข" : "เพิ่มเข้าหอพัก"}
           </button>
           {editingId && (
             <button type="button" onClick={resetForm} className="btn-ghost px-4 py-2 rounded-lg text-sm">
@@ -265,32 +223,52 @@ export default function AdminProductsPage() {
         </div>
       </form>
 
+      {!isLoading && products.length > 0 && (
+        <div className="relative">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={`ค้นหาครุภัณฑ์ (${products.length} รายการ)`}
+            className="glass-input pl-9 pr-3 py-2 rounded-xl text-sm"
+          />
+        </div>
+      )}
+
       {isLoading ? (
         <div className="flex justify-center py-10">
           <Loader2 className="animate-spin text-brand-400" size={24} />
         </div>
-      ) : products.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <div className="text-center py-8 text-slate-400 text-sm glass-card rounded-2xl">
-          ยังไม่มีครุภัณฑ์
+          {products.length === 0 ? "ยังไม่มีครุภัณฑ์ในหอพัก" : "ไม่พบครุภัณฑ์ที่ค้นหา"}
         </div>
       ) : (
-        <div className="space-y-3">
-          {products.map((p) => {
-            const asset = roomAssets.find((a) => a.product_id === p.product_id);
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {filtered.map((p) => {
+            const usedRooms = roomsUsing(p.product_id);
             return (
-              <div key={p.product_id} className="glass-card rounded-2xl p-3.5 flex items-center gap-3.5">
+              <div
+                key={p.product_id}
+                className={`glass-card rounded-2xl p-3.5 flex items-center gap-3.5 ${editingId === p.product_id ? "ring-2 ring-brand-400" : ""}`}
+              >
                 <AssetAvatar imageUrl={p.product_image} name={p.product_name} />
                 <div className="flex-1 min-w-0">
                   <h4 className="font-bold text-slate-900 truncate">{p.product_name}</h4>
-                  <p className="text-xs text-slate-400">
-                    ห้อง {roomLabel(asset?.room_id ?? p.room_id)} · {statusLabel(asset?.status_id ?? p.status_id)}
+                  <p className="text-xs text-slate-400">{categoryLabel(p.category_id)}</p>
+                  <p
+                    className="text-xs text-brand-600 mt-0.5 flex items-center gap-1 truncate"
+                    title={usedRooms.length > 0 ? usedRooms.join(", ") : undefined}
+                  >
+                    <DoorOpen size={12} className="shrink-0" />
+                    {usedRooms.length > 0 ? `ใช้ใน ${usedRooms.length} ห้อง` : "ยังไม่ได้ใส่ห้องใด"}
                   </p>
                 </div>
                 <div className="flex gap-2 shrink-0">
-                  <button onClick={() => startEdit(p)} className="p-2 rounded-lg bg-brand-100/70 text-brand-600 hover:bg-brand-100">
+                  <button onClick={() => startEdit(p)} title="แก้ไข" className="p-2 rounded-lg bg-brand-100/70 text-brand-600 hover:bg-brand-100">
                     <Pencil size={16} />
                   </button>
-                  <button onClick={() => handleDelete(p.product_id)} className="p-2 rounded-lg bg-red-100/70 text-red-500 hover:bg-red-100">
+                  <button onClick={() => handleDelete(p)} title="ลบออกจากหอพัก" className="p-2 rounded-lg bg-red-100/70 text-red-500 hover:bg-red-100">
                     <Trash2 size={16} />
                   </button>
                 </div>

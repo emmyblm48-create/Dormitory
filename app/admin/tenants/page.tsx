@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { ChevronRight, DoorOpen, Eye, EyeOff, Loader2, Plus, Search, ShieldCheck, Shuffle, UserPlus, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
@@ -8,8 +9,7 @@ import { formatCurrency } from "@/lib/format";
 import { RoomDetailModal } from "@/components/admin/RoomDetailModal";
 import { TenantAccountRow } from "@/components/admin/TenantAccountRow";
 import {
-  DEFAULT_EQUIPMENT,
-  addRoomEquipment,
+  assignProductsToRoom,
   assetStatusDotClass,
   callAdminApi,
   generatePassword,
@@ -17,7 +17,7 @@ import {
   shortStatus,
   type RoomAssetDetail,
 } from "@/lib/tenant-admin";
-import type { Category, Room, Status, UserProfile } from "@/lib/types";
+import type { Product, Room, Status, UserProfile } from "@/lib/types";
 
 type Notice = { type: "error" | "success"; text: string } | null;
 type CreateMode = "tenant" | "admin";
@@ -31,7 +31,7 @@ export default function AdminTenantsPage() {
   const [tenants, setTenants] = useState<UserProfile[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [assets, setAssets] = useState<RoomAssetDetail[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [catalog, setCatalog] = useState<Product[]>([]);
   const [statuses, setStatuses] = useState<Status[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [notice, setNotice] = useState<Notice>(null);
@@ -46,8 +46,7 @@ export default function AdminTenantsPage() {
   const [mode, setMode] = useState<CreateMode>("tenant");
   const [form, setForm] = useState(emptyForm);
   const [showPassword, setShowPassword] = useState(true);
-  const [selectedEquipment, setSelectedEquipment] = useState<Set<string>>(() => new Set(DEFAULT_EQUIPMENT.map((i) => i.name)));
-  const [customEquipment, setCustomEquipment] = useState("");
+  const [selectedProducts, setSelectedProducts] = useState<Set<number>>(() => new Set());
   const [isCreating, setIsCreating] = useState(false);
 
   const load = useCallback(async (showSpinner = false) => {
@@ -56,13 +55,13 @@ export default function AdminTenantsPage() {
       supabase.from("user_extra").select("*").order("email"),
       supabase.from("rooms").select("*").order("room_number"),
       supabase.from("room_asset").select("asset_id, room_id, product_id, status_id, products(product_name, product_image)").order("asset_id"),
-      supabase.from("categories").select("*"),
+      supabase.from("products").select("*").order("product_name"),
       supabase.from("status").select("*").order("status_id"),
     ]);
     if (t.data) setTenants(t.data as UserProfile[]);
     if (r.data) setRooms(r.data as Room[]);
     if (a.data) setAssets(a.data as unknown as RoomAssetDetail[]);
-    if (c.data) setCategories(c.data as Category[]);
+    if (c.data) setCatalog(c.data as Product[]);
     if (s.data) setStatuses(s.data as Status[]);
     const firstError = [t, r, a, c, s].find((res) => res.error)?.error;
     if (firstError) setNotice({ type: "error", text: firstError.message });
@@ -110,16 +109,15 @@ export default function AdminTenantsPage() {
 
   const resetForm = () => {
     setForm(emptyForm);
-    setSelectedEquipment(new Set(DEFAULT_EQUIPMENT.map((i) => i.name)));
-    setCustomEquipment("");
+    setSelectedProducts(new Set());
     setMode("tenant");
   };
 
-  const toggleEquipment = (name: string) => {
-    setSelectedEquipment((prev) => {
+  const toggleProduct = (productId: number) => {
+    setSelectedProducts((prev) => {
       const next = new Set(prev);
-      if (next.has(name)) next.delete(name);
-      else next.add(name);
+      if (next.has(productId)) next.delete(productId);
+      else next.add(productId);
       return next;
     });
   };
@@ -171,12 +169,8 @@ export default function AdminTenantsPage() {
     }
     rememberPassword(email, form.password);
 
-    const customNames = customEquipment
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-    const itemNames = [...DEFAULT_EQUIPMENT.filter((i) => selectedEquipment.has(i.name)).map((i) => i.name), ...customNames];
-    const { added, error: equipmentError } = await addRoomEquipment(room.room_id, itemNames, categories, statuses);
+    const productIds = catalog.filter((p) => selectedProducts.has(p.product_id)).map((p) => p.product_id);
+    const { added, error: equipmentError } = await assignProductsToRoom(room.room_id, productIds, statuses);
     setIsCreating(false);
 
     let text = `สร้างห้อง ${roomNumber} พร้อมบัญชี ${email} แล้ว`;
@@ -349,31 +343,51 @@ export default function AdminTenantsPage() {
 
           {mode === "tenant" && (
             <fieldset>
-              <legend className="text-xs font-bold text-brand-700 mb-2">3. ครุภัณฑ์ประจำห้อง</legend>
-              <div className="flex flex-wrap gap-1.5">
-                {DEFAULT_EQUIPMENT.map((item) => {
-                  const checked = selectedEquipment.has(item.name);
-                  return (
-                    <button
-                      type="button"
-                      key={item.name}
-                      onClick={() => toggleEquipment(item.name)}
-                      aria-pressed={checked}
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
-                        checked ? "bg-brand-600 border-brand-600 text-white" : "bg-white/60 border-brand-100 text-slate-500 hover:bg-white"
-                      }`}
-                    >
-                      {item.name}
+              <legend className="text-xs font-bold text-brand-700 mb-2">
+                3. ครุภัณฑ์ประจำห้อง {selectedProducts.size > 0 && <span className="text-slate-400 font-medium">(เลือก {selectedProducts.size})</span>}
+              </legend>
+              {catalog.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-brand-200 p-3 text-center text-xs text-slate-400">
+                  ยังไม่มีครุภัณฑ์ในหอพัก{" "}
+                  <Link href="/admin/products" className="text-brand-600 font-semibold underline">
+                    เพิ่มครุภัณฑ์
+                  </Link>{" "}
+                  ก่อนแล้วกลับมาเลือกที่นี่
+                </div>
+              ) : (
+                <>
+                  <div className="flex gap-2 mb-2 text-xs">
+                    <button type="button" onClick={() => setSelectedProducts(new Set(catalog.map((p) => p.product_id)))} className="text-brand-600 font-semibold hover:underline">
+                      เลือกทั้งหมด
                     </button>
-                  );
-                })}
-              </div>
-              <input
-                value={customEquipment}
-                onChange={(e) => setCustomEquipment(e.target.value)}
-                placeholder="รายการเพิ่มเติม คั่นด้วย , เช่น กระจกเงา, ราวตากผ้า"
-                className="glass-input px-3 py-2 rounded-lg text-sm mt-2"
-              />
+                    <span className="text-slate-300">|</span>
+                    <button type="button" onClick={() => setSelectedProducts(new Set())} className="text-slate-500 hover:underline">
+                      ล้าง
+                    </button>
+                    <Link href="/admin/products" className="ml-auto text-slate-500 hover:text-brand-600 hover:underline">
+                      + เพิ่มครุภัณฑ์ใหม่เข้าหอพัก
+                    </Link>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {catalog.map((item) => {
+                      const checked = selectedProducts.has(item.product_id);
+                      return (
+                        <button
+                          type="button"
+                          key={item.product_id}
+                          onClick={() => toggleProduct(item.product_id)}
+                          aria-pressed={checked}
+                          className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
+                            checked ? "bg-brand-600 border-brand-600 text-white" : "bg-white/60 border-brand-100 text-slate-500 hover:bg-white"
+                          }`}
+                        >
+                          {item.product_name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </fieldset>
           )}
 
@@ -509,7 +523,7 @@ export default function AdminTenantsPage() {
           accounts={accountsForRoom(selectedRoom)}
           assets={assetsForRoom(selectedRoom.room_id)}
           statuses={statuses}
-          categories={categories}
+          catalog={catalog}
           sessionEmail={sessionEmail}
           knownPasswords={knownPasswords}
           onPasswordSet={rememberPassword}
