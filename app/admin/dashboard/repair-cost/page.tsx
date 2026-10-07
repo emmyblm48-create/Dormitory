@@ -8,7 +8,6 @@ import { shortStatus } from "@/lib/tenant-admin";
 import {
   STATUS_REPORTED,
   computeMonthly,
-  computeOccupancy,
   downloadCsv,
   monthKey,
   monthKeyLabel,
@@ -29,9 +28,8 @@ const groupCost = <T,>(rows: T[], keyOf: (r: T) => string, costOf: (r: T) => num
 };
 
 export default function RepairCostDetailPage() {
-  const { rooms, tenants, requests, isLoading, loadedAt, load, now, roomNumber } = useDashboardData();
+  const { requests, isLoading, loadedAt, load, now, roomNumber } = useDashboardData();
   const monthly = useMemo(() => computeMonthly(requests, now), [requests, now]);
-  const occupancy = useMemo(() => computeOccupancy(rooms, tenants), [rooms, tenants]);
 
   const [selectedKey, setSelectedKey] = useState<number>(() => monthKey(new Date()));
   useEffect(() => {
@@ -54,7 +52,7 @@ export default function RepairCostDetailPage() {
   const costed = monthRequests.filter((r) => r.repair_cost != null);
   const missingCost = monthRequests.filter((r) => r.repair_cost == null && r.status !== STATUS_REPORTED);
   const avgCost = costed.length ? selected.cost / costed.length : 0;
-  const rentPercent = occupancy.expectedRent ? (selected.cost / occupancy.expectedRent) * 100 : 0;
+  const billedRooms = new Set(costed.filter((r) => Number(r.repair_cost) > 0).map((r) => r.room_id)).size;
 
   const byProduct = groupCost(monthRequests, (r) => r.products?.product_name ?? "ไม่ระบุ", (r) => Number(r.repair_cost ?? 0));
   const byRoom = groupCost(monthRequests, (r) => `ห้อง ${roomNumber(r.room_id)}`, (r) => Number(r.repair_cost ?? 0));
@@ -114,18 +112,13 @@ export default function RepairCostDetailPage() {
         />
         <StatTile label="จำนวนการแจ้งซ่อม" value={dash(`${monthRequests.length} รายการ`)} sub={`บันทึกค่าซ่อมแล้ว ${costed.length} รายการ`} />
         <StatTile label="ค่าซ่อมเฉลี่ย / รายการ" value={dash(formatCurrency(avgCost))} sub="เฉพาะรายการที่บันทึกค่าซ่อม" />
-        <StatTile
-          label="สัดส่วนต่อรายได้ค่าเช่า"
-          value={dash(`${rentPercent.toFixed(1)}%`)}
-          sub={`ค่าเช่าที่คาดการณ์ ${formatCurrency(occupancy.expectedRent)}`}
-          tone={rentPercent >= 10 ? "text-red-500" : "text-slate-900"}
-        />
+        <StatTile label="ห้องที่ต้องเรียกเก็บค่าซ่อม" value={dash(`${billedRooms} ห้อง`)} sub="เรียกเก็บพร้อมค่าเช่า" />
       </div>
 
       {missingCost.length > 0 && (
         <div className="flex items-start gap-2 text-[11px] text-amber-700 bg-amber-50/80 border border-amber-200 rounded-xl px-3 py-2">
           <AlertCircle size={14} className="shrink-0 mt-px" />
-          มี {missingCost.length} รายการในเดือนนี้ที่ดำเนินการแล้วแต่ยังไม่บันทึกค่าซ่อม ยอดรวมอาจต่ำกว่าความจริง
+          มี {missingCost.length} รายการในเดือนนี้ที่ดำเนินการแล้วแต่ยังไม่บันทึกค่าซ่อม อาจเรียกเก็บจากผู้เช่าได้ไม่ครบ
         </div>
       )}
 
@@ -161,7 +154,7 @@ export default function RepairCostDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {[
           { title: "แยกตามครุภัณฑ์", rows: byProduct },
-          { title: "แยกตามห้อง", rows: byRoom },
+          { title: "แยกตามห้อง (ยอดเรียกเก็บจากผู้เช่า)", rows: byRoom },
         ].map(({ title, rows }) => (
           <div key={title} className="glass-card rounded-2xl p-4">
             <h3 className="text-sm font-bold text-slate-900 mb-3">{title}</h3>

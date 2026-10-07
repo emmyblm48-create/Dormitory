@@ -69,7 +69,6 @@ export default function AdminDashboardPage() {
   const thisMonth = monthly[11];
   const lastMonth = monthly[10];
   const costDelta = thisMonth.cost - lastMonth.cost;
-  const costToRentPercent = occupancy.expectedRent ? (thisMonth.cost / occupancy.expectedRent) * 100 : 0;
   const maxMonthlyCount = Math.max(1, ...monthly.map((m) => m.count));
   const totalCost12m = monthly.reduce((s, m) => s + m.cost, 0);
   const totalCount12m = monthly.reduce((s, m) => s + m.count, 0);
@@ -134,10 +133,10 @@ export default function AdminDashboardPage() {
       list.push({ tone: "amber", text: `${p.name} ถูกแจ้งซ่อม ${p.count} ครั้ง รวม ${formatCurrency(p.cost)} ควรพิจารณาเปลี่ยนใหม่แทนการซ่อม` });
     }
     if (costDelta > 0 && lastMonth.cost > 0) {
-      list.push({ tone: "amber", text: `ค่าซ่อมเดือนนี้เพิ่มขึ้น ${formatCurrency(costDelta)} จากเดือนก่อน` });
+      list.push({ tone: "amber", text: `ค่าซ่อมเดือนนี้เพิ่มขึ้น ${formatCurrency(costDelta)} จากเดือนก่อน อย่าลืมเรียกเก็บจากผู้เช่าพร้อมค่าเช่า` });
     }
     if (missingCostCount > 0) {
-      list.push({ tone: "blue", text: `มี ${missingCostCount} รายการที่ดำเนินการแล้วแต่ยังไม่บันทึกค่าซ่อม ตัวเลขค่าใช้จ่ายอาจต่ำกว่าความจริง` });
+      list.push({ tone: "blue", text: `มี ${missingCostCount} รายการที่ดำเนินการแล้วแต่ยังไม่บันทึกค่าซ่อม อาจเรียกเก็บค่าซ่อมจากผู้เช่าได้ไม่ครบ` });
     }
     return list;
   }, [overdueCount, occupancy, productStats, costDelta, lastMonth.cost, missingCostCount]);
@@ -227,10 +226,9 @@ export default function AdminDashboardPage() {
           href="/admin/dashboard/repair-cost"
           icon={costDelta > 0 ? TrendingUp : TrendingDown}
           color="from-amber-400 to-amber-600"
-          label={`ค่าซ่อมเดือน ${thisMonth.label}`}
+          label={`ค่าซ่อมเรียกเก็บจากผู้เช่า ${thisMonth.label}`}
           value={dash(formatCurrency(thisMonth.cost))}
-          sub={`${costDelta >= 0 ? "▲" : "▼"} ${formatCurrency(Math.abs(costDelta))} จากเดือนก่อน · ${costToRentPercent.toFixed(1)}% ของค่าเช่า`}
-          subClass={costDelta > 0 ? "text-red-500" : "text-emerald-600"}
+          sub={`${thisMonth.count} รายการ · ${costDelta >= 0 ? "▲" : "▼"} ${formatCurrency(Math.abs(costDelta))} จากเดือนก่อน`}
         />
       </div>
 
@@ -435,7 +433,7 @@ export default function AdminDashboardPage() {
         {/* Products */}
         <div className="glass-card rounded-2xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-bold text-slate-900">ครุภัณฑ์ที่มีต้นทุนซ่อมสูง</h3>
+            <h3 className="text-sm font-bold text-slate-900">ครุภัณฑ์ที่มีค่าซ่อมสูง</h3>
             {assetStatus.length > 0 && (
               <div className="flex items-center gap-2.5 flex-wrap justify-end">
                 {assetStatus.map((s) => (
