@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { RefreshCw } from "lucide-react";
+import Link from "next/link";
+import { CheckCircle2, ChevronRight, RefreshCw } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { formatFullDate, formatCurrency, statusTextClass } from "@/lib/format";
 import { AssetAvatar } from "@/components/AssetAvatar";
@@ -10,15 +11,20 @@ import type { ViewHomeUser } from "@/lib/types";
 export default function UserRequestsPage() {
   const [requests, setRequests] = useState<ViewHomeUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [completedCount, setCompletedCount] = useState<number | null>(null);
 
   const load = async () => {
     setIsLoading(true);
-    const { data, error } = await supabase
-      .from("view_home_user")
-      .select("*")
-      .neq("status", "สถานะเสร็จสมบรูณ์")
-      .order("reported_date", { ascending: false });
+    const [{ data, error }, completed] = await Promise.all([
+      supabase
+        .from("view_home_user")
+        .select("*")
+        .neq("status", "สถานะเสร็จสมบรูณ์")
+        .order("reported_date", { ascending: false }),
+      supabase.from("view_home_user").select("*", { count: "exact", head: true }).eq("status", "สถานะเสร็จสมบรูณ์"),
+    ]);
     if (!error && data) setRequests(data as ViewHomeUser[]);
+    setCompletedCount(completed.count ?? 0);
     setIsLoading(false);
   };
 
@@ -32,7 +38,7 @@ export default function UserRequestsPage() {
         <h3 className="sr-only">ประวัติการแจ้งซ่อม</h3>
         <div className="ml-auto flex items-center gap-2">
           <span className="text-xs bg-red-100/80 backdrop-blur-md text-red-600 px-2.5 py-1 rounded-full font-semibold">
-            {requests.length} รายการ
+            กำลังดำเนินการ {requests.length} รายการ
           </span>
           <button onClick={load} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg" title="รีเฟรช">
             <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
@@ -40,11 +46,23 @@ export default function UserRequestsPage() {
         </div>
       </div>
 
+      <Link href="/user/requests/history" className="tap glass-card rounded-2xl p-3.5 flex items-center gap-3">
+        <span className="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center text-white bg-gradient-to-br from-emerald-400 to-emerald-600">
+          <CheckCircle2 size={20} />
+        </span>
+        <span className="flex-1 min-w-0">
+          <span className="block text-sm font-semibold text-slate-900">ประวัติที่ซ่อมเสร็จแล้ว</span>
+          <span className="block text-[11px] text-slate-500">ดูรายการซ่อมเสร็จสมบูรณ์ย้อนหลังและค่าซ่อม</span>
+        </span>
+        {completedCount != null && <span className="text-sm font-bold text-slate-900 tabular-nums">{completedCount}</span>}
+        <ChevronRight size={18} className="text-slate-300 shrink-0" />
+      </Link>
+
       {isLoading ? (
         <div className="text-center py-8 text-slate-400 text-xs">กำลังโหลดข้อมูล...</div>
       ) : requests.length === 0 ? (
         <div className="text-center py-8 text-slate-400 text-xs glass-card rounded-2xl">
-          ไม่มีรายการแจ้งซ่อม
+          ไม่มีรายการที่กำลังดำเนินการ
         </div>
       ) : (
         <div className="space-y-3">

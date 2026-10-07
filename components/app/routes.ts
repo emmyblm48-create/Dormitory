@@ -50,6 +50,7 @@ const USER_ROUTES: Record<string, RouteMeta> = {
   "/user/notifications": { title: "การแจ้งเตือน" },
   "/user/profile": { title: "โปรไฟล์" },
   "/user/requests": { title: "ประวัติการแจ้งซ่อม", back: "/user" },
+  "/user/requests/history": { title: "ซ่อมเสร็จแล้ว", back: "/user/requests" },
   "/user/checklist": { title: "เช็คอุปกรณ์", back: "/user" },
 };
 
