@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import {
   DoorOpen,
@@ -16,129 +16,30 @@ import {
   Clock,
   type LucideIcon,
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import { formatCurrency } from "@/lib/format";
 import { sameRoom, shortStatus, assetStatusDotClass } from "@/lib/tenant-admin";
+import {
+  STATUS_REPORTED,
+  STATUS_IN_PROGRESS,
+  STATUS_DONE,
+  AGE_CRITICAL_DAYS,
+  REPLACE_REPAIR_COUNT,
+  daysSince,
+  isOpen,
+  ageBadgeClass,
+  downloadCsv,
+  useDashboardData,
+  computeOccupancy,
+  computeMonthly,
+} from "@/lib/dashboard";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { ProgressRing } from "@/components/ProgressRing";
-import type { Room, Status } from "@/lib/types";
-
-const STATUS_REPORTED = "สถานะแจ้งซ่อม";
-const STATUS_IN_PROGRESS = "สถานะกำลังดำเนินการ";
-const STATUS_DONE = "สถานะเสร็จสมบรูณ์";
-
-// Open requests older than these many days are flagged on the dashboard
-const AGE_WARN_DAYS = 3;
-const AGE_CRITICAL_DAYS = 7;
-// A product repaired this many times is suggested for replacement
-const REPLACE_REPAIR_COUNT = 3;
-
-const MONTH_LABELS = [
-  "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
-  "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค.",
-];
-
-interface RequestRow {
-  maintenance_request_id: number;
-  description: string | null;
-  status: string | null;
-  reported_date: string | null;
-  product_id: number | null;
-  room_id: number | null;
-  repair_cost: number | null;
-  products: { product_name: string } | null;
-}
-
-interface TenantRow {
-  userName: string;
-  email: string;
-}
-
-interface AssetRow {
-  room_id: number | null;
-  status_id: number | null;
-}
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-const daysSince = (dateStr: string | null, now: number) =>
-  dateStr ? Math.max(0, Math.floor((now - new Date(dateStr).getTime()) / DAY_MS)) : 0;
-
-const monthKey = (d: Date) => d.getFullYear() * 12 + d.getMonth();
-
-const isOpen = (status: string | null) => status !== STATUS_DONE;
-
-const ageBadgeClass = (days: number) =>
-  days >= AGE_CRITICAL_DAYS
-    ? "bg-red-100/80 text-red-600"
-    : days >= AGE_WARN_DAYS
-      ? "bg-amber-100/80 text-amber-700"
-      : "bg-slate-100/80 text-slate-500";
-
-const downloadCsv = (filename: string, rows: (string | number)[][]) => {
-  const escape = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
-  const csv = rows.map((r) => r.map(escape).join(",")).join("\r\n");
-  // BOM so Excel opens Thai text as UTF-8
-  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-};
+import { Placeholder } from "@/components/admin/DashboardParts";
 
 export default function AdminDashboardPage() {
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [tenants, setTenants] = useState<TenantRow[]>([]);
-  const [requests, setRequests] = useState<RequestRow[]>([]);
-  const [assets, setAssets] = useState<AssetRow[]>([]);
-  const [statuses, setStatuses] = useState<Status[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadedAt, setLoadedAt] = useState<Date | null>(null);
+  const { rooms, tenants, requests, assets, statuses, isLoading, loadedAt, load, now } = useDashboardData();
 
-  const load = useCallback(async () => {
-    setIsLoading(true);
-    const [roomRes, tenantRes, reqRes, assetRes, statusRes] = await Promise.all([
-      supabase.from("rooms").select("*").order("room_number"),
-      supabase.from("user_extra").select("userName, email").eq("role", "user"),
-      supabase
-        .from("maintenance_request")
-        .select("maintenance_request_id, description, status, reported_date, product_id, room_id, repair_cost, products(product_name)")
-        .order("reported_date", { ascending: true }),
-      supabase.from("room_asset").select("room_id, status_id"),
-      supabase.from("status").select("*").order("status_id"),
-    ]);
-    if (roomRes.data) setRooms(roomRes.data as Room[]);
-    if (tenantRes.data) setTenants(tenantRes.data as TenantRow[]);
-    if (reqRes.data) setRequests(reqRes.data as unknown as RequestRow[]);
-    if (assetRes.data) setAssets(assetRes.data as AssetRow[]);
-    if (statusRes.data) setStatuses(statusRes.data as Status[]);
-    setLoadedAt(new Date());
-    setIsLoading(false);
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  const now = loadedAt?.getTime() ?? Date.now();
-
-  // ---------- Occupancy & income ----------
-  const occupancy = useMemo(() => {
-    // Rooms with no rent (e.g. the office) aren't rentable units
-    const rentable = rooms.filter((r) => Number(r.rent_price) > 0);
-    const occupied = rentable.filter((r) => tenants.some((t) => sameRoom(t.userName, r.room_number)));
-    const expectedRent = occupied.reduce((s, r) => s + Number(r.rent_price), 0);
-    const potentialRent = rentable.reduce((s, r) => s + Number(r.rent_price), 0);
-    return {
-      rentable: rentable.length,
-      occupied: occupied.length,
-      vacant: rentable.filter((r) => !occupied.includes(r)),
-      percent: rentable.length ? (occupied.length / rentable.length) * 100 : 0,
-      expectedRent,
-      vacancyLoss: potentialRent - expectedRent,
-    };
-  }, [rooms, tenants]);
+  const occupancy = useMemo(() => computeOccupancy(rooms, tenants), [rooms, tenants]);
 
   // ---------- Repair workload ----------
   const openRequests = useMemo(
@@ -163,21 +64,7 @@ export default function AdminDashboardPage() {
   const missingCostCount = requests.filter((r) => r.status !== STATUS_REPORTED && r.repair_cost == null).length;
 
   // ---------- Monthly trend: last 12 months ----------
-  const monthly = useMemo(() => {
-    const current = monthKey(new Date(now));
-    const buckets = Array.from({ length: 12 }, (_, i) => {
-      const key = current - 11 + i;
-      return { key, label: MONTH_LABELS[key % 12], year: Math.floor(key / 12), count: 0, cost: 0 };
-    });
-    for (const r of requests) {
-      if (!r.reported_date) continue;
-      const b = buckets.find((x) => x.key === monthKey(new Date(r.reported_date!)));
-      if (!b) continue;
-      b.count += 1;
-      b.cost += Number(r.repair_cost ?? 0);
-    }
-    return buckets;
-  }, [requests, now]);
+  const monthly = useMemo(() => computeMonthly(requests, now), [requests, now]);
 
   const thisMonth = monthly[11];
   const lastMonth = monthly[10];
@@ -301,19 +188,20 @@ export default function AdminDashboardPage() {
 
       {/* KPI row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Link href="/admin/tenants" className="reveal tilt-card glass-card rounded-2xl p-4 flex items-center gap-4">
+        <Link href="/admin/dashboard/occupancy" className="reveal tilt-card glass-card rounded-2xl p-4 flex items-center gap-4 group relative">
           <ProgressRing percent={isLoading ? 0 : occupancy.percent} size={60} />
           <div className="min-w-0">
             <p className="text-xs text-slate-400 font-medium">อัตราการเข้าพัก</p>
             <p className="text-xl font-bold text-slate-900 tabular-nums">
-              {dash(`${occupancy.occupied}/${occupancy.rentable}`)} <span className="text-xs font-medium text-slate-400">ห้อง</span>
+              {dash(`${occupancy.occupied.length}/${occupancy.rentable.length}`)} <span className="text-xs font-medium text-slate-400">ห้อง</span>
             </p>
             <p className="text-[11px] text-slate-500">ว่าง {dash(occupancy.vacant.length)} ห้อง</p>
           </div>
+          <ChevronRight size={14} className="absolute top-4 right-4 text-slate-300 group-hover:text-brand-400 transition-colors" />
         </Link>
 
         <KpiCard
-          href="/admin/tenants"
+          href="/admin/dashboard/income"
           icon={Banknote}
           color="from-emerald-400 to-emerald-600"
           label="รายได้ค่าเช่าที่คาดการณ์ / เดือน"
@@ -322,7 +210,7 @@ export default function AdminDashboardPage() {
         />
 
         <KpiCard
-          href="/admin/requests"
+          href="/admin/dashboard/open-repairs"
           icon={Wrench}
           color="from-red-400 to-red-600"
           label="งานซ่อมที่ยังไม่เสร็จ"
@@ -336,10 +224,10 @@ export default function AdminDashboardPage() {
         />
 
         <KpiCard
-          href="/admin/requests"
+          href="/admin/dashboard/repair-cost"
           icon={costDelta > 0 ? TrendingUp : TrendingDown}
           color="from-amber-400 to-amber-600"
-          label={`ค่าซ่อมเดือน${thisMonth.label}`}
+          label={`ค่าซ่อมเดือน ${thisMonth.label}`}
           value={dash(formatCurrency(thisMonth.cost))}
           sub={`${costDelta >= 0 ? "▲" : "▼"} ${formatCurrency(Math.abs(costDelta))} จากเดือนก่อน · ${costToRentPercent.toFixed(1)}% ของค่าเช่า`}
           subClass={costDelta > 0 ? "text-red-500" : "text-emerald-600"}
@@ -374,8 +262,8 @@ export default function AdminDashboardPage() {
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
               <AlertTriangle size={16} className="text-red-500" /> งานซ่อมที่ต้องติดตาม
             </h3>
-            <Link href="/admin/requests" className="flex items-center gap-0.5 text-xs font-semibold text-brand-600 hover:text-brand-700">
-              จัดการ <ChevronRight size={14} />
+            <Link href="/admin/dashboard/open-repairs" className="flex items-center gap-0.5 text-xs font-semibold text-brand-600 hover:text-brand-700">
+              ดูทั้งหมด <ChevronRight size={14} />
             </Link>
           </div>
           {isLoading ? (
@@ -632,6 +520,3 @@ function KpiCard({
   );
 }
 
-function Placeholder({ text }: { text: string }) {
-  return <div className="text-center py-6 text-slate-400 text-xs">{text}</div>;
-}

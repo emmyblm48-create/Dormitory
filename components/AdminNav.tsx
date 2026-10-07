@@ -34,7 +34,7 @@ export function AdminNav() {
       {/* Tablet+desktop rail: icon-only at md, icon+label at lg */}
       <nav className="hidden md:flex md:flex-col md:w-16 lg:w-56 md:shrink-0 md:sticky md:top-0 md:h-dvh md:overflow-y-auto glass-nav border-r-2 border-dashed border-brand-200 py-5 gap-1 px-2 lg:px-3">
         {items.map(({ href, label, icon: Icon }) => {
-          const active = href === "/admin" ? pathname === href : pathname.startsWith(href);
+          const active = href === "/admin" ? pathname === href || pathname.startsWith("/admin/dashboard") : pathname.startsWith(href);
           return (
             <Link
               key={href}
@@ -58,7 +58,7 @@ export function AdminNav() {
         <div className="relative">
           <div className="flex items-stretch gap-1 overflow-x-auto no-scrollbar snap-x snap-mandatory scroll-smooth px-2 py-1">
             {items.map(({ href, label, icon: Icon }) => {
-              const active = href === "/admin" ? pathname === href : pathname.startsWith(href);
+              const active = href === "/admin" ? pathname === href || pathname.startsWith("/admin/dashboard") : pathname.startsWith(href);
               return (
                 <Link
                   key={href}
