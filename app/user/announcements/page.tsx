@@ -37,7 +37,7 @@ export default function UserAnnouncementsPage() {
   return (
     <div className="p-4 md:p-8 max-w-3xl mx-auto w-full space-y-4">
       <div>
-        <h3 className="text-lg font-bold text-slate-900">ข่าวสารประชาสัมพันธ์</h3>
+        <h3 className="sr-only">ข่าวสารประชาสัมพันธ์</h3>
         <p className="text-sm text-slate-400">ข่าวสารและกฎระเบียบภายในหอพัก</p>
       </div>
 

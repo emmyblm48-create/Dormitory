@@ -98,8 +98,8 @@ export function NotificationsView() {
   return (
     <div className="space-y-4 max-w-3xl mx-auto w-full">
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <h2 className="text-lg md:text-xl font-bold text-slate-900 flex items-center gap-2">
-          การแจ้งเตือน
+        <h2 className="flex items-center gap-2">
+          <span className="sr-only">การแจ้งเตือน</span>
           {unread.length > 0 && (
             <span className="text-xs bg-red-100/80 text-red-600 px-2.5 py-0.5 rounded-full font-semibold">{unread.length} ใหม่</span>
           )}

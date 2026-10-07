@@ -68,8 +68,8 @@ export default function EquipmentChecklistPage() {
     <div className="p-4 md:p-8 space-y-4 max-w-3xl mx-auto w-full">
       <ScrollReveal />
       <div className="flex items-center justify-between">
-        <h3 className="text-base md:text-lg font-bold text-slate-900">เช็คอุปกรณ์ครุภัณฑ์</h3>
-        <div className="flex items-center gap-2">
+        <h3 className="sr-only">เช็คอุปกรณ์ครุภัณฑ์</h3>
+        <div className="ml-auto flex items-center gap-2">
           <button onClick={reset} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg" title="รีเซ็ตรายการ">
             <RotateCcw size={16} />
           </button>

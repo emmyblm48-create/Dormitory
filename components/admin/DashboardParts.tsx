@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowLeft, Download, RefreshCw } from "lucide-react";
+import { Download, RefreshCw } from "lucide-react";
 
 export function DetailHeader({
   title,
@@ -18,12 +17,9 @@ export function DetailHeader({
 }) {
   return (
     <div className="space-y-2">
-      <Link href="/admin" className="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700">
-        <ArrowLeft size={14} /> กลับแดชบอร์ด
-      </Link>
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-lg md:text-xl font-bold text-slate-900">{title}</h2>
+          <h2 className="sr-only">{title}</h2>
           <p className="text-[11px] text-slate-400">
             {loadedAt ? `ข้อมูล ณ ${loadedAt.toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" })} น.` : "กำลังโหลดข้อมูล..."}
           </p>

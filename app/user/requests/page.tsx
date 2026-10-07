@@ -29,8 +29,8 @@ export default function UserRequestsPage() {
   return (
     <div className="p-4 md:p-8 space-y-4 max-w-3xl mx-auto w-full">
       <div className="flex items-center justify-between">
-        <h3 className="text-base md:text-lg font-bold text-slate-900">ประวัติการแจ้งซ่อม</h3>
-        <div className="flex items-center gap-2">
+        <h3 className="sr-only">ประวัติการแจ้งซ่อม</h3>
+        <div className="ml-auto flex items-center gap-2">
           <span className="text-xs bg-red-100/80 backdrop-blur-md text-red-600 px-2.5 py-1 rounded-full font-semibold">
             {requests.length} รายการ
           </span>

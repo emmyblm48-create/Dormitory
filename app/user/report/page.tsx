@@ -80,7 +80,7 @@ function ReportDamageForm() {
 
   return (
     <div className="p-4 md:p-8 max-w-lg mx-auto w-full">
-      <h3 className="text-base md:text-lg font-bold text-slate-900 mb-4">แจ้งซ่อมครุภัณฑ์เสียหาย</h3>
+      <h3 className="sr-only">แจ้งซ่อมครุภัณฑ์เสียหาย</h3>
 
       <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-4 md:p-6 space-y-4">
         <div>

@@ -52,8 +52,8 @@ export default function AdminRequestsPage() {
   return (
     <div className="space-y-4 max-w-4xl mx-auto w-full">
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <h2 className="text-lg md:text-xl font-bold text-slate-900">รายการแจ้งซ่อมทั้งหมด</h2>
-        <div className="flex items-center gap-2">
+        <h2 className="sr-only">รายการแจ้งซ่อมทั้งหมด</h2>
+        <div className="ml-auto flex items-center gap-2">
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}

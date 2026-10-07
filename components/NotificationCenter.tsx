@@ -158,11 +158,11 @@ export function NotificationBell({ href }: { href: string }) {
     <Link
       href={href}
       title="การแจ้งเตือน"
-      className="relative flex items-center justify-center w-9 h-9 bg-white/15 hover:bg-white/25 rounded-lg text-white transition-colors"
+      className="tap relative flex items-center justify-center w-10 h-10 rounded-full text-slate-800 hover:bg-slate-100 transition-colors"
     >
-      <Bell size={18} />
+      <Bell size={22} />
       {unreadCount > 0 && (
-        <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center border-2 border-brand-600">
+        <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">
           {unreadCount > 99 ? "99+" : unreadCount}
         </span>
       )}

@@ -2,60 +2,42 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, AlertCircle, ClipboardList, Megaphone } from "lucide-react";
+import { UserCircle } from "lucide-react";
+import { useNotifications } from "@/components/NotificationCenter";
+import { USER_TABS, isTabActive } from "@/components/app/routes";
 
-const items = [
-  { href: "/user", label: "หน้าหลัก", icon: Home },
-  { href: "/user/report", label: "แจ้งซ่อม", icon: AlertCircle },
-  { href: "/user/requests", label: "ประวัติ", icon: ClipboardList },
-  { href: "/user/announcements", label: "ข่าวสาร", icon: Megaphone },
-];
-
+// Tablet+desktop rail for tenants (icon-only at md, icon+label at lg). On phones the
+// TabBar in the user layout takes over.
 export function BottomNav() {
   const pathname = usePathname();
+  const { unreadCount } = useNotifications();
 
   return (
-    <>
-      {/* Tablet+desktop rail: icon-only at md, icon+label at lg */}
-      <nav className="hidden md:flex md:flex-col md:w-16 lg:w-56 md:shrink-0 md:sticky md:top-0 md:h-dvh md:overflow-y-auto glass-nav border-r-2 border-dashed border-brand-200 py-5 gap-1 px-2 lg:px-3 md:order-first">
-        {items.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href;
-          return (
-            <Link
-              key={href}
-              href={href}
-              title={label}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all justify-center lg:justify-start ${
-                active
-                  ? "bg-gradient-to-r from-bloom-500 to-brand-600 text-white shadow-lg shadow-brand-600/25"
-                  : "text-slate-500 hover:bg-white/70"
-              }`}
-            >
-              <Icon size={18} className="shrink-0" />
-              <span className="hidden lg:inline">{label}</span>
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Mobile floating dock */}
-      <nav className="md:hidden fixed bottom-3 left-3 right-3 z-30 flex justify-around items-stretch bg-cream-50/95 backdrop-blur-md border border-brand-100 rounded-2xl shadow-paper px-1 py-1">
-        {items.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href;
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={`relative flex-1 flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl text-[10px] font-medium transition-colors ${
-                active ? "bg-brand-50 text-brand-600" : "text-slate-400"
-              }`}
-            >
-              <Icon size={20} />
-              {label}
-            </Link>
-          );
-        })}
-      </nav>
-    </>
+    <nav className="hidden md:flex md:flex-col md:w-16 lg:w-56 md:shrink-0 md:sticky md:top-0 md:h-dvh md:overflow-y-auto glass-nav border-r-2 border-dashed border-brand-200 py-5 gap-1 px-2 lg:px-3 md:order-first">
+      {USER_TABS.map((tab) => {
+        const active = isTabActive(tab, pathname);
+        const Icon = tab.icon === "avatar" ? UserCircle : tab.icon;
+        return (
+          <Link
+            key={tab.href}
+            href={tab.href}
+            title={tab.label}
+            className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all justify-center lg:justify-start ${
+              active
+                ? "bg-gradient-to-r from-bloom-500 to-brand-600 text-white shadow-lg shadow-brand-600/25"
+                : "text-slate-500 hover:bg-white/70"
+            }`}
+          >
+            <Icon size={18} className="shrink-0" />
+            <span className="hidden lg:inline">{tab.label}</span>
+            {tab.badge === "notifications" && unreadCount > 0 && (
+              <span className="absolute top-1.5 left-7 lg:static lg:ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
+          </Link>
+        );
+      })}
+    </nav>
   );
 }

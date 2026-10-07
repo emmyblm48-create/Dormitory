@@ -109,7 +109,7 @@ export default function AdminAnnouncementsPage() {
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto w-full">
-      <h2 className="text-lg md:text-xl font-bold text-slate-900">จัดการข่าวสารประชาสัมพันธ์</h2>
+      <h2 className="sr-only">จัดการข่าวสารประชาสัมพันธ์</h2>
 
       {error && (
         <div className="bg-red-50/80 backdrop-blur-md border border-red-200/60 text-red-600 text-sm rounded-xl px-4 py-2.5">{error}</div>

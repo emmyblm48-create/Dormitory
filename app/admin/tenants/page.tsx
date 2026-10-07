@@ -187,9 +187,9 @@ export default function AdminTenantsPage() {
   return (
     <div className="space-y-5 max-w-5xl mx-auto w-full">
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-        <h2 className="text-lg md:text-xl font-bold text-slate-900 flex-1">จัดการห้องพักและผู้เช่า</h2>
+        <h2 className="sr-only">จัดการห้องพักและผู้เช่า</h2>
         {!isFormOpen && (
-          <button onClick={openForm} className="btn-primary px-4 py-2 rounded-xl text-sm flex items-center justify-center gap-1.5">
+          <button onClick={openForm} className="btn-primary sm:ml-auto px-4 py-2 rounded-xl text-sm flex items-center justify-center gap-1.5">
             <Plus size={16} /> เพิ่มห้องพัก + บัญชี
           </button>
         )}

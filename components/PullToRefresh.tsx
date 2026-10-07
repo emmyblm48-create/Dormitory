@@ -95,7 +95,7 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
   return (
     <>
       <div
-        className="fixed left-1/2 top-[72px] z-30 pointer-events-none"
+        className="fixed left-1/2 top-[calc(env(safe-area-inset-top,0px)+60px)] z-30 pointer-events-none"
         style={{
           transform: `translate(-50%, ${pull - 48}px)`,
           opacity: pull > 0 ? 1 : 0,

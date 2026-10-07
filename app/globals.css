@@ -36,6 +36,36 @@ body {
   border-radius: 999px;
 }
 
+/* Native-app press feedback for tappable elements */
+.tap {
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.tap:active {
+  transform: scale(0.94);
+  opacity: 0.7;
+}
+
+/* Page transition: each route fades and rises in. No fill-mode, so the transform is
+   gone once it finishes and fixed-position modals inside pages keep working. */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.page-enter {
+  animation: page-enter 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-enter {
+    animation: none;
+  }
+}
+
 /* Fully hidden scrollbar, e.g. for swipeable nav sliders */
 .no-scrollbar {
   -ms-overflow-style: none;

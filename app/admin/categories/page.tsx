@@ -5,7 +5,7 @@ import { CrudTable } from "@/components/admin/CrudTable";
 export default function AdminCategoriesPage() {
   return (
     <div className="space-y-4 max-w-5xl mx-auto w-full">
-      <h2 className="text-lg md:text-xl font-bold text-slate-900">จัดการหมวดหมู่และสถานะ</h2>
+      <h2 className="sr-only">จัดการหมวดหมู่และสถานะ</h2>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         <CrudTable
           title="หมวดหมู่ครุภัณฑ์"

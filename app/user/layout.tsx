@@ -1,17 +1,18 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { supabase } from "@/lib/supabase";
-import { detachPushFromAccount } from "@/lib/push";
 import { BottomNav } from "@/components/BottomNav";
 import { PullToRefresh } from "@/components/PullToRefresh";
-import { NotificationBell, NotificationProvider } from "@/components/NotificationCenter";
+import { NotificationProvider } from "@/components/NotificationCenter";
+import { AppTopBar } from "@/components/app/AppTopBar";
+import { TabBar } from "@/components/app/TabBar";
+import { USER_TABS } from "@/components/app/routes";
 
 export default function UserLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { session, profile, isLoading } = useAuth();
 
   useEffect(() => {
@@ -24,12 +25,6 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
       router.replace("/admin");
     }
   }, [isLoading, session, profile, router]);
-
-  const handleLogout = async () => {
-    await detachPushFromAccount();
-    await supabase.auth.signOut();
-    router.replace("/");
-  };
 
   if (isLoading || !session || !profile || profile.role !== "user") {
     return (
@@ -45,29 +40,18 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
         <BottomNav />
 
         <div className="flex-1 flex flex-col min-h-dvh min-w-0">
-          <header className="shrink-0 sticky top-0 z-20 glass-header text-white px-4 md:px-8 py-4 flex justify-between items-center border-b-2 border-dashed border-cream-50/30">
-            <div>
-              <h1 className="text-xl md:text-2xl font-display tracking-wide">Home</h1>
-              <p className="text-xs text-white/75">ห้อง {profile.userName}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <NotificationBell href="/user/notifications" />
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-lg text-white text-sm font-medium transition-colors"
-                title="ออกจากระบบ"
-              >
-                <LogOut size={18} />
-                <span className="hidden md:inline">ออกจากระบบ</span>
-              </button>
-            </div>
-          </header>
+          <AppTopBar />
 
-          <main className="flex-1 overflow-y-auto pb-24 md:pb-0">
-            <PullToRefresh>{children}</PullToRefresh>
+          <main className="flex-1 overflow-y-auto pb-[calc(96px+env(safe-area-inset-bottom,0px))] md:pb-0">
+            <PullToRefresh>
+              <div key={pathname} className="page-enter">
+                {children}
+              </div>
+            </PullToRefresh>
           </main>
         </div>
       </div>
+      <TabBar tabs={USER_TABS} avatarText={profile.userName.slice(0, 4)} />
     </NotificationProvider>
   );
 }

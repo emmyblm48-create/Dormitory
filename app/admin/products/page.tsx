@@ -137,8 +137,8 @@ export default function AdminProductsPage() {
   return (
     <div className="space-y-4 max-w-4xl mx-auto w-full">
       <div>
-        <h2 className="text-lg md:text-xl font-bold text-slate-900">จัดการครุภัณฑ์</h2>
-        <p className="text-xs text-slate-500 mt-0.5">รายการครุภัณฑ์ทั้งหมดในระบบ เพิ่มหรือแก้ไขได้ที่นี่</p>
+        <h2 className="sr-only">จัดการครุภัณฑ์</h2>
+        <p className="text-xs text-slate-500">รายการครุภัณฑ์ทั้งหมดในระบบ เพิ่มหรือแก้ไขได้ที่นี่</p>
       </div>
 
       {error && (
