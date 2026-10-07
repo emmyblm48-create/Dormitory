@@ -51,7 +51,7 @@ function ReportDamageForm() {
       image_path: imageUrl,
       room_id: roomId,
       status: "สถานะแจ้งซ่อม",
-      reported_date: new Date().toISOString().slice(0, 10),
+      reported_date: new Date().toISOString(),
     });
     setIsSubmitting(false);
     if (error) {
