@@ -13,6 +13,7 @@ const prompt = Prompt({
 export const metadata: Metadata = {
   title: "Dormitory",
   description: "Dormitory Management System",
+  appleWebApp: { capable: true, title: "Dormitory", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {

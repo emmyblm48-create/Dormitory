@@ -5,7 +5,10 @@ import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
+import { detachPushFromAccount } from "@/lib/push";
 import { AdminNav } from "@/components/AdminNav";
+import { PullToRefresh } from "@/components/PullToRefresh";
+import { NotificationBell, NotificationProvider } from "@/components/NotificationCenter";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -23,6 +26,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [isLoading, session, profile, router]);
 
   const handleLogout = async () => {
+    await detachPushFromAccount();
     await supabase.auth.signOut();
     router.replace("/");
   };
@@ -36,26 +40,33 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="min-h-dvh flex flex-col md:flex-row">
-      <AdminNav />
+    <NotificationProvider email={session.user.email ?? profile.email}>
+      <div className="min-h-dvh flex flex-col md:flex-row">
+        <AdminNav />
 
-      <div className="flex-1 flex flex-col min-h-dvh min-w-0">
-        <header className="shrink-0 sticky top-0 z-20 glass-header text-white px-4 md:px-8 py-4 flex justify-between items-center border-b-2 border-dashed border-cream-50/30">
-          <h1 className="text-lg md:text-2xl font-display tracking-wide">Dormitory Admin</h1>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-lg text-white text-sm font-medium transition-colors"
-            title="ออกจากระบบ"
-          >
-            <LogOut size={18} />
-            <span className="hidden md:inline">ออกจากระบบ</span>
-          </button>
-        </header>
+        <div className="flex-1 flex flex-col min-h-dvh min-w-0">
+          <header className="shrink-0 sticky top-0 z-20 glass-header text-white px-4 md:px-8 py-4 flex justify-between items-center border-b-2 border-dashed border-cream-50/30">
+            <h1 className="text-lg md:text-2xl font-display tracking-wide">Dormitory Admin</h1>
+            <div className="flex items-center gap-2">
+              <NotificationBell href="/admin/notifications" />
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-lg text-white text-sm font-medium transition-colors"
+                title="ออกจากระบบ"
+              >
+                <LogOut size={18} />
+                <span className="hidden md:inline">ออกจากระบบ</span>
+              </button>
+            </div>
+          </header>
 
-        <main className="flex-1 overflow-y-auto">
-          <div className="max-w-6xl mx-auto w-full p-4 pb-24 md:p-8 md:pb-8 lg:p-10">{children}</div>
-        </main>
+          <main className="flex-1 overflow-y-auto">
+            <div className="max-w-6xl mx-auto w-full p-4 pb-24 md:p-8 md:pb-8 lg:p-10">
+              <PullToRefresh>{children}</PullToRefresh>
+            </div>
+          </main>
+        </div>
       </div>
-    </div>
+    </NotificationProvider>
   );
 }
