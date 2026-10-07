@@ -2,13 +2,12 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
-import { DormitoryLogo } from "@/components/DormitoryLogo";
-import { ScrollReveal } from "@/components/ScrollReveal";
-import { AppShowcase } from "@/components/AppShowcase";
 
+// Login in the BLM48 Membership style: no card, plain white page, underline inputs with
+// labels above, and a dark pill button.
 export default function LoginPage() {
   const router = useRouter();
   const { session, profile, isLoading } = useAuth();
@@ -35,7 +34,7 @@ export default function LoginPage() {
 
   if (isLoading) {
     return (
-      <div className="h-dvh flex items-center justify-center">
+      <div className="h-dvh flex items-center justify-center bg-white">
         <div className="w-9 h-9 border-4 border-brand-600 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
@@ -43,92 +42,101 @@ export default function LoginPage() {
 
   if (session && !profile) {
     return (
-      <div className="h-dvh flex flex-col items-center justify-center gap-4 px-6 text-center">
-        <div className="glass-card rounded-3xl px-6 py-8 max-w-xs flex flex-col items-center gap-4">
-          <p className="text-slate-600 text-sm">
-            ไม่พบข้อมูลผู้ใช้สำหรับบัญชีนี้ กรุณาติดต่อผู้ดูแลระบบ
-          </p>
-          <button
-            onClick={() => supabase.auth.signOut()}
-            className="btn-primary px-4 py-2 rounded-xl text-sm"
-          >
-            ออกจากระบบ
-          </button>
-        </div>
+      <div className="h-dvh flex flex-col items-center justify-center gap-4 px-6 text-center bg-white">
+        <p className="text-slate-600 text-sm max-w-xs">ไม่พบข้อมูลผู้ใช้สำหรับบัญชีนี้ กรุณาติดต่อผู้ดูแลระบบ</p>
+        <button
+          onClick={() => supabase.auth.signOut()}
+          className="tap h-12 px-8 rounded-full bg-slate-900 text-white text-sm font-bold"
+        >
+          ออกจากระบบ
+        </button>
       </div>
     );
   }
 
+  const fieldClass =
+    "w-full h-[46px] bg-transparent border-0 border-b border-slate-200 rounded-none pr-10 text-base text-slate-700 placeholder:text-slate-300 placeholder:text-sm outline-none transition-colors focus:border-brand-500";
+  const labelClass = "block text-sm font-medium text-slate-400 transition-colors group-focus-within:text-brand-600";
+
   return (
-    <div className="h-dvh flex justify-center items-center p-0 md:p-6">
-      <ScrollReveal />
-      <div className="reveal w-full max-w-5xl h-dvh md:h-[850px] glass-shell md:rounded-[32px] relative flex flex-col lg:flex-row overflow-hidden">
-        {/* Motion-graphic showcase — desktop only, so phones go straight to the form */}
-        <div className="hidden lg:flex flex-[1.15] flex-col bg-gradient-to-br from-brand-50 via-cream-100 to-brand-100 border-r border-brand-100">
-          <div className="px-10 pt-10">
-            <p className="text-xs uppercase tracking-[0.2em] text-brand-500 font-display">Dormitory App</p>
-            <p className="text-2xl font-bold text-slate-900 mt-1">แจ้งซ่อม ติดตามสถานะ ครบในแอปเดียว</p>
+    <div
+      className="relative z-10 min-h-dvh flex items-center justify-center bg-white"
+      style={{ paddingTop: "env(safe-area-inset-top, 0px)", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+    >
+      <div className="w-full max-w-[360px] px-7 py-10 text-center page-enter">
+        <h1 className="text-[30px] font-bold text-slate-700 tracking-tight mb-7">Dormitory Login</h1>
+
+        <form onSubmit={handleLogin} className="text-left">
+          <div className="group mb-[18px]">
+            <label htmlFor="email" className={labelClass}>
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="กรอกอีเมลบัญชีห้องพัก"
+              required
+              autoComplete="username"
+              className={fieldClass}
+            />
           </div>
-          <AppShowcase className="flex-1" />
-        </div>
-        <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 overflow-y-auto">
-          <div className="w-full max-w-sm flex flex-col items-center text-center reveal">
-            <div className="relative p-4 rounded-3xl bg-cream-50 border border-brand-100 shadow-glass-sm mb-2">
-              <DormitoryLogo className="w-24 h-24 md:w-32 md:h-32" />
-            </div>
-            <h1 className="font-display text-4xl text-brand-600 tracking-wide mb-6 mt-2">
-              DORMITORY
-            </h1>
 
-            <h2 className="text-2xl font-bold text-slate-900 mb-1">WELCOME</h2>
-            <p className="text-slate-500 text-sm mb-6 font-medium">กรุณาเข้าสู่ระบบด้วยบัญชีห้องของท่าน</p>
-
-            <form onSubmit={handleLogin} className="w-full space-y-4">
-              <div>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="อีเมล"
-                  required
-                  className="glass-input px-4 py-3.5 rounded-xl shadow-glass-sm text-base md:text-sm"
-                />
-              </div>
-
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="รหัสผ่าน"
-                  required
-                  className="glass-input px-4 py-3.5 rounded-xl shadow-glass-sm text-base md:text-sm"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600"
-                >
-                  {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
-                </button>
-              </div>
-
-              {loginError && <p className="text-red-500 text-sm font-medium">{loginError}</p>}
-
+          <div className="group mb-[18px]">
+            <label htmlFor="password" className={labelClass}>
+              Password
+            </label>
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="กรอกรหัสผ่าน"
+                required
+                autoComplete="current-password"
+                className={fieldClass}
+              />
               <button
-                type="submit"
-                disabled={isSubmitting}
-                className="btn-primary w-full py-3.5 rounded-xl text-base mt-2"
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+                className="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 text-slate-700"
               >
-                {isSubmitting ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
+                {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
               </button>
-            </form>
-
-            <div className="text-center text-xs text-slate-400 mt-8">
-              Dormitory Management System
             </div>
           </div>
+
+          {loginError && <p className="text-red-500 text-sm font-medium text-center">{loginError}</p>}
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full h-[50px] mt-3.5 rounded-full bg-[#111] text-white text-[17px] font-bold flex items-center justify-center gap-2 transition active:scale-[0.98] active:opacity-90 disabled:opacity-60"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 size={18} className="animate-spin" /> กำลังเข้าสู่ระบบ...
+              </>
+            ) : (
+              <>
+                Sign In <ArrowRight size={19} strokeWidth={2.5} />
+              </>
+            )}
+          </button>
+        </form>
+
+        <div className="flex items-center gap-2.5 mt-[26px] mb-4 text-[13px] text-slate-400 before:flex-1 before:h-px before:bg-slate-200 after:flex-1 after:h-px after:bg-slate-200">
+          หรือถ้ายังไม่มีบัญชี
         </div>
+
+        <p className="text-[13px] text-slate-400 leading-relaxed">
+          หมายเหตุ : บัญชีผู้เช่าสร้างโดยผู้ดูแลหอพัก
+          <br />
+          ติดต่อ <b className="text-brand-600 font-bold">สำนักงานหอพัก</b> เพื่อรับอีเมลและรหัสผ่าน
+        </p>
       </div>
     </div>
   );
