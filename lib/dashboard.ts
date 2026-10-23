@@ -48,6 +48,7 @@ export const daysSince = (dateStr: string | null, now: number) =>
 // Months counted since year 0, so consecutive months differ by 1 across year boundaries
 export const monthKey = (d: Date) => d.getFullYear() * 12 + d.getMonth();
 export const monthKeyLabel = (key: number) => `${MONTH_LABELS[key % 12]} ${Math.floor(key / 12) + 543}`;
+export const monthKeyStart = (key: number) => new Date(Math.floor(key / 12), key % 12, 1).getTime();
 
 export const isOpen = (status: string | null) => status !== STATUS_DONE;
 
