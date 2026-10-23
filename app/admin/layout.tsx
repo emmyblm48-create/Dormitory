@@ -9,6 +9,7 @@ import { NotificationBell, NotificationProvider } from "@/components/Notificatio
 import { AppTopBar } from "@/components/app/AppTopBar";
 import { TabBar } from "@/components/app/TabBar";
 import { ADMIN_TABS } from "@/components/app/routes";
+import { SplashScreen } from "@/components/SplashScreen";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -27,11 +28,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [isLoading, session, profile, router]);
 
   if (isLoading || !session || !profile || profile.role !== "admin") {
-    return (
-      <div className="h-dvh flex items-center justify-center">
-        <div className="w-9 h-9 border-4 border-brand-600 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+    return <SplashScreen />;
   }
 
   return (

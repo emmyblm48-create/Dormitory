@@ -3,6 +3,7 @@ import { Prompt } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 import { BackgroundBlobs } from "@/components/BackgroundBlobs";
+import { AppSplash } from "@/components/SplashScreen";
 
 const prompt = Prompt({
   subsets: ["thai", "latin"],
@@ -35,7 +36,10 @@ export default function RootLayout({
     <html lang="th" className={prompt.variable}>
       <body className="relative min-h-dvh overflow-x-hidden">
         <BackgroundBlobs />
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          <AppSplash />
+        </AuthProvider>
       </body>
     </html>
   );

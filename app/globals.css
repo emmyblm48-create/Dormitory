@@ -165,3 +165,39 @@ body {
     @apply inline-flex items-center gap-1 bg-brand-50 border border-brand-100 text-brand-700 text-[10px] font-bold uppercase tracking-wide rounded-full px-2.5 py-1;
   }
 }
+
+/* Splash screen (components/SplashScreen.tsx) */
+@keyframes splash-pop {
+  0% { opacity: 0; transform: scale(0.82); }
+  60% { opacity: 1; transform: scale(1.04); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes splash-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes splash-shadow {
+  0%, 100% { transform: scaleX(1); opacity: 0.16; }
+  50% { transform: scaleX(0.82); opacity: 0.08; }
+}
+@keyframes splash-row {
+  0%, 100% { opacity: 0.28; }
+  45% { opacity: 1; }
+}
+@keyframes splash-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes splash-bar {
+  from { transform: translateX(-110%); }
+  to { transform: translateX(260%); }
+}
+.splash-icon { animation: splash-pop 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.splash-float { animation: splash-float 2.8s ease-in-out 0.7s infinite; }
+.splash-shadow { animation: splash-shadow 2.8s ease-in-out 0.7s infinite; opacity: 0.16; }
+.splash-row { animation: splash-row 1.4s ease-in-out infinite; }
+.splash-up { animation: splash-up 0.6s ease-out both; }
+.splash-bar { animation: splash-bar 1.5s cubic-bezier(0.45, 0, 0.25, 1) infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .splash-icon, .splash-float, .splash-shadow, .splash-row, .splash-up, .splash-bar { animation: none; }
+}

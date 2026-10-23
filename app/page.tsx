@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Eye, EyeOff, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
+import { SplashScreen } from "@/components/SplashScreen";
 
 // Login in the BLM48 Membership style: no card, plain white page, underline inputs with
 // labels above, and a dark pill button.
@@ -33,11 +34,7 @@ export default function LoginPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="h-dvh flex items-center justify-center bg-white">
-        <div className="w-9 h-9 border-4 border-brand-600 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+    return <SplashScreen />;
   }
 
   if (session && !profile) {
