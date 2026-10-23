@@ -57,6 +57,70 @@ export const parseMonthParam = (value: string | null) => {
   return Number(m[1]) * 12 + Number(m[2]) - 1;
 };
 
+// One calendar day, month or year picked on the dashboard filter; `end` is exclusive
+export type PeriodKind = "day" | "month" | "year";
+export interface Period {
+  kind: PeriodKind;
+  param: string;
+  start: number;
+  end: number;
+  label: string;
+}
+
+export const PERIOD_KINDS: PeriodKind[] = ["day", "month", "year"];
+
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+// The period of `kind` that contains `d`
+export const makePeriod = (kind: PeriodKind, d: Date): Period => {
+  const y = d.getFullYear();
+  const m = d.getMonth();
+  const day = d.getDate();
+  if (kind === "day") {
+    return {
+      kind,
+      param: `${y}-${pad2(m + 1)}-${pad2(day)}`,
+      start: new Date(y, m, day).getTime(),
+      end: new Date(y, m, day + 1).getTime(),
+      label: `${day} ${MONTH_LABELS[m]} ${y + 543}`,
+    };
+  }
+  if (kind === "month") {
+    return {
+      kind,
+      param: `${y}-${pad2(m + 1)}`,
+      start: new Date(y, m, 1).getTime(),
+      end: new Date(y, m + 1, 1).getTime(),
+      label: `${MONTH_LABELS[m]} ${y + 543}`,
+    };
+  }
+  return { kind, param: String(y), start: new Date(y, 0, 1).getTime(), end: new Date(y + 1, 0, 1).getTime(), label: `ปี ${y + 543}` };
+};
+
+// Yesterday, last month or last year relative to `p`
+export const previousPeriod = (p: Period) => makePeriod(p.kind, new Date(p.start - 1));
+
+export const inPeriod = (dateStr: string | null, p: Period) => {
+  if (!dateStr) return false;
+  const t = new Date(dateStr).getTime();
+  return t >= p.start && t < p.end;
+};
+
+// Reads ?day=YYYY-MM-DD, ?month=YYYY-MM or ?year=YYYY; anything malformed is ignored
+export const parsePeriodParams = (params: URLSearchParams): Period | null => {
+  const day = params.get("day")?.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (day) {
+    const d = new Date(Number(day[1]), Number(day[2]) - 1, Number(day[3]));
+    // Rejects dates that roll over, e.g. 2026-02-30
+    if (d.getMonth() === Number(day[2]) - 1 && d.getDate() === Number(day[3])) return makePeriod("day", d);
+  }
+  const month = parseMonthParam(params.get("month"));
+  if (month != null) return makePeriod("month", new Date(monthKeyStart(month)));
+  const year = params.get("year")?.match(/^\d{4}$/);
+  if (year) return makePeriod("year", new Date(Number(year[0]), 0, 1));
+  return null;
+};
+
 export const isOpen = (status: string | null) => status !== STATUS_DONE;
 
 export const ageBadgeClass = (days: number) =>
