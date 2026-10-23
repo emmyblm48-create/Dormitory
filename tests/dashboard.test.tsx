@@ -19,6 +19,9 @@ import {
   monthKey,
   monthKeyParam,
   parseMonthParam,
+  parsePeriodParams,
+  previousPeriod,
+  makePeriod,
   type RequestRow,
 } from "@/lib/dashboard";
 import { formatCurrency, formatFullDate } from "@/lib/format";
@@ -123,6 +126,34 @@ describe("UT-DASH: การประมวลผลสถิติ", () => {
   });
 });
 
+describe("UT-DASH: ช่วงเวลาของตัวกรอง (วัน/เดือน/ปี)", () => {
+  it("UT-DASH-13 สร้างช่วงเวลารายวัน รายเดือน และรายปี", () => {
+    const d = new Date(2026, 9, 23, 15, 0);
+    const day = makePeriod("day", d);
+    expect(day).toMatchObject({ param: "2026-10-23", label: "23 ต.ค. 2569" });
+    expect(day.end - day.start).toBe(24 * 60 * 60 * 1000);
+    expect(makePeriod("month", d)).toMatchObject({ param: "2026-10", label: "ต.ค. 2569" });
+    expect(makePeriod("year", d)).toMatchObject({ param: "2026", label: "ปี 2569" });
+  });
+
+  it("UT-DASH-14 หาช่วงเวลาก่อนหน้าเพื่อเปรียบเทียบค่าซ่อม (ข้ามเดือนและข้ามปี)", () => {
+    expect(previousPeriod(makePeriod("day", new Date(2026, 0, 1))).param).toBe("2025-12-31");
+    expect(previousPeriod(makePeriod("month", new Date(2026, 0, 15))).param).toBe("2025-12");
+    expect(previousPeriod(makePeriod("year", new Date(2026, 5, 1))).param).toBe("2025");
+  });
+
+  it("UT-DASH-15 อ่านช่วงเวลาจาก URL และปฏิเสธค่าที่ผิดรูปแบบ", () => {
+    const parse = (q: string) => parsePeriodParams(new URLSearchParams(q))?.param ?? null;
+    expect(parse("day=2026-10-05")).toBe("2026-10-05");
+    expect(parse("month=2026-09")).toBe("2026-09");
+    expect(parse("year=2025")).toBe("2025");
+    expect(parse("day=2026-02-30")).toBeNull(); // no such date
+    expect(parse("day=2026-1-5")).toBeNull();
+    expect(parse("year=25")).toBeNull();
+    expect(parse("")).toBeNull();
+  });
+});
+
 describe("UT-DASH: หน้าแดชบอร์ดผู้ดูแลระบบ", () => {
   beforeEach(() => {
     vi.useFakeTimers({ now: NOW, toFake: ["Date"] });
@@ -132,6 +163,10 @@ describe("UT-DASH: หน้าแดชบอร์ดผู้ดูแลร�
 
   // The timestamp only appears once every query has resolved
   const loaded = () => screen.findByText(/^ข้อมูล ณ/);
+  const renderLoaded = async () => {
+    render(<AdminDashboardPage />);
+    await loaded();
+  };
 
   const sample = [
     req(1, "2026-10-02T10:00:00+07:00", "สถานะแจ้งซ่อม", null),
@@ -153,12 +188,12 @@ describe("UT-DASH: หน้าแดชบอร์ดผู้ดูแลร�
     seed(sample);
     const view = render(<AdminDashboardPage />);
     await loaded();
-    const monthSelect = view.container.querySelector("select")!;
-    fireEvent.change(monthSelect, { target: { value: String(monthKey(new Date(2026, 8, 1))) } });
+    fireEvent.change(screen.getByLabelText("ช่วงเวลา"), { target: { value: "month" } });
+    fireEvent.change(screen.getByLabelText("เลือกเดือน"), { target: { value: String(monthKey(new Date(2026, 8, 1))) } });
 
     expect(screen.getByText("สถานะงานซ่อม ก.ย. 2569")).toBeTruthy();
-    expect(screen.getByText("แจ้งซ่อมในเดือนนี้").previousElementSibling!.textContent).toBe("1");
-    expect(screen.getByText("ค่าซ่อมในเดือนนี้").previousElementSibling!.textContent).toBe("250 บาท");
+    expect(screen.getByText("แจ้งซ่อมในช่วงนี้").previousElementSibling!.textContent).toBe("1");
+    expect(screen.getByText("ค่าซ่อมในช่วงนี้").previousElementSibling!.textContent).toBe("250 บาท");
     expect(window.location.search).toBe("?month=2026-09");
 
     fireEvent.click(screen.getByRole("button", { name: /ล้างตัวกรอง/ }));
@@ -172,7 +207,7 @@ describe("UT-DASH: หน้าแดชบอร์ดผู้ดูแลร�
     render(<AdminDashboardPage />);
     await loaded();
     expect(screen.getByText("สถานะงานซ่อม ต.ค. 2569")).toBeTruthy();
-    expect(screen.getByText("แจ้งซ่อมในเดือนนี้").previousElementSibling!.textContent).toBe("2");
+    expect(screen.getByText("แจ้งซ่อมในช่วงนี้").previousElementSibling!.textContent).toBe("2");
   });
 
   it("UT-DASH-10 เปิดลิงก์ที่ระบุเดือนผิดรูปแบบหรือเป็นเดือนในอนาคต", async () => {
@@ -196,8 +231,53 @@ describe("UT-DASH: หน้าแดชบอร์ดผู้ดูแลร�
     seed(sample);
     const view = render(<AdminDashboardPage />);
     await loaded();
-    fireEvent.change(view.container.querySelector("select")!, { target: { value: String(monthKey(new Date(2026, 6, 1))) } });
+    fireEvent.change(screen.getByLabelText("ช่วงเวลา"), { target: { value: "month" } });
+    fireEvent.change(screen.getByLabelText("เลือกเดือน"), { target: { value: String(monthKey(new Date(2026, 6, 1))) } });
     expect(screen.getByText("ไม่มีการแจ้งซ่อมใน ก.ค. 2569")).toBeTruthy();
     expect(screen.getByText("ไม่มีงานซ่อมค้างที่แจ้งใน ก.ค. 2569")).toBeTruthy();
+  });
+  it("UT-DASH-16 กรองแดชบอร์ดรายวัน", async () => {
+    seed(sample);
+    await renderLoaded();
+    fireEvent.change(screen.getByLabelText("ช่วงเวลา"), { target: { value: "day" } });
+    const dayInput = screen.getByLabelText("เลือกวันที่") as HTMLInputElement;
+    expect(dayInput.value).toBe("2026-10-23"); // defaults to today
+    fireEvent.change(dayInput, { target: { value: "2026-10-10" } });
+
+    expect(screen.getByText("สถานะงานซ่อม 10 ต.ค. 2569")).toBeTruthy();
+    expect(screen.getByText("แจ้งซ่อมในช่วงนี้").previousElementSibling!.textContent).toBe("1");
+    expect(screen.getByText("ค่าซ่อมในช่วงนี้").previousElementSibling!.textContent).toBe("400 บาท");
+    expect(screen.getByText("ค่าซ่อมเรียกเก็บจากผู้เช่า 10 ต.ค. 2569")).toBeTruthy();
+    expect(screen.getByText(/จาก 9 ต.ค. 2569$/)).toBeTruthy();
+    expect(window.location.search).toBe("?day=2026-10-10");
+  });
+
+  it("UT-DASH-17 กรองแดชบอร์ดรายปี", async () => {
+    seed([...sample, req(4, "2025-03-01T10:00:00+07:00", "สถานะเสร็จสมบรูณ์", 100)]);
+    await renderLoaded();
+    fireEvent.change(screen.getByLabelText("ช่วงเวลา"), { target: { value: "year" } });
+    expect(screen.getByText("แจ้งซ่อมในช่วงนี้").previousElementSibling!.textContent).toBe("3");
+    expect(screen.getByText("แนวโน้มการแจ้งซ่อมรายเดือน ปี 2569")).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText("เลือกปี"), { target: { value: "2025" } });
+    expect(screen.getByText("สถานะงานซ่อม ปี 2568")).toBeTruthy();
+    expect(screen.getByText("แจ้งซ่อมในช่วงนี้").previousElementSibling!.textContent).toBe("1");
+    expect(window.location.search).toBe("?year=2025");
+  });
+
+  it("UT-DASH-18 เปลี่ยนจากรายเดือนเป็นรายวันโดยคงเดือนที่เลือกไว้", async () => {
+    window.history.replaceState(null, "", "/admin?month=2026-09");
+    seed(sample);
+    await renderLoaded();
+    fireEvent.change(screen.getByLabelText("ช่วงเวลา"), { target: { value: "day" } });
+    expect((screen.getByLabelText("เลือกวันที่") as HTMLInputElement).value).toBe("2026-09-01");
+    expect(window.location.search).toBe("?day=2026-09-01");
+  });
+
+  it("UT-DASH-19 เปิดลิงก์ที่ระบุวันที่ในอนาคต", async () => {
+    window.history.replaceState(null, "", "/admin?day=2026-12-25");
+    seed(sample);
+    await renderLoaded();
+    expect(screen.getByText("สถานะงานซ่อมทั้งหมด")).toBeTruthy();
   });
 });

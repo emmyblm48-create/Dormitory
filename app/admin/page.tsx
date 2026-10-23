@@ -36,8 +36,13 @@ import {
   monthKey,
   monthKeyLabel,
   monthKeyStart,
-  monthKeyParam,
-  parseMonthParam,
+  makePeriod,
+  previousPeriod,
+  inPeriod,
+  parsePeriodParams,
+  PERIOD_KINDS,
+  type Period,
+  type PeriodKind,
 } from "@/lib/dashboard";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { ProgressRing } from "@/components/ProgressRing";
@@ -48,34 +53,39 @@ export default function AdminDashboardPage() {
 
   const occupancy = useMemo(() => computeOccupancy(rooms, tenants), [rooms, tenants]);
 
-  // ---------- Month filter: null shows every request ----------
-  const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
-  // Kept in ?month=YYYY-MM so a filtered view survives reloads and can be shared
+  // ---------- Date filter: a day, month or year; null shows every request ----------
+  const [period, setPeriod] = useState<Period | null>(null);
+  // Kept in ?day= / ?month= / ?year= so a filtered view survives reloads and can be shared
   useEffect(() => {
-    const key = parseMonthParam(new URLSearchParams(window.location.search).get("month"));
-    setSelectedMonth(key != null && key <= monthKey(new Date()) ? key : null);
+    const p = parsePeriodParams(new URLSearchParams(window.location.search));
+    setPeriod(p && p.start <= Date.now() ? p : null);
   }, []);
-  const selectMonth = (key: number | null) => {
-    setSelectedMonth(key);
+  const selectPeriod = (p: Period | null) => {
+    setPeriod(p);
     const url = new URL(window.location.href);
-    if (key == null) url.searchParams.delete("month");
-    else url.searchParams.set("month", monthKeyParam(key));
+    for (const kind of PERIOD_KINDS) url.searchParams.delete(kind);
+    if (p) url.searchParams.set(p.kind, p.param);
     window.history.replaceState(window.history.state, "", url);
   };
+  // Switching between day/month/year keeps the date already picked where possible
+  const selectKind = (kind: PeriodKind | "") =>
+    selectPeriod(kind === "" ? null : makePeriod(kind, new Date(period ? Math.min(period.start, now) : now)));
+
   const currentMonth = monthKey(new Date(now));
-  const monthOptions = useMemo(() => {
+  const periodMonth = period ? monthKey(new Date(period.start)) : null;
+  const firstMonth = useMemo(() => {
     const keys = requests.filter((r) => r.reported_date).map((r) => monthKey(new Date(r.reported_date!)));
-    const first = Math.min(currentMonth - 11, selectedMonth ?? currentMonth, ...keys);
-    return Array.from({ length: currentMonth - first + 1 }, (_, i) => currentMonth - i);
-  }, [requests, currentMonth, selectedMonth]);
-  const periodLabel = selectedMonth == null ? "ทั้งหมด" : monthKeyLabel(selectedMonth);
+    return Math.min(currentMonth - 11, periodMonth ?? currentMonth, ...keys);
+  }, [requests, currentMonth, periodMonth]);
+  const monthOptions = Array.from({ length: currentMonth - firstMonth + 1 }, (_, i) => currentMonth - i);
+  const currentYear = Math.floor(currentMonth / 12);
+  const yearOptions = Array.from({ length: currentYear - Math.floor(firstMonth / 12) + 1 }, (_, i) => currentYear - i);
+  const todayParam = makePeriod("day", new Date(now)).param;
+  const periodLabel = period?.label ?? "ทั้งหมด";
 
   const scopedRequests = useMemo(
-    () =>
-      selectedMonth == null
-        ? requests
-        : requests.filter((r) => r.reported_date && monthKey(new Date(r.reported_date)) === selectedMonth),
-    [requests, selectedMonth]
+    () => (period == null ? requests : requests.filter((r) => inPeriod(r.reported_date, period))),
+    [requests, period]
   );
 
   // ---------- Repair workload ----------
@@ -100,13 +110,22 @@ export default function AdminDashboardPage() {
   const overdueCount = openRequests.filter((r) => r.age >= AGE_CRITICAL_DAYS).length;
   const missingCostCount = scopedRequests.filter((r) => r.status !== STATUS_REPORTED && r.repair_cost == null).length;
 
-  // ---------- Monthly trend: 12 months ending at the selected (or current) month ----------
-  const trendEnd = selectedMonth ?? currentMonth;
+  // ---------- Monthly trend: a year's Jan-Dec, else 12 months ending at the picked (or current) month ----------
+  const trendEnd = period?.kind === "year" ? Math.floor(periodMonth! / 12) * 12 + 11 : (periodMonth ?? currentMonth);
+  const highlightMonth = period?.kind === "year" ? null : (periodMonth ?? currentMonth);
   const monthly = useMemo(() => computeMonthly(requests, monthKeyStart(trendEnd)), [requests, trendEnd]);
 
-  const thisMonth = monthly[11];
-  const lastMonth = monthly[10];
-  const costDelta = thisMonth.cost - lastMonth.cost;
+  // ---------- Repair cost: the picked period (or this month) against the one before ----------
+  const costPeriod = useMemo(() => period ?? makePeriod("month", new Date(now)), [period, now]);
+  const costSummary = useMemo(() => {
+    const sum = (p: Period) => {
+      const rows = requests.filter((r) => inPeriod(r.reported_date, p));
+      return { label: p.label, count: rows.length, cost: rows.reduce((s, r) => s + Number(r.repair_cost ?? 0), 0) };
+    };
+    return { current: sum(costPeriod), previous: sum(previousPeriod(costPeriod)) };
+  }, [requests, costPeriod]);
+  const { current: thisPeriod, previous: lastPeriod } = costSummary;
+  const costDelta = thisPeriod.cost - lastPeriod.cost;
   const maxMonthlyCount = Math.max(1, ...monthly.map((m) => m.count));
   const totalCost12m = monthly.reduce((s, m) => s + m.cost, 0);
   const totalCount12m = monthly.reduce((s, m) => s + m.count, 0);
@@ -159,7 +178,7 @@ export default function AdminDashboardPage() {
   const insights = useMemo(() => {
     const list: { tone: "red" | "amber" | "blue"; text: string }[] = [];
     if (overdueCount > 0) {
-      list.push({ tone: "red", text: `${selectedMonth == null ? "" : `งานที่แจ้งใน ${periodLabel} `}มีงานซ่อมค้างเกิน ${AGE_CRITICAL_DAYS} วัน ${overdueCount} รายการ ควรเร่งดำเนินการหรือแจ้งความคืบหน้าให้ผู้เช่า` });
+      list.push({ tone: "red", text: `${period == null ? "" : `งานที่แจ้งใน ${periodLabel} `}มีงานซ่อมค้างเกิน ${AGE_CRITICAL_DAYS} วัน ${overdueCount} รายการ ควรเร่งดำเนินการหรือแจ้งความคืบหน้าให้ผู้เช่า` });
     }
     if (occupancy.vacant.length > 0) {
       list.push({
@@ -170,21 +189,21 @@ export default function AdminDashboardPage() {
     for (const p of productStats.filter((p) => p.count >= REPLACE_REPAIR_COUNT)) {
       list.push({ tone: "amber", text: `${p.name} ถูกแจ้งซ่อม ${p.count} ครั้ง รวม ${formatCurrency(p.cost)} ควรพิจารณาเปลี่ยนใหม่แทนการซ่อม` });
     }
-    if (costDelta > 0 && lastMonth.cost > 0) {
+    if (costDelta > 0 && lastPeriod.cost > 0) {
       list.push({
         tone: "amber",
-        text: `ค่าซ่อม ${thisMonth.label} เพิ่มขึ้น ${formatCurrency(costDelta)} จาก ${lastMonth.label} อย่าลืมเรียกเก็บจากผู้เช่าพร้อมค่าเช่า`,
+        text: `ค่าซ่อม ${thisPeriod.label} เพิ่มขึ้น ${formatCurrency(costDelta)} จาก ${lastPeriod.label} อย่าลืมเรียกเก็บจากผู้เช่าพร้อมค่าเช่า`,
       });
     }
     if (missingCostCount > 0) {
-      list.push({ tone: "blue", text: `${selectedMonth == null ? "" : `${periodLabel}: `}มี ${missingCostCount} รายการที่ดำเนินการแล้วแต่ยังไม่บันทึกค่าซ่อม อาจเรียกเก็บค่าซ่อมจากผู้เช่าได้ไม่ครบ` });
+      list.push({ tone: "blue", text: `${period == null ? "" : `${periodLabel}: `}มี ${missingCostCount} รายการที่ดำเนินการแล้วแต่ยังไม่บันทึกค่าซ่อม อาจเรียกเก็บค่าซ่อมจากผู้เช่าได้ไม่ครบ` });
     }
     return list;
-  }, [selectedMonth, periodLabel, overdueCount, occupancy, productStats, costDelta, thisMonth.label, lastMonth.label, lastMonth.cost, missingCostCount]);
+  }, [period, periodLabel, overdueCount, occupancy, productStats, costDelta, thisPeriod.label, lastPeriod.label, lastPeriod.cost, missingCostCount]);
 
   const exportCsv = () => {
     const roomById = new Map(rooms.map((r) => [r.room_id, r.room_number]));
-    const suffix = selectedMonth == null ? new Date().toISOString().slice(0, 10) : monthKeyParam(selectedMonth);
+    const suffix = period == null ? new Date().toISOString().slice(0, 10) : period.param;
     downloadCsv(`maintenance-report-${suffix}.csv`, [
       ["เลขที่", "วันที่แจ้ง", "ห้อง", "ครุภัณฑ์", "รายละเอียด", "สถานะ", "ค่าซ่อม (บาท)", "ค้างมา (วัน)"],
       ...scopedRequests.map((r) => [
@@ -214,22 +233,61 @@ export default function AdminDashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <label className="flex items-center gap-1.5 text-xs text-slate-500">
+          <div className="flex items-center gap-1.5 text-xs text-slate-500">
             <CalendarDays size={14} className="text-brand-500" />
-            <span className="sr-only">ดูข้อมูลเดือน</span>
             <select
-              value={selectedMonth ?? ""}
-              onChange={(e) => selectMonth(e.target.value === "" ? null : Number(e.target.value))}
+              aria-label="ช่วงเวลา"
+              value={period?.kind ?? ""}
+              onChange={(e) => selectKind(e.target.value as PeriodKind | "")}
               className="glass-input !w-auto px-2.5 py-1.5 rounded-lg text-xs"
             >
-              <option value="">ทุกเดือน</option>
-              {monthOptions.map((key) => (
-                <option key={key} value={key}>
-                  {monthKeyLabel(key)}
-                </option>
-              ))}
+              <option value="">ทุกช่วงเวลา</option>
+              <option value="day">รายวัน</option>
+              <option value="month">รายเดือน</option>
+              <option value="year">รายปี</option>
             </select>
-          </label>
+            {period?.kind === "day" && (
+              <input
+                type="date"
+                aria-label="เลือกวันที่"
+                value={period.param}
+                max={todayParam}
+                onChange={(e) => {
+                  const [y, m, d] = e.target.value.split("-").map(Number);
+                  if (y && m && d) selectPeriod(makePeriod("day", new Date(y, m - 1, d)));
+                }}
+                className="glass-input !w-auto px-2.5 py-1.5 rounded-lg text-xs"
+              />
+            )}
+            {period?.kind === "month" && (
+              <select
+                aria-label="เลือกเดือน"
+                value={periodMonth!}
+                onChange={(e) => selectPeriod(makePeriod("month", new Date(monthKeyStart(Number(e.target.value)))))}
+                className="glass-input !w-auto px-2.5 py-1.5 rounded-lg text-xs"
+              >
+                {monthOptions.map((key) => (
+                  <option key={key} value={key}>
+                    {monthKeyLabel(key)}
+                  </option>
+                ))}
+              </select>
+            )}
+            {period?.kind === "year" && (
+              <select
+                aria-label="เลือกปี"
+                value={Math.floor(periodMonth! / 12)}
+                onChange={(e) => selectPeriod(makePeriod("year", new Date(Number(e.target.value), 0, 1)))}
+                className="glass-input !w-auto px-2.5 py-1.5 rounded-lg text-xs"
+              >
+                {yearOptions.map((y) => (
+                  <option key={y} value={y}>
+                    {y + 543}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
           <button
             onClick={exportCsv}
             disabled={isLoading || scopedRequests.length === 0}
@@ -243,12 +301,12 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {selectedMonth != null && (
+      {period != null && (
         <div className="flex items-center justify-between gap-2 flex-wrap text-[11px] text-brand-700 bg-brand-50/80 border border-brand-100 rounded-xl px-3 py-2">
           <span>
             แสดงงานซ่อมที่แจ้งใน <span className="font-semibold">{periodLabel}</span> · อัตราการเข้าพักและรายได้ค่าเช่าแสดงตามสถานะปัจจุบัน
           </span>
-          <button onClick={() => selectMonth(null)} className="flex items-center gap-0.5 font-semibold hover:text-brand-900">
+          <button onClick={() => selectPeriod(null)} className="flex items-center gap-0.5 font-semibold hover:text-brand-900">
             <X size={12} /> ล้างตัวกรอง
           </button>
         </div>
@@ -281,7 +339,7 @@ export default function AdminDashboardPage() {
           href="/admin/dashboard/open-repairs"
           icon={Wrench}
           color="from-red-400 to-red-600"
-          label={selectedMonth == null ? "งานซ่อมที่ยังไม่เสร็จ" : `งานซ่อมที่ยังไม่เสร็จ (แจ้ง ${periodLabel})`}
+          label={period == null ? "งานซ่อมที่ยังไม่เสร็จ" : `งานซ่อมที่ยังไม่เสร็จ (แจ้ง ${periodLabel})`}
           value={dash(`${openRequests.length} รายการ`)}
           sub={
             openRequests.length > 0
@@ -295,9 +353,9 @@ export default function AdminDashboardPage() {
           href="/admin/dashboard/repair-cost"
           icon={costDelta > 0 ? TrendingUp : TrendingDown}
           color="from-amber-400 to-amber-600"
-          label={`ค่าซ่อมเรียกเก็บจากผู้เช่า ${thisMonth.label}`}
-          value={dash(formatCurrency(thisMonth.cost))}
-          sub={`${thisMonth.count} รายการ · ${costDelta >= 0 ? "▲" : "▼"} ${formatCurrency(Math.abs(costDelta))} จาก ${lastMonth.label}`}
+          label={`ค่าซ่อมเรียกเก็บจากผู้เช่า ${thisPeriod.label}`}
+          value={dash(formatCurrency(thisPeriod.cost))}
+          sub={`${thisPeriod.count} รายการ · ${costDelta >= 0 ? "▲" : "▼"} ${formatCurrency(Math.abs(costDelta))} จาก ${lastPeriod.label}`}
         />
       </div>
 
@@ -336,7 +394,7 @@ export default function AdminDashboardPage() {
           {isLoading ? (
             <Placeholder text="กำลังโหลดข้อมูล..." />
           ) : openRequests.length === 0 ? (
-            <Placeholder text={selectedMonth == null ? "ไม่มีงานซ่อมค้าง" : `ไม่มีงานซ่อมค้างที่แจ้งใน ${periodLabel}`} />
+            <Placeholder text={period == null ? "ไม่มีงานซ่อมค้าง" : `ไม่มีงานซ่อมค้างที่แจ้งใน ${periodLabel}`} />
           ) : (
             <div className="divide-y divide-brand-100">
               {openRequests.slice(0, 6).map((r) => (
@@ -366,12 +424,12 @@ export default function AdminDashboardPage() {
         {/* Pipeline */}
         <div className="glass-card rounded-2xl p-4 lg:col-span-2">
           <h3 className="text-sm font-bold text-slate-900 mb-3">
-            {selectedMonth == null ? "สถานะงานซ่อมทั้งหมด" : `สถานะงานซ่อม ${periodLabel}`}
+            {period == null ? "สถานะงานซ่อมทั้งหมด" : `สถานะงานซ่อม ${periodLabel}`}
           </h3>
           {isLoading ? (
             <Placeholder text="กำลังโหลดข้อมูล..." />
           ) : scopedRequests.length === 0 ? (
-            <Placeholder text={selectedMonth == null ? "ยังไม่มีการแจ้งซ่อม" : `ไม่มีการแจ้งซ่อมใน ${periodLabel}`} />
+            <Placeholder text={period == null ? "ยังไม่มีการแจ้งซ่อม" : `ไม่มีการแจ้งซ่อมใน ${periodLabel}`} />
           ) : (
             <>
               <div className="flex h-3 rounded-full overflow-hidden bg-slate-100 mb-4">
@@ -396,13 +454,13 @@ export default function AdminDashboardPage() {
               <div className="mt-4 pt-3 border-t border-brand-100 grid grid-cols-2 gap-3 text-center">
                 <div>
                   <p className="text-base font-bold text-slate-900 tabular-nums">{scopedRequests.length}</p>
-                  <p className="text-[10px] text-slate-400">{selectedMonth == null ? "แจ้งซ่อมทั้งหมด" : "แจ้งซ่อมในเดือนนี้"}</p>
+                  <p className="text-[10px] text-slate-400">{period == null ? "แจ้งซ่อมทั้งหมด" : "แจ้งซ่อมในช่วงนี้"}</p>
                 </div>
                 <div>
                   <p className="text-base font-bold text-slate-900 tabular-nums">
                     {formatCurrency(scopedRequests.reduce((s, r) => s + Number(r.repair_cost ?? 0), 0))}
                   </p>
-                  <p className="text-[10px] text-slate-400">{selectedMonth == null ? "ค่าซ่อมสะสม" : "ค่าซ่อมในเดือนนี้"}</p>
+                  <p className="text-[10px] text-slate-400">{period == null ? "ค่าซ่อมสะสม" : "ค่าซ่อมในช่วงนี้"}</p>
                 </div>
               </div>
             </>
@@ -414,7 +472,11 @@ export default function AdminDashboardPage() {
       <div className="glass-card rounded-2xl p-4">
         <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
           <h3 className="text-sm font-bold text-slate-900">
-            {selectedMonth == null ? "แนวโน้มการแจ้งซ่อม 12 เดือนล่าสุด" : `แนวโน้มการแจ้งซ่อม 12 เดือนถึง ${periodLabel}`}{" "}
+            {period == null
+              ? "แนวโน้มการแจ้งซ่อม 12 เดือนล่าสุด"
+              : period.kind === "year"
+                ? `แนวโน้มการแจ้งซ่อมรายเดือน ${periodLabel}`
+                : `แนวโน้มการแจ้งซ่อม 12 เดือนถึง ${monthKeyLabel(periodMonth!)}`}{" "}
             <span className="text-[11px] font-normal text-slate-400">(กดแท่งเพื่อกรองเดือนนั้น)</span>
           </h3>
           <p className="text-[11px] text-slate-500">
@@ -426,16 +488,19 @@ export default function AdminDashboardPage() {
         ) : (
           <div className="overflow-x-auto">
             <div className="flex items-end justify-between gap-1.5 h-44 min-w-[520px]">
-              {monthly.map((m, i) => (
+              {monthly.map((m) => (
                 <button
                   key={m.key}
-                  onClick={() => selectMonth(m.key === selectedMonth ? null : m.key)}
-                  className="flex-1 flex flex-col items-center justify-end gap-1 h-full group"
+                  onClick={() =>
+                    selectPeriod(period?.kind === "month" && m.key === periodMonth ? null : makePeriod("month", new Date(monthKeyStart(m.key))))
+                  }
+                  disabled={m.key > currentMonth}
+                  className="flex-1 flex flex-col items-center justify-end gap-1 h-full group disabled:cursor-default"
                 >
                   <span className="text-[10px] font-semibold text-slate-600">{m.count > 0 ? m.count : ""}</span>
                   <div
                     className={`w-full max-w-[26px] rounded-t-md transition-all ${
-                      i === 11 ? "bg-gradient-to-t from-brand-700 to-brand-500" : "bg-gradient-to-t from-brand-400 to-brand-200 group-hover:from-brand-500 group-hover:to-brand-300"
+                      m.key === highlightMonth ? "bg-gradient-to-t from-brand-700 to-brand-500" : "bg-gradient-to-t from-brand-400 to-brand-200 group-hover:from-brand-500 group-hover:to-brand-300"
                     }`}
                     style={{ height: `${m.count > 0 ? Math.max(6, (m.count / maxMonthlyCount) * 75) : 2}%` }}
                     title={`${m.label} ${m.year + 543}: ${m.count} ครั้ง, ${formatCurrency(m.cost)}`}
@@ -475,7 +540,7 @@ export default function AdminDashboardPage() {
                     <th className="font-medium pb-2">ผู้เช่า</th>
                     <th className="font-medium pb-2 text-right">ค่าเช่า</th>
                     <th className="font-medium pb-2 text-right">แจ้งซ่อม</th>
-                    <th className="font-medium pb-2 text-right">{selectedMonth == null ? "ค่าซ่อมสะสม" : "ค่าซ่อม"}</th>
+                    <th className="font-medium pb-2 text-right">{period == null ? "ค่าซ่อมสะสม" : "ค่าซ่อม"}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-brand-100">
@@ -512,7 +577,7 @@ export default function AdminDashboardPage() {
         <div className="glass-card rounded-2xl p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-slate-900">
-              ครุภัณฑ์ที่มีค่าซ่อมสูง{selectedMonth != null && <span className="text-[11px] font-normal text-slate-400"> · {periodLabel}</span>}
+              ครุภัณฑ์ที่มีค่าซ่อมสูง{period != null && <span className="text-[11px] font-normal text-slate-400"> · {periodLabel}</span>}
             </h3>
             {assetStatus.length > 0 && (
               <div className="flex items-center gap-2.5 flex-wrap justify-end">
@@ -528,7 +593,7 @@ export default function AdminDashboardPage() {
           {isLoading ? (
             <Placeholder text="กำลังโหลดข้อมูล..." />
           ) : productStats.length === 0 ? (
-            <Placeholder text={selectedMonth == null ? "ยังไม่มีข้อมูลการซ่อม" : `ไม่มีข้อมูลการซ่อมใน ${periodLabel}`} />
+            <Placeholder text={period == null ? "ยังไม่มีข้อมูลการซ่อม" : `ไม่มีข้อมูลการซ่อมใน ${periodLabel}`} />
           ) : (
             <div className="space-y-3">
               {productStats.slice(0, 6).map((p) => {
