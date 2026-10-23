@@ -142,6 +142,27 @@ describe("UT-DASH: ช่วงเวลาของตัวกรอง (ว�
     expect(previousPeriod(makePeriod("year", new Date(2026, 5, 1))).param).toBe("2025");
   });
 
+  it("UT-DASH-20 สร้างช่วงเวลาแบบหลายวัน หลายเดือน และหลายปี (ข้ามเดือนข้ามปี)", () => {
+    const days = makePeriod("day", new Date(2025, 11, 25), new Date(2026, 0, 5));
+    expect(days).toMatchObject({ param: "2025-12-25..2026-01-05", label: "25 ธ.ค. 2568 – 5 ม.ค. 2569" });
+    expect((days.end - days.start) / (24 * 60 * 60 * 1000)).toBe(12);
+    expect(makePeriod("day", new Date(2026, 9, 1), new Date(2026, 9, 23)).label).toBe("1 – 23 ต.ค. 2569");
+    expect(makePeriod("month", new Date(2026, 0, 1), new Date(2026, 1, 1)).label).toBe("ม.ค. – ก.พ. 2569");
+    expect(makePeriod("month", new Date(2025, 10, 1), new Date(2026, 1, 1)).label).toBe("พ.ย. 2568 – ก.พ. 2569");
+    expect(makePeriod("year", new Date(2025, 0, 1), new Date(2026, 0, 1)).label).toBe("ปี 2568 – 2569");
+  });
+
+  it("UT-DASH-21 เลือกช่วงกลับด้าน (วันสิ้นสุดก่อนวันเริ่มต้น)", () => {
+    const p = makePeriod("month", new Date(2026, 1, 1), new Date(2026, 0, 1));
+    expect(p).toMatchObject({ from: "2026-01", to: "2026-02", param: "2026-01..2026-02" });
+  });
+
+  it("UT-DASH-22 หาช่วงก่อนหน้าที่ยาวเท่ากันเพื่อเปรียบเทียบค่าซ่อม", () => {
+    expect(previousPeriod(makePeriod("month", new Date(2026, 0, 1), new Date(2026, 1, 1))).param).toBe("2025-11..2025-12");
+    expect(previousPeriod(makePeriod("day", new Date(2026, 9, 1), new Date(2026, 9, 3))).param).toBe("2026-09-28..2026-09-30");
+    expect(previousPeriod(makePeriod("year", new Date(2025, 0, 1), new Date(2026, 0, 1))).param).toBe("2023..2024");
+  });
+
   it("UT-DASH-15 อ่านช่วงเวลาจาก URL และปฏิเสธค่าที่ผิดรูปแบบ", () => {
     const parse = (q: string) => parsePeriodParams(new URLSearchParams(q))?.param ?? null;
     expect(parse("day=2026-10-05")).toBe("2026-10-05");
@@ -151,6 +172,10 @@ describe("UT-DASH: ช่วงเวลาของตัวกรอง (ว�
     expect(parse("day=2026-1-5")).toBeNull();
     expect(parse("year=25")).toBeNull();
     expect(parse("")).toBeNull();
+    expect(parse("month=2026-01..2026-02")).toBe("2026-01..2026-02");
+    expect(parse("day=2025-12-25..2026-01-05")).toBe("2025-12-25..2026-01-05");
+    expect(parse("month=2026-01..2026-13")).toBeNull();
+    expect(parse("year=2024..2025..2026")).toBeNull();
   });
 });
 
@@ -189,7 +214,7 @@ describe("UT-DASH: หน้าแดชบอร์ดผู้ดูแลร�
     const view = render(<AdminDashboardPage />);
     await loaded();
     fireEvent.change(screen.getByLabelText("ช่วงเวลา"), { target: { value: "month" } });
-    fireEvent.change(screen.getByLabelText("เลือกเดือน"), { target: { value: String(monthKey(new Date(2026, 8, 1))) } });
+    fireEvent.change(screen.getByLabelText("ตั้งแต่เดือน"), { target: { value: String(monthKey(new Date(2026, 8, 1))) } });
 
     expect(screen.getByText("สถานะงานซ่อม ก.ย. 2569")).toBeTruthy();
     expect(screen.getByText("แจ้งซ่อมในช่วงนี้").previousElementSibling!.textContent).toBe("1");
@@ -232,7 +257,7 @@ describe("UT-DASH: หน้าแดชบอร์ดผู้ดูแลร�
     const view = render(<AdminDashboardPage />);
     await loaded();
     fireEvent.change(screen.getByLabelText("ช่วงเวลา"), { target: { value: "month" } });
-    fireEvent.change(screen.getByLabelText("เลือกเดือน"), { target: { value: String(monthKey(new Date(2026, 6, 1))) } });
+    fireEvent.change(screen.getByLabelText("ตั้งแต่เดือน"), { target: { value: String(monthKey(new Date(2026, 6, 1))) } });
     expect(screen.getByText("ไม่มีการแจ้งซ่อมใน ก.ค. 2569")).toBeTruthy();
     expect(screen.getByText("ไม่มีงานซ่อมค้างที่แจ้งใน ก.ค. 2569")).toBeTruthy();
   });
@@ -240,7 +265,7 @@ describe("UT-DASH: หน้าแดชบอร์ดผู้ดูแลร�
     seed(sample);
     await renderLoaded();
     fireEvent.change(screen.getByLabelText("ช่วงเวลา"), { target: { value: "day" } });
-    const dayInput = screen.getByLabelText("เลือกวันที่") as HTMLInputElement;
+    const dayInput = screen.getByLabelText("ตั้งแต่วันที่") as HTMLInputElement;
     expect(dayInput.value).toBe("2026-10-23"); // defaults to today
     fireEvent.change(dayInput, { target: { value: "2026-10-10" } });
 
@@ -259,7 +284,7 @@ describe("UT-DASH: หน้าแดชบอร์ดผู้ดูแลร�
     expect(screen.getByText("แจ้งซ่อมในช่วงนี้").previousElementSibling!.textContent).toBe("3");
     expect(screen.getByText("แนวโน้มการแจ้งซ่อมรายเดือน ปี 2569")).toBeTruthy();
 
-    fireEvent.change(screen.getByLabelText("เลือกปี"), { target: { value: "2025" } });
+    fireEvent.change(screen.getByLabelText("ตั้งแต่ปี"), { target: { value: "2025" } });
     expect(screen.getByText("สถานะงานซ่อม ปี 2568")).toBeTruthy();
     expect(screen.getByText("แจ้งซ่อมในช่วงนี้").previousElementSibling!.textContent).toBe("1");
     expect(window.location.search).toBe("?year=2025");
@@ -270,8 +295,9 @@ describe("UT-DASH: หน้าแดชบอร์ดผู้ดูแลร�
     seed(sample);
     await renderLoaded();
     fireEvent.change(screen.getByLabelText("ช่วงเวลา"), { target: { value: "day" } });
-    expect((screen.getByLabelText("เลือกวันที่") as HTMLInputElement).value).toBe("2026-09-01");
-    expect(window.location.search).toBe("?day=2026-09-01");
+    expect((screen.getByLabelText("ตั้งแต่วันที่") as HTMLInputElement).value).toBe("2026-09-01");
+    expect((screen.getByLabelText("ถึงวันที่") as HTMLInputElement).value).toBe("2026-09-30");
+    expect(window.location.search).toBe("?day=2026-09-01..2026-09-30");
   });
 
   it("UT-DASH-19 เปิดลิงก์ที่ระบุวันที่ในอนาคต", async () => {
@@ -279,5 +305,51 @@ describe("UT-DASH: หน้าแดชบอร์ดผู้ดูแลร�
     seed(sample);
     await renderLoaded();
     expect(screen.getByText("สถานะงานซ่อมทั้งหมด")).toBeTruthy();
+  });
+  it("UT-DASH-23 เลือกช่วงรายเดือนตั้งแต่ ม.ค. ถึง ก.พ.", async () => {
+    seed([
+      req(1, "2026-01-10T10:00:00+07:00", "สถานะเสร็จสมบรูณ์", 100),
+      req(2, "2026-02-20T10:00:00+07:00", "สถานะเสร็จสมบรูณ์", 200),
+      req(3, "2026-03-05T10:00:00+07:00", "สถานะเสร็จสมบรูณ์", 400),
+      req(4, "2025-12-15T10:00:00+07:00", "สถานะเสร็จสมบรูณ์", 50),
+    ]);
+    await renderLoaded();
+    fireEvent.change(screen.getByLabelText("ช่วงเวลา"), { target: { value: "month" } });
+    fireEvent.change(screen.getByLabelText("ตั้งแต่เดือน"), { target: { value: String(monthKey(new Date(2026, 0, 1))) } });
+    fireEvent.change(screen.getByLabelText("ถึงเดือน"), { target: { value: String(monthKey(new Date(2026, 1, 1))) } });
+
+    expect(screen.getByText("สถานะงานซ่อม ม.ค. – ก.พ. 2569")).toBeTruthy();
+    expect(screen.getByText("แจ้งซ่อมในช่วงนี้").previousElementSibling!.textContent).toBe("2");
+    expect(screen.getByText("ค่าซ่อมในช่วงนี้").previousElementSibling!.textContent).toBe("300 บาท");
+    // compared with the two months before: Nov-Dec 2025
+    expect(screen.getByText(/จาก พ.ย. – ธ.ค. 2568$/)).toBeTruthy();
+    expect(window.location.search).toBe("?month=2026-01..2026-02");
+  });
+
+  it("UT-DASH-24 เลือกช่วงรายวันข้ามปี (25 ธ.ค. 2568 ถึง 5 ม.ค. 2569)", async () => {
+    seed([
+      req(1, "2025-12-24T10:00:00+07:00", "สถานะเสร็จสมบรูณ์", 10),
+      req(2, "2025-12-28T10:00:00+07:00", "สถานะเสร็จสมบรูณ์", 20),
+      req(3, "2026-01-05T22:00:00+07:00", "สถานะเสร็จสมบรูณ์", 30),
+      req(4, "2026-01-06T08:00:00+07:00", "สถานะเสร็จสมบรูณ์", 40),
+    ]);
+    window.history.replaceState(null, "", "/admin?day=2025-12-25..2026-01-05");
+    await renderLoaded();
+    expect(screen.getByText("สถานะงานซ่อม 25 ธ.ค. 2568 – 5 ม.ค. 2569")).toBeTruthy();
+    expect(screen.getByText("แจ้งซ่อมในช่วงนี้").previousElementSibling!.textContent).toBe("2");
+    expect(screen.getByText("ค่าซ่อมในช่วงนี้").previousElementSibling!.textContent).toBe("50 บาท");
+  });
+
+  it("UT-DASH-25 เลือกช่วงรายปีหลายปี", async () => {
+    seed([...sample, req(4, "2025-03-01T10:00:00+07:00", "สถานะเสร็จสมบรูณ์", 100), req(5, "2024-06-01T10:00:00+07:00", "สถานะเสร็จสมบรูณ์", 70)]);
+    await renderLoaded();
+    fireEvent.change(screen.getByLabelText("ช่วงเวลา"), { target: { value: "year" } });
+    fireEvent.change(screen.getByLabelText("ตั้งแต่ปี"), { target: { value: "2025" } });
+    // from moved alone, so the range is still one year; now widen it
+    expect(screen.getByText("แจ้งซ่อมในช่วงนี้").previousElementSibling!.textContent).toBe("1");
+    fireEvent.change(screen.getByLabelText("ถึงปี"), { target: { value: "2026" } });
+    expect(screen.getByText("สถานะงานซ่อม ปี 2568 – 2569")).toBeTruthy();
+    expect(screen.getByText("แจ้งซ่อมในช่วงนี้").previousElementSibling!.textContent).toBe("4");
+    expect(screen.getByText("แนวโน้มการแจ้งซ่อมรายเดือน ปี 2568 – 2569")).toBeTruthy();
   });
 });

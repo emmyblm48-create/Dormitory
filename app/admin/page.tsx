@@ -67,16 +67,31 @@ export default function AdminDashboardPage() {
     if (p) url.searchParams.set(p.kind, p.param);
     window.history.replaceState(window.history.state, "", url);
   };
-  // Switching between day/month/year keeps the date already picked where possible
+  // First and last day the picked range covers
+  const fromDate = period ? new Date(period.start) : null;
+  const toDate = period ? new Date(period.end - 1) : null;
+  // Switching between day/month/year keeps the dates already picked where possible
   const selectKind = (kind: PeriodKind | "") =>
-    selectPeriod(kind === "" ? null : makePeriod(kind, new Date(period ? Math.min(period.start, now) : now)));
+    selectPeriod(
+      kind === ""
+        ? null
+        : makePeriod(kind, new Date(period ? Math.min(period.start, now) : now), new Date(period ? Math.min(period.end - 1, now) : now))
+    );
+  // Moves one end of the range; picking ends the wrong way round just swaps them. While the
+  // range is a single day/month/year, "from" moves both ends, so picking one takes one step.
+  const selectEnd = (end: "from" | "to", d: Date) => {
+    if (!period) return;
+    if (end === "from" && period.from === period.to) selectPeriod(makePeriod(period.kind, d));
+    else selectPeriod(makePeriod(period.kind, end === "from" ? d : fromDate!, end === "to" ? d : toDate!));
+  };
 
   const currentMonth = monthKey(new Date(now));
-  const periodMonth = period ? monthKey(new Date(period.start)) : null;
+  const fromMonth = fromDate ? monthKey(fromDate) : null;
+  const toMonth = toDate ? monthKey(toDate) : null;
   const firstMonth = useMemo(() => {
     const keys = requests.filter((r) => r.reported_date).map((r) => monthKey(new Date(r.reported_date!)));
-    return Math.min(currentMonth - 11, periodMonth ?? currentMonth, ...keys);
-  }, [requests, currentMonth, periodMonth]);
+    return Math.min(currentMonth - 11, fromMonth ?? currentMonth, ...keys);
+  }, [requests, currentMonth, fromMonth]);
   const monthOptions = Array.from({ length: currentMonth - firstMonth + 1 }, (_, i) => currentMonth - i);
   const currentYear = Math.floor(currentMonth / 12);
   const yearOptions = Array.from({ length: currentYear - Math.floor(firstMonth / 12) + 1 }, (_, i) => currentYear - i);
@@ -111,9 +126,16 @@ export default function AdminDashboardPage() {
   const missingCostCount = scopedRequests.filter((r) => r.status !== STATUS_REPORTED && r.repair_cost == null).length;
 
   // ---------- Monthly trend: a year's Jan-Dec, else 12 months ending at the picked (or current) month ----------
-  const trendEnd = period?.kind === "year" ? Math.floor(periodMonth! / 12) * 12 + 11 : (periodMonth ?? currentMonth);
-  const highlightMonth = period?.kind === "year" ? null : (periodMonth ?? currentMonth);
-  const monthly = useMemo(() => computeMonthly(requests, monthKeyStart(trendEnd)), [requests, trendEnd]);
+  // Years show January of the first through December of the last; otherwise the chart ends at the
+  // range's last month and reaches back at least 12 months
+  const trendEnd = period?.kind === "year" ? Math.floor(toMonth! / 12) * 12 + 11 : (toMonth ?? currentMonth);
+  const trendStart = period?.kind === "year" ? Math.floor(fromMonth! / 12) * 12 : Math.min(fromMonth ?? trendEnd, trendEnd - 11);
+  const isHighlighted = (key: number) =>
+    period == null ? key === currentMonth : period.kind !== "year" && key >= fromMonth! && key <= toMonth!;
+  const monthly = useMemo(
+    () => computeMonthly(requests, monthKeyStart(trendEnd), trendEnd - trendStart + 1),
+    [requests, trendStart, trendEnd]
+  );
 
   // ---------- Repair cost: the picked period (or this month) against the one before ----------
   const costPeriod = useMemo(() => period ?? makePeriod("month", new Date(now)), [period, now]);
@@ -221,6 +243,58 @@ export default function AdminDashboardPage() {
 
   const dash = (v: string | number) => (isLoading ? "-" : v);
 
+  const pickerClass = "glass-input !w-auto px-2.5 py-1.5 rounded-lg text-xs";
+  const renderEndPicker = (end: "from" | "to") => {
+    if (!period) return null;
+    const d = end === "from" ? fromDate! : toDate!;
+    const word = end === "from" ? "ตั้งแต่" : "ถึง";
+    if (period.kind === "day") {
+      return (
+        <input
+          type="date"
+          aria-label={`${word}วันที่`}
+          value={end === "from" ? period.from : period.to}
+          max={todayParam}
+          onChange={(e) => {
+            const [y, m, day] = e.target.value.split("-").map(Number);
+            if (y && m && day) selectEnd(end, new Date(y, m - 1, day));
+          }}
+          className={pickerClass}
+        />
+      );
+    }
+    if (period.kind === "month") {
+      return (
+        <select
+          aria-label={`${word}เดือน`}
+          value={monthKey(d)}
+          onChange={(e) => selectEnd(end, new Date(monthKeyStart(Number(e.target.value))))}
+          className={pickerClass}
+        >
+          {monthOptions.map((key) => (
+            <option key={key} value={key}>
+              {monthKeyLabel(key)}
+            </option>
+          ))}
+        </select>
+      );
+    }
+    return (
+      <select
+        aria-label={`${word}ปี`}
+        value={d.getFullYear()}
+        onChange={(e) => selectEnd(end, new Date(Number(e.target.value), 0, 1))}
+        className={pickerClass}
+      >
+        {yearOptions.map((y) => (
+          <option key={y} value={y}>
+            {y + 543}
+          </option>
+        ))}
+      </select>
+    );
+  };
+
   return (
     <div className="space-y-5 max-w-6xl mx-auto w-full">
       <ScrollReveal />
@@ -233,7 +307,7 @@ export default function AdminDashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5 text-xs text-slate-500">
+          <div className="flex items-center gap-1.5 flex-wrap text-xs text-slate-500">
             <CalendarDays size={14} className="text-brand-500" />
             <select
               aria-label="ช่วงเวลา"
@@ -246,46 +320,12 @@ export default function AdminDashboardPage() {
               <option value="month">รายเดือน</option>
               <option value="year">รายปี</option>
             </select>
-            {period?.kind === "day" && (
-              <input
-                type="date"
-                aria-label="เลือกวันที่"
-                value={period.param}
-                max={todayParam}
-                onChange={(e) => {
-                  const [y, m, d] = e.target.value.split("-").map(Number);
-                  if (y && m && d) selectPeriod(makePeriod("day", new Date(y, m - 1, d)));
-                }}
-                className="glass-input !w-auto px-2.5 py-1.5 rounded-lg text-xs"
-              />
-            )}
-            {period?.kind === "month" && (
-              <select
-                aria-label="เลือกเดือน"
-                value={periodMonth!}
-                onChange={(e) => selectPeriod(makePeriod("month", new Date(monthKeyStart(Number(e.target.value)))))}
-                className="glass-input !w-auto px-2.5 py-1.5 rounded-lg text-xs"
-              >
-                {monthOptions.map((key) => (
-                  <option key={key} value={key}>
-                    {monthKeyLabel(key)}
-                  </option>
-                ))}
-              </select>
-            )}
-            {period?.kind === "year" && (
-              <select
-                aria-label="เลือกปี"
-                value={Math.floor(periodMonth! / 12)}
-                onChange={(e) => selectPeriod(makePeriod("year", new Date(Number(e.target.value), 0, 1)))}
-                className="glass-input !w-auto px-2.5 py-1.5 rounded-lg text-xs"
-              >
-                {yearOptions.map((y) => (
-                  <option key={y} value={y}>
-                    {y + 543}
-                  </option>
-                ))}
-              </select>
+            {period && (
+              <>
+                {renderEndPicker("from")}
+                <span className="text-slate-400">ถึง</span>
+                {renderEndPicker("to")}
+              </>
             )}
           </div>
           <button
@@ -476,7 +516,7 @@ export default function AdminDashboardPage() {
               ? "แนวโน้มการแจ้งซ่อม 12 เดือนล่าสุด"
               : period.kind === "year"
                 ? `แนวโน้มการแจ้งซ่อมรายเดือน ${periodLabel}`
-                : `แนวโน้มการแจ้งซ่อม 12 เดือนถึง ${monthKeyLabel(periodMonth!)}`}{" "}
+                : `แนวโน้มการแจ้งซ่อม ${monthKeyLabel(trendStart)} – ${monthKeyLabel(trendEnd)}`}{" "}
             <span className="text-[11px] font-normal text-slate-400">(กดแท่งเพื่อกรองเดือนนั้น)</span>
           </h3>
           <p className="text-[11px] text-slate-500">
@@ -487,12 +527,16 @@ export default function AdminDashboardPage() {
           <Placeholder text="กำลังโหลดข้อมูล..." />
         ) : (
           <div className="overflow-x-auto">
-            <div className="flex items-end justify-between gap-1.5 h-44 min-w-[520px]">
+            <div className="flex items-end justify-between gap-1.5 h-44" style={{ minWidth: Math.max(520, monthly.length * 44) }}>
               {monthly.map((m) => (
                 <button
                   key={m.key}
                   onClick={() =>
-                    selectPeriod(period?.kind === "month" && m.key === periodMonth ? null : makePeriod("month", new Date(monthKeyStart(m.key))))
+                    selectPeriod(
+                      period?.kind === "month" && period.from === period.to && m.key === fromMonth
+                        ? null
+                        : makePeriod("month", new Date(monthKeyStart(m.key)))
+                    )
                   }
                   disabled={m.key > currentMonth}
                   className="flex-1 flex flex-col items-center justify-end gap-1 h-full group disabled:cursor-default"
@@ -500,7 +544,7 @@ export default function AdminDashboardPage() {
                   <span className="text-[10px] font-semibold text-slate-600">{m.count > 0 ? m.count : ""}</span>
                   <div
                     className={`w-full max-w-[26px] rounded-t-md transition-all ${
-                      m.key === highlightMonth ? "bg-gradient-to-t from-brand-700 to-brand-500" : "bg-gradient-to-t from-brand-400 to-brand-200 group-hover:from-brand-500 group-hover:to-brand-300"
+                      isHighlighted(m.key) ? "bg-gradient-to-t from-brand-700 to-brand-500" : "bg-gradient-to-t from-brand-400 to-brand-200 group-hover:from-brand-500 group-hover:to-brand-300"
                     }`}
                     style={{ height: `${m.count > 0 ? Math.max(6, (m.count / maxMonthlyCount) * 75) : 2}%` }}
                     title={`${m.label} ${m.year + 543}: ${m.count} ครั้ง, ${formatCurrency(m.cost)}`}

@@ -57,10 +57,13 @@ export const parseMonthParam = (value: string | null) => {
   return Number(m[1]) * 12 + Number(m[2]) - 1;
 };
 
-// One calendar day, month or year picked on the dashboard filter; `end` is exclusive
+// A run of whole days, months or years picked on the dashboard filter (from..to, both
+// inclusive). A single day/month/year is a range whose ends are the same. `end` is exclusive.
 export type PeriodKind = "day" | "month" | "year";
 export interface Period {
   kind: PeriodKind;
+  from: string;
+  to: string;
   param: string;
   start: number;
   end: number;
@@ -71,34 +74,70 @@ export const PERIOD_KINDS: PeriodKind[] = ["day", "month", "year"];
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
-// The period of `kind` that contains `d`
-export const makePeriod = (kind: PeriodKind, d: Date): Period => {
+// The single day, month or year that contains `d`
+const unitOf = (kind: PeriodKind, d: Date) => {
   const y = d.getFullYear();
   const m = d.getMonth();
   const day = d.getDate();
   if (kind === "day") {
-    return {
-      kind,
-      param: `${y}-${pad2(m + 1)}-${pad2(day)}`,
-      start: new Date(y, m, day).getTime(),
-      end: new Date(y, m, day + 1).getTime(),
-      label: `${day} ${MONTH_LABELS[m]} ${y + 543}`,
-    };
+    return { param: `${y}-${pad2(m + 1)}-${pad2(day)}`, start: new Date(y, m, day).getTime(), end: new Date(y, m, day + 1).getTime(), y, m, day };
   }
   if (kind === "month") {
-    return {
-      kind,
-      param: `${y}-${pad2(m + 1)}`,
-      start: new Date(y, m, 1).getTime(),
-      end: new Date(y, m + 1, 1).getTime(),
-      label: `${MONTH_LABELS[m]} ${y + 543}`,
-    };
+    return { param: `${y}-${pad2(m + 1)}`, start: new Date(y, m, 1).getTime(), end: new Date(y, m + 1, 1).getTime(), y, m, day: 1 };
   }
-  return { kind, param: String(y), start: new Date(y, 0, 1).getTime(), end: new Date(y + 1, 0, 1).getTime(), label: `ปี ${y + 543}` };
+  return { param: String(y), start: new Date(y, 0, 1).getTime(), end: new Date(y + 1, 0, 1).getTime(), y, m: 0, day: 1 };
 };
 
-// Yesterday, last month or last year relative to `p`
-export const previousPeriod = (p: Period) => makePeriod(p.kind, new Date(p.start - 1));
+type Unit = ReturnType<typeof unitOf>;
+
+// "23 ต.ค. 2569", "1 – 23 ต.ค. 2569", "25 ธ.ค. 2568 – 5 ม.ค. 2569", "ม.ค. – ก.พ. 2569", "ปี 2568 – 2569"
+const rangeLabel = (kind: PeriodKind, a: Unit, b: Unit) => {
+  const be = (y: number) => y + 543;
+  if (kind === "year") return a.y === b.y ? `ปี ${be(a.y)}` : `ปี ${be(a.y)} – ${be(b.y)}`;
+  const part = (u: Unit) => (kind === "day" ? `${u.day} ${MONTH_LABELS[u.m]}` : MONTH_LABELS[u.m]);
+  if (a.param === b.param) return `${part(a)} ${be(a.y)}`;
+  if (a.y !== b.y) return `${part(a)} ${be(a.y)} – ${part(b)} ${be(b.y)}`;
+  if (kind === "day" && a.m === b.m) return `${a.day} – ${b.day} ${MONTH_LABELS[a.m]} ${be(a.y)}`;
+  return `${part(a)} – ${part(b)} ${be(a.y)}`;
+};
+
+// The range of `kind` units covering `from` through `to`; the ends are swapped if given backwards
+export const makePeriod = (kind: PeriodKind, from: Date, to: Date = from): Period => {
+  let a = unitOf(kind, from);
+  let b = unitOf(kind, to);
+  if (b.start < a.start) [a, b] = [b, a];
+  return {
+    kind,
+    from: a.param,
+    to: b.param,
+    param: a.param === b.param ? a.param : `${a.param}..${b.param}`,
+    start: a.start,
+    end: b.end,
+    label: rangeLabel(kind, a, b),
+  };
+};
+
+const shiftUnits = (kind: PeriodKind, t: number, n: number) => {
+  const d = new Date(t);
+  if (kind === "day") return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+  if (kind === "month") return new Date(d.getFullYear(), d.getMonth() + n, 1);
+  return new Date(d.getFullYear() + n, 0, 1);
+};
+
+// Number of days, months or years the range spans
+export const periodLength = (p: Period) => {
+  const a = new Date(p.start);
+  const b = new Date(p.end - 1);
+  if (p.kind === "day") return Math.round((p.end - p.start) / DAY_MS);
+  if (p.kind === "month") return monthKey(b) - monthKey(a) + 1;
+  return b.getFullYear() - a.getFullYear() + 1;
+};
+
+// The equally long range just before `p`: yesterday, last month, or e.g. Nov-Dec before Jan-Feb
+export const previousPeriod = (p: Period) => {
+  const n = periodLength(p);
+  return makePeriod(p.kind, shiftUnits(p.kind, p.start, -n), shiftUnits(p.kind, p.end - 1, -n));
+};
 
 export const inPeriod = (dateStr: string | null, p: Period) => {
   if (!dateStr) return false;
@@ -106,18 +145,33 @@ export const inPeriod = (dateStr: string | null, p: Period) => {
   return t >= p.start && t < p.end;
 };
 
-// Reads ?day=YYYY-MM-DD, ?month=YYYY-MM or ?year=YYYY; anything malformed is ignored
-export const parsePeriodParams = (params: URLSearchParams): Period | null => {
-  const day = params.get("day")?.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (day) {
-    const d = new Date(Number(day[1]), Number(day[2]) - 1, Number(day[3]));
+const parseUnit = (kind: PeriodKind, value: string): Date | null => {
+  if (kind === "day") {
+    const m = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return null;
+    const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
     // Rejects dates that roll over, e.g. 2026-02-30
-    if (d.getMonth() === Number(day[2]) - 1 && d.getDate() === Number(day[3])) return makePeriod("day", d);
+    return d.getMonth() === Number(m[2]) - 1 && d.getDate() === Number(m[3]) ? d : null;
   }
-  const month = parseMonthParam(params.get("month"));
-  if (month != null) return makePeriod("month", new Date(monthKeyStart(month)));
-  const year = params.get("year")?.match(/^\d{4}$/);
-  if (year) return makePeriod("year", new Date(Number(year[0]), 0, 1));
+  if (kind === "month") {
+    const key = parseMonthParam(value);
+    return key == null ? null : new Date(monthKeyStart(key));
+  }
+  return /^\d{4}$/.test(value) ? new Date(Number(value), 0, 1) : null;
+};
+
+// Reads ?day=, ?month= or ?year= holding one value (2026-10) or a range (2026-01..2026-02);
+// anything malformed is ignored
+export const parsePeriodParams = (params: URLSearchParams): Period | null => {
+  for (const kind of PERIOD_KINDS) {
+    const value = params.get(kind);
+    if (!value) continue;
+    const parts = value.split("..");
+    if (parts.length > 2) continue;
+    const from = parseUnit(kind, parts[0]);
+    const to = parseUnit(kind, parts[1] ?? parts[0]);
+    if (from && to) return makePeriod(kind, from, to);
+  }
   return null;
 };
 
