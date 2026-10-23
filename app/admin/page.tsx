@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   DoorOpen,
@@ -36,6 +36,8 @@ import {
   monthKey,
   monthKeyLabel,
   monthKeyStart,
+  monthKeyParam,
+  parseMonthParam,
 } from "@/lib/dashboard";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { ProgressRing } from "@/components/ProgressRing";
@@ -48,12 +50,24 @@ export default function AdminDashboardPage() {
 
   // ---------- Month filter: null shows every request ----------
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
+  // Kept in ?month=YYYY-MM so a filtered view survives reloads and can be shared
+  useEffect(() => {
+    const key = parseMonthParam(new URLSearchParams(window.location.search).get("month"));
+    setSelectedMonth(key != null && key <= monthKey(new Date()) ? key : null);
+  }, []);
+  const selectMonth = (key: number | null) => {
+    setSelectedMonth(key);
+    const url = new URL(window.location.href);
+    if (key == null) url.searchParams.delete("month");
+    else url.searchParams.set("month", monthKeyParam(key));
+    window.history.replaceState(window.history.state, "", url);
+  };
   const currentMonth = monthKey(new Date(now));
   const monthOptions = useMemo(() => {
     const keys = requests.filter((r) => r.reported_date).map((r) => monthKey(new Date(r.reported_date!)));
-    const first = Math.min(currentMonth - 11, ...keys);
+    const first = Math.min(currentMonth - 11, selectedMonth ?? currentMonth, ...keys);
     return Array.from({ length: currentMonth - first + 1 }, (_, i) => currentMonth - i);
-  }, [requests, currentMonth]);
+  }, [requests, currentMonth, selectedMonth]);
   const periodLabel = selectedMonth == null ? "ทั้งหมด" : monthKeyLabel(selectedMonth);
 
   const scopedRequests = useMemo(
@@ -170,10 +184,7 @@ export default function AdminDashboardPage() {
 
   const exportCsv = () => {
     const roomById = new Map(rooms.map((r) => [r.room_id, r.room_number]));
-    const suffix =
-      selectedMonth == null
-        ? new Date().toISOString().slice(0, 10)
-        : `${Math.floor(selectedMonth / 12)}-${String((selectedMonth % 12) + 1).padStart(2, "0")}`;
+    const suffix = selectedMonth == null ? new Date().toISOString().slice(0, 10) : monthKeyParam(selectedMonth);
     downloadCsv(`maintenance-report-${suffix}.csv`, [
       ["เลขที่", "วันที่แจ้ง", "ห้อง", "ครุภัณฑ์", "รายละเอียด", "สถานะ", "ค่าซ่อม (บาท)", "ค้างมา (วัน)"],
       ...scopedRequests.map((r) => [
@@ -208,7 +219,7 @@ export default function AdminDashboardPage() {
             <span className="sr-only">ดูข้อมูลเดือน</span>
             <select
               value={selectedMonth ?? ""}
-              onChange={(e) => setSelectedMonth(e.target.value === "" ? null : Number(e.target.value))}
+              onChange={(e) => selectMonth(e.target.value === "" ? null : Number(e.target.value))}
               className="glass-input !w-auto px-2.5 py-1.5 rounded-lg text-xs"
             >
               <option value="">ทุกเดือน</option>
@@ -237,7 +248,7 @@ export default function AdminDashboardPage() {
           <span>
             แสดงงานซ่อมที่แจ้งใน <span className="font-semibold">{periodLabel}</span> · อัตราการเข้าพักและรายได้ค่าเช่าแสดงตามสถานะปัจจุบัน
           </span>
-          <button onClick={() => setSelectedMonth(null)} className="flex items-center gap-0.5 font-semibold hover:text-brand-900">
+          <button onClick={() => selectMonth(null)} className="flex items-center gap-0.5 font-semibold hover:text-brand-900">
             <X size={12} /> ล้างตัวกรอง
           </button>
         </div>
@@ -418,7 +429,7 @@ export default function AdminDashboardPage() {
               {monthly.map((m, i) => (
                 <button
                   key={m.key}
-                  onClick={() => setSelectedMonth(m.key === selectedMonth ? null : m.key)}
+                  onClick={() => selectMonth(m.key === selectedMonth ? null : m.key)}
                   className="flex-1 flex flex-col items-center justify-end gap-1 h-full group"
                 >
                   <span className="text-[10px] font-semibold text-slate-600">{m.count > 0 ? m.count : ""}</span>

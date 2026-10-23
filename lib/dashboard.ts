@@ -49,6 +49,13 @@ export const daysSince = (dateStr: string | null, now: number) =>
 export const monthKey = (d: Date) => d.getFullYear() * 12 + d.getMonth();
 export const monthKeyLabel = (key: number) => `${MONTH_LABELS[key % 12]} ${Math.floor(key / 12) + 543}`;
 export const monthKeyStart = (key: number) => new Date(Math.floor(key / 12), key % 12, 1).getTime();
+// "YYYY-MM" form used in URLs and file names
+export const monthKeyParam = (key: number) => `${Math.floor(key / 12)}-${String((key % 12) + 1).padStart(2, "0")}`;
+export const parseMonthParam = (value: string | null) => {
+  const m = value?.match(/^(\d{4})-(\d{2})$/);
+  if (!m || Number(m[2]) < 1 || Number(m[2]) > 12) return null;
+  return Number(m[1]) * 12 + Number(m[2]) - 1;
+};
 
 export const isOpen = (status: string | null) => status !== STATUS_DONE;
 
