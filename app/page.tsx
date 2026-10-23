@@ -33,7 +33,9 @@ export default function LoginPage() {
     setIsSubmitting(false);
   };
 
-  if (isLoading) {
+  // Signed in: the effect above is redirecting, so keep the splash up instead of
+  // flashing the login form for a frame.
+  if (isLoading || (session && profile)) {
     return <SplashScreen />;
   }
 
